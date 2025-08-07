@@ -72,6 +72,27 @@ app.get('/auth/google/callback',
   }
 );
 
+// Adres, który sprawdzi frontend, aby dowiedzieć się, kto jest zalogowany
+app.get('/api/me', (req, res) => {
+    if (req.user) {
+        // Jeśli użytkownik jest w sesji (zalogowany), odeślij jego dane
+        res.json(req.user);
+    } else {
+        // Jeśli nie, odeślij błąd "Unauthorized"
+        res.status(401).json({ message: 'Użytkownik niezalogowany' });
+    }
+});
+
+// Adres do wylogowania użytkownika
+app.get('/auth/logout', (req, res) => {
+    req.logout(err => {
+        if (err) { return next(err); }
+        // Po wylogowaniu przekieruj z powrotem na stronę główną
+        // W przyszłości wstawisz tu adres swojej gry na Netlify
+        res.redirect('/'); 
+    });
+});
+
 
 // --- URUCHOMIENIE SERWERA ---
 app.listen(PORT, () => {

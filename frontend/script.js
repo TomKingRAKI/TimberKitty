@@ -1,4 +1,10 @@
 // --- Ustawienia gry ---
+        const BACKEND_URL = 'https://timberman-backend.onrender.com';
+        const loginButton = document.getElementById('login-button');
+        const userProfile = document.getElementById('user-profile');
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        const logoutButton = document.getElementById('logout-button');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
@@ -745,6 +751,53 @@ function buyItem(itemId, cardElement) {
             }, 300); // Czas animacji
         }
 
+        // --- Logika Autoryzacji Frontendu ---
+
+        async function checkLoginStatus() {
+            try {
+                // Spróbuj pobrać dane zalogowanego użytkownika z backendu
+                // credentials: 'include' jest KLUCZOWE, aby sesja działała
+                const response = await fetch(`${BACKEND_URL}/api/me`, { credentials: 'include' });
+
+                if (!response.ok) {
+                    // Jeśli serwer odpowie błędem (np. 401), to znaczy, że nikt nie jest zalogowany
+                    throw new Error('Użytkownik niezalogowany');
+                }
+
+                const user = await response.json();
+                // Jeśli się udało, zaktualizuj interfejs
+                updateUIAfterLogin(user);
+
+            } catch (error) {
+                console.log('Błąd sprawdzania statusu logowania:', error.message);
+                // Jeśli wystąpił błąd, pokaż przycisk logowania
+                showLoginButton();
+            }
+        }
+
+        function updateUIAfterLogin(user) {
+            // Ukryj przycisk logowania
+            loginButton.style.display = 'none';
+            // Pokaż panel użytkownika
+            userProfile.classList.remove('hidden');
+            userProfile.classList.add('flex');
+
+            // Ustaw awatar i nazwę użytkownika
+            // Z profilu Google bierzemy pierwszy obraz z tablicy 'photos'
+            userAvatar.src = user.photos[0].value;
+            userName.textContent = user.displayName;
+
+            // W przyszłości tutaj będziemy ładować postęp gry z bazy danych!
+        }
+
+        function showLoginButton() {
+            // Pokaż przycisk logowania
+            loginButton.style.display = 'block';
+            // Ukryj panel użytkownika
+            userProfile.classList.add('hidden');
+            userProfile.classList.remove('flex');
+        }
+
         // Event Listeners
         achievementsButton.addEventListener('click', () => {
             populateAchievementsModal();
@@ -789,6 +842,19 @@ function buyItem(itemId, cardElement) {
         window.onload = () => {
             showStartScreen();
             const stats = loadStats();
-            updateEquipmentPanel(stats); // Dodane
+            updateEquipmentPanel(stats);
             populateShopPreview();
+            // Sprawdź, czy użytkownik jest zalogowany
+            checkLoginStatus(); 
         };
+
+        // I dodaj event listenery do nowych przycisków
+        loginButton.addEventListener('click', () => {
+            // Przekieruj na adres logowania na backendzie
+            window.location.href = `${BACKEND_URL}/auth/google`;
+        });
+
+        logoutButton.addEventListener('click', () => {
+            // Przekieruj na adres wylogowania
+            window.location.href = `${BACKEND_URL}/auth/logout`;
+        });
