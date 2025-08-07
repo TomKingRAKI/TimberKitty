@@ -7,6 +7,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 // Krok 2: Inicjalizacja aplikacji Express
 const app = express();
+app.set('trust proxy', 1);
 const PORT = 3000;
 
 // Krok 3: Konfiguracja sesji
@@ -98,3 +99,4 @@ app.get('/auth/logout', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Serwer uruchomiony na http://localhost:${PORT}`);
 });
+
