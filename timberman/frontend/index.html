@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gra Timberman</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-800 flex flex-col items-center justify-center min-h-screen text-white p-4 overflow-x-hidden">
+
+    <h1 class="text-4xl md:text-6xl font-bold mb-4 text-shadow">Timberman</h1>
+
+    <main class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-6">
+
+        <!-- Panel Statystyk (Lewa strona) -->
+        <div id="stats-panel" class="w-full md:w-1/4 panel rounded-lg p-4 flex flex-col items-center gap-4 order-1 md:order-none">
+            <h2 class="text-2xl font-bold text-shadow text-center mb-4">Statystyki</h2>
+            <div class="flex flex-col items-center gap-4 w-full">
+                <div class="w-24 h-24 bg-gray-700 rounded-full border-4 border-gray-500 flex items-center justify-center equipment-slot">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div id="coins-stat-box" class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center transition-shadow duration-300">
+                    <p class="text-gray-400 text-sm">Monety</p>
+                    <p id="coinsStat" class="text-2xl font-bold text-yellow-400">0</p>
+                </div>
+                <div id="highscore-stat-box" class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center transition-shadow duration-300">
+                    <p class="text-gray-400 text-sm">Najlepszy Wynik</p>
+                    <p id="highScoreStat" class="text-2xl font-bold">0</p>
+                </div>
+                <div id="totalchops-stat-box" class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center transition-shadow duration-300">
+                    <p class="text-gray-400 text-sm">Suma Ściętych</p>
+                    <p id="totalChopsStat" class="text-2xl font-bold">0</p>
+                </div>
+
+                <h3 class="text-xl font-bold mt-4 text-shadow">Ostatnie Osiągnięcia</h3>
+                <div id="achievements-preview" class="grid grid-cols-4 gap-3 w-full"></div>
+                <button id="achievements-button" class="panel-button w-full bg-gray-700 p-2 rounded-md text-sm">
+                    Zobacz wszystkie...
+                </button>
+
+                <h3 class="text-xl font-bold mt-4 text-shadow">Posiadane Przedmioty</h3>
+                <div class="w-full flex gap-2">
+                    <div id="equipment-slot-character" data-category="characters" class="w-1/2 h-40 item-slot equipment-slot rounded-md flex items-center justify-center cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="w-1/2 grid grid-cols-2 gap-2">
+                        <div id="equipment-slot-axe" data-category="axes" class="item-slot equipment-slot rounded-md cursor-pointer" title="Siekiera">斧</div>
+                        <div id="equipment-slot-hat" data-category="hats" class="item-slot equipment-slot rounded-md cursor-pointer" title="Czapka">🧢</div>
+                        <div id="equipment-slot-accessory" data-category="accessories" class="item-slot equipment-slot rounded-md cursor-pointer" title="Akcesoria">🧣</div>
+                        <div id="equipment-slot-pet" data-category="pets" class="item-slot equipment-slot rounded-md cursor-pointer" title="Zwierzaczek">🐾</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Główny kontener gry (Środek) -->
+        <div class="w-full max-w-sm md:max-w-md order-2 md:order-none">
+            <div id="game-container" class="relative w-full">
+                <div id="timer-bar-container" class="w-full h-6 rounded-md mb-2 overflow-hidden">
+                    <div id="timer-bar" class="h-full w-full"></div>
+                </div>
+                <div id="score" class="absolute top-10 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow">0</div>
+                <canvas id="gameCanvas"></canvas>
+                <div id="message-overlay" class="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4">
+                    <h2 id="message-title" class="text-4xl font-bold mb-2 text-shadow">Gotowy?</h2>
+                    <p id="message-text" class="text-xl text-shadow mb-4">Kliknij przycisk, aby rozpocząć!</p>
+                    <button id="startButton" class="px-8 py-3 bg-green-500 hover:bg-green-600 rounded-lg text-2xl font-bold transition-transform transform hover:scale-105 text-shadow">Graj!</button>
+                </div>
+            </div>
+            <div class="mt-4 text-center text-gray-400">
+                <p>Użyj klawiszy (A/D, J/L, ←/→) lub kliknij, aby ścinać drzewo.</p>
+                <p>Omijaj gałęzie!</p>
+            </div>
+        </div>
+
+        <!-- Panel Sklepu (Prawa strona) -->
+        <div id="shop-panel" class="w-full md:w-1/4 panel rounded-lg p-4 flex flex-col items-center gap-4 order-3">
+            <h2 class="text-2xl font-bold text-shadow text-center mb-4">Sklep</h2>
+            <div id="shop-preview-container" class="w-full flex flex-col gap-4"></div>
+        </div>
+    </main>
+
+    <!-- Modal Osiągnięć -->
+    <div id="achievements-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-3xl font-bold text-shadow">Osiągnięcia</h2>
+                <button id="close-achievements-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+            </div>
+            <div id="achievements-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+    </div>
+
+    <!-- Modal Sklepu -->
+    <div id="shop-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="shop-modal-title" class="text-3xl font-bold text-shadow">Sklep</h2>
+                <button id="close-shop-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+            </div>
+            <div id="shop-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+    </div>
+
+    <div id="equipment-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="equipment-modal-title" class="text-3xl font-bold text-shadow">Wybierz przedmiot</h2>
+            <button id="close-equipment-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+        </div>
+        <button id="unequip-button" class="w-full p-2 mb-4 bg-red-700 hover:bg-red-600 rounded-md">Zdejmij przedmiot</button>
+        <div id="equipment-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            </div>
+    </div>
+    </div>
+    <div id="notification-container" class="fixed top-5 right-5 z-[100] flex flex-col items-end gap-3"></div>
+    <script src="script.js"></script>
+</body>
+</html>
