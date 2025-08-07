@@ -1,3 +1,5 @@
+const cors = require('cors');
+
 // Krok 1: Importowanie bibliotek
 require('dotenv').config(); // Ładuje zmienne z pliku .env
 const express = require('express');
@@ -8,6 +10,10 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // Krok 2: Inicjalizacja aplikacji Express
 const app = express();
 app.set('trust proxy', 1);
+app.use(cors({
+    origin: 'https://timberkitty.netlify.app', // Zezwól na żądania tylko z Twojego frontendu
+    credentials: true                          // Zezwól na przesyłanie ciasteczek (ważne dla sesji)
+}));
 const PORT = 3000;
 
 // Krok 3: Konfiguracja sesji
