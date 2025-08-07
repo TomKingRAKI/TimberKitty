@@ -21,7 +21,13 @@ const PORT = 3000;
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Lepsza praktyka: nie twórz sesji, dopóki ktoś się nie zaloguje
+    cookie: {
+        secure: true, // Wymagane, gdy aplikacja jest na HTTPS (a na Renderze jest)
+        sameSite: 'none', // KLUCZOWE: Zezwól na wysyłanie ciasteczka z innej domeny
+        httpOnly: true, // Zwiększa bezpieczeństwo, ciasteczko niedostępne dla JS po stronie klienta
+        maxAge: 1000 * 60 * 60 * 24 // Ciasteczko ważne przez 1 dzień
+    }
 }));
 
 // Krok 4: Inicjalizacja Passport.js
