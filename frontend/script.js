@@ -5,6 +5,8 @@
         const userAvatar = document.getElementById('user-avatar');
         const userName = document.getElementById('user-name');
         const logoutButton = document.getElementById('logout-button');
+        const mainAvatarContainer = document.getElementById('main-avatar-container');
+        const mainUsername = document.getElementById('main-username');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
@@ -775,27 +777,43 @@ function buyItem(itemId, cardElement) {
             }
         }
 
-        function updateUIAfterLogin(user) {
-            // Ukryj przycisk logowania
-            loginButton.style.display = 'none';
-            // Pokaż panel użytkownika
-            userProfile.classList.remove('hidden');
-            userProfile.classList.add('flex');
+            function updateUIAfterLogin(user) {
+                // --- Panel w prawym górnym rogu ---
+                loginButton.textContent = 'Zalogowano!'; // Zmiana tekstu przycisku
+                loginButton.disabled = true; // Wyłącz przycisk
+                loginButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                loginButton.classList.add('bg-green-600', 'cursor-default'); // Zmień kolor na zielony
 
-            // Ustaw awatar i nazwę użytkownika
-            // Z profilu Google bierzemy pierwszy obraz z tablicy 'photos'
-            userAvatar.src = user.photos[0].value;
-            userName.textContent = user.displayName;
+                // Ukryj panel z awatarem i wylogowaniem (już go nie potrzebujemy)
+                userProfile.classList.add('hidden');
 
-            // W przyszłości tutaj będziemy ładować postęp gry z bazy danych!
-        }
+                // --- Panel statystyk po lewej stronie ---
+                const userAvatarUrl = user.photos[0].value;
+
+                // Ustaw duży awatar w panelu
+                mainAvatarContainer.innerHTML = `<img src="${userAvatarUrl}" alt="Avatar" class="w-full h-full rounded-full">`;
+
+                // Ustaw imię użytkownika
+                mainUsername.textContent = user.displayName;
+            }
 
         function showLoginButton() {
-            // Pokaż przycisk logowania
-            loginButton.style.display = 'block';
-            // Ukryj panel użytkownika
+            // --- Panel w prawym górnym rogu ---
+            loginButton.textContent = 'Zaloguj się z Google';
+            loginButton.disabled = false;
+            loginButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            loginButton.classList.remove('bg-green-600', 'cursor-default');
+
             userProfile.classList.add('hidden');
             userProfile.classList.remove('flex');
+
+            // --- Panel statystyk po lewej stronie (przywróć domyślny wygląd) ---
+            mainAvatarContainer.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                </svg>
+            `;
+            mainUsername.textContent = 'Gość';
         }
 
         // Event Listeners
