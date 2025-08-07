@@ -69,7 +69,7 @@ app.get('/auth/google/callback',
   (req, res) => {
     // Sukces! Użytkownik jest zalogowany. Na razie przekierujmy go na stronę główną.
     // W przyszłości zmienimy to na adres Twojej gry na Netlify
-    res.redirect('/'); 
+    res.redirect('https://timberkitty.netlify.app'); 
   }
 );
 
