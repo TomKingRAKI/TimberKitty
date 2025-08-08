@@ -1,52 +1,53 @@
-# 🌲 Timberman Clone 🪓
+# 😼 TimberKitty 🪓
 
-Wciągająca gra zręcznościowa w stylu klasycznego Timbermana, stworzona od zera przy użyciu czystego JavaScript, HTML5 Canvas oraz w pełni funkcjonalnego backendu do zapisu postępów online.
+An addictive arcade game with a charming twist on the classic Timberman. Built from scratch using pure JavaScript, HTML5 Canvas, and a fully functional Node.js backend for online progress saving.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Play%20Now!-brightgreen?style=for-the-badge)](https://timberkitty.netlify.app)
-
----
-
-## 🌟 Kluczowe Funkcje
-
-* **Logowanie przez Google:** Pełna integracja z OAuth 2.0 do bezpiecznego uwierzytelniania graczy.
-* **Zapis Postępów Online:** Wszystkie statystyki, przedmioty i osiągnięcia są przypisane do konta gracza i zapisywane w bazie danych PostgreSQL.
-* **Tryb Gościa:** Możliwość gry bez logowania z zapisem postępów w `localStorage`.
-* **Sklep i Ekwipunek:** System kupowania przedmiotów (siekier, czapek, postaci), które dają realne bonusy w grze.
-* **System Osiągnięć:** Kilkanaście osiągnięć do odblokowania za postępy w grze.
-* **Dynamiczna Rozgrywka:** Płynna animacja oparta na HTML5 Canvas, z efektami cząsteczkowymi i dynamicznie generowanym drzewem.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Play%20TimberKitty!-brightgreen?style=for-the-badge)](https://timberkitty.netlify.app)
 
 ---
 
-## 🛠️ Użyte Technologie
+## 🌟 Key Features
+
+* **Google Login:** Full integration with OAuth 2.0 for secure player authentication.
+* **Online Progress Saving:** All stats, items, and achievements are tied to the player's account and saved in a PostgreSQL database.
+* **Guest Mode:** Players can enjoy the game without logging in, with their progress saved to `localStorage`.
+* **Shop & Equipment System:** A system for purchasing items (axes, hats, characters) that provide real in-game bonuses.
+* **Achievement System:** Dozens of achievements to unlock for reaching milestones.
+* **Dynamic Gameplay:** Smooth animation based on HTML5 Canvas, complete with particle effects and a procedurally generated tree.
+
+---
+
+## 🛠️ Tech Stack
 
 * **Frontend:** Vanilla JavaScript (ES6+), HTML5, Tailwind CSS
 * **Backend:** Node.js, Express.js
-* **Baza Danych:** PostgreSQL (hostowana na Supabase)
-* **Autoryzacja:** Passport.js (strategia Google OAuth 2.0)
+* **Database:** PostgreSQL (hosted on Supabase)
+* **Authentication:** Passport.js (Google OAuth 2.0 Strategy)
 * **Hosting:**
     * Frontend: Netlify
     * Backend: Render
 
 ---
 
-## 🚀 Roadmap / Plany Rozwoju
+## 🚀 Roadmap / Future Plans
 
-Ten projekt będzie dalej rozwijany! Poniżej znajduje się lista planowanych funkcji:
+This project is actively being developed! The list below outlines planned features:
 
-* [ ] **Nowe Mapy i Motywy:** Dodanie możliwości zmiany otoczenia (np. motyw zimowy, nocny, pustynny).
-* [ ] **Poprawa Grafiki i Animacji:** Wprowadzenie bardziej zaawansowanych animacji postaci i otoczenia.
-* [ ] **Optymalizacja Mobilna:** Ulepszenie sterowania i interfejsu dla urządzeń dotykowych.
-* [ ] **Tryb Rywalizacji:** Stworzenie globalnej tablicy wyników (leaderboard) i być może cotygodniowych turniejów.
-* [ ] **Dynamiczne Power-upy:** Dodanie przedmiotów specjalnych (np. zatrzymanie czasu, bomby czyszczące gałęzie) pojawiających się w trakcie gry.
-* [ ] **Misje Dzienne:** System codziennych wyzwań z nagrodami.
-* [ ] **Więcej Przedmiotów i Osiągnięć:** Rozbudowa sklepu o nowe kategorie i dodanie bardziej wymagających osiągnięć.
+* [ ] **Main Character Sprite:** Replace the current player graphic with a cute, animated cat to match the "TimberKitty" theme.
+* [ ] **New Maps & Themes:** Add the ability to switch environments (e.g., winter, night, desert themes).
+* [ ] **Improved Graphics & Animations:** Introduce more advanced animations for the character and the environment.
+* [ ] **Mobile Optimization:** Enhance controls and UI for a better experience on touch devices.
+* [ ] **Competitive Mode:** Implement a global leaderboard and possibly weekly tournaments.
+* [ ] **In-Game Power-ups:** Add special items (e.g., time freeze, branch-clearing bombs) that appear during gameplay.
+* [ ] **Daily Missions:** A system of daily challenges with rewards.
+* [ ] **More Items & Achievements:** Expand the shop with new categories and add more challenging achievements.
 
 ---
 
-## 💻 Uruchomienie Lokalne
+## 💻 Running Locally
 
-1.  Sklonuj repozytorium: `git clone <URL>`
-2.  Zainstaluj zależności backendu: `cd backend && npm install`
-3.  Stwórz plik `.env` w folderze `backend` na podstawie własnych kluczy API.
-4.  Uruchom serwer: `node server.js`
-5.  Otwórz plik `frontend/index.html` w swojej przeglądarce.
+1.  Clone the repository: `git clone https://github.com/TomKingRAKI/TimberKitty.git`
+2.  Install backend dependencies: `cd backend && npm install`
+3.  Create a `.env` file in the `backend` folder based on your own API keys.
+4.  Run the server: `node server.js`
+5.  Open the `frontend/index.html` file in your browser.
