@@ -375,18 +375,26 @@ async function unequipItem(category) {
 }
 
 function updateEquipmentPanel(stats) {
+    // Sprawdź, czy obiekt stats i equippedItems w ogóle istnieją
+    if (!stats || !stats.equippedItems) {
+        return;
+    }
+
     for (const slot in stats.equippedItems) {
         const itemId = stats.equippedItems[slot];
         const slotElement = document.getElementById(`equipment-slot-${slot}`);
-        if(!slotElement) continue;
-        if (itemId && shopData[itemId]) {
-            slotElement.innerHTML = `<span class="text-3xl">${shopData[itemId].icon}</span>`;
-        } else {
-            const defaultIcons = {
-                character: `<svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>`,
-                axe: '斧', hat: '🧢', accessory: '🧣', pet: '🐾'
-            };
-            slotElement.innerHTML = defaultIcons[slot];
+
+        // KLUCZOWA POPRAWKA: Działaj tylko, jeśli element istnieje na stronie!
+        if (slotElement) {
+            if (itemId && shopData[itemId]) {
+                slotElement.innerHTML = `<span class="text-3xl">${shopData[itemId].icon}</span>`;
+            } else {
+                const defaultIcons = {
+                    character: `<svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>`,
+                    axe: '斧', hat: '🧢', accessory: '🧣', pet: '🐾'
+                };
+                slotElement.innerHTML = defaultIcons[slot];
+            }
         }
     }
 }
