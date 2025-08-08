@@ -743,7 +743,7 @@ startButton.addEventListener('click', init);
 
 function showStartScreen() {
     gameState = 'start';
-    messageTitle.textContent = 'Timberman';
+    messageTitle.textContent = 'TimberKitty';
     messageText.textContent = 'Kliknij przycisk, aby rozpocząć!';
     startButton.textContent = 'Graj!';
     messageOverlay.style.display = 'flex';
