@@ -69,7 +69,7 @@ let tree = [];
 let particles = [];
 let score = 0;
 let gameState = 'start';
-let currentUser = null; // NOWA ZMIENNA: Przechowuje dane zalogowanego użytkownika
+let currentUser = null; // Przechowuje pełne dane zalogowanego użytkownika z bazy
 
 // Zmienne timera
 let timer = 100;
@@ -78,7 +78,7 @@ let gameLoopInterval = null;
 let activeBonuses = {};
 let petSaveUsed = false;
 
-// --- Baza Danych Osiągnięć ---
+// --- Baza Danych Osiągnięć i Sklepu ---
 const achievementsData = {
     'chop10': { name: 'Początkujący', description: 'Zetnij 10 drzew.', icon: '🪵', condition: (stats) => stats.totalChops >= 10 },
     'chop100': { name: 'Drwal', description: 'Zetnij 100 drzew.', icon: '🪓', condition: (stats) => stats.totalChops >= 100 },
@@ -89,8 +89,6 @@ const achievementsData = {
     'coins1000': { name: 'Skarbnik', description: 'Zdobądź 1000 monet.', icon: '💎', condition: (stats) => stats.coins >= 1000 },
     'noBranch10': { name: 'Szczęściarz', description: 'Zetnij 10 drzew bez gałęzi.', icon: '🍀', condition: (stats) => stats.highScore >= 10 }
 };
-
-// --- Baza Danych Sklepu ---
 const shopData = {
     char_santa: { id: 'char_santa', name: 'Święty', category: 'characters', icon: '🧑‍🎄', price: 500, description: 'Dłuższy czas za cięcie (+0.5s)', bonus: { type: 'timeGainBonus', value: 0.5 } },
     char_vampire: { id: 'char_vampire', name: 'Wampir', category: 'characters', icon: '🧛', price: 750, description: 'Dłuższy czas za cięcie (+0.75s)', bonus: { type: 'timeGainBonus', value: 0.75 } },
@@ -106,8 +104,6 @@ const shopData = {
     pet_dog: { id: 'pet_dog', name: 'Piesek', category: 'pets', icon: '🐶', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } },
     pet_cat: { id: 'pet_cat', name: 'Kotek', category: 'pets', icon: '🐱', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } },
 };
-
-// Mapowanie kategorii na sloty ekwipunku
 const categoryToSlotMap = {
     characters: 'character', hats: 'hat', axes: 'axe', accessories: 'accessory', pets: 'pet'
 };
@@ -118,34 +114,33 @@ const categoryNames = {
 
 // --- NOWA LOGIKA STATYSTYK I OSIĄGNIĘĆ ---
 
-// Ta funkcja teraz zwraca obiekt z polami, które pasują do bazy danych
-function parseStats(statsObject) {
+// NOWA FUNKCJA: Tłumaczy nazwy z bazy danych (snake_case) na nazwy używane w JS (camelCase)
+function parseStatsFromDB(dbUser) {
     return {
-        highScore: statsObject.high_score || 0,
-        totalChops: statsObject.total_chops || 0,
-        coins: statsObject.coins || 0,
-        unlockedAchievements: statsObject.unlocked_achievements || [],
-        unlockedItems: statsObject.unlocked_items || [],
-        equippedItems: statsObject.equipped_items || { character: null, hat: null, axe: null, accessory: null, pet: null }
+        highScore: Number(dbUser.high_score || 0),
+        totalChops: Number(dbUser.total_chops || 0),
+        coins: Number(dbUser.coins || 0),
+        unlockedAchievements: dbUser.unlocked_achievements || [],
+        unlockedItems: dbUser.unlocked_items || [],
+        equippedItems: dbUser.equipped_items || { character: null, hat: null, axe: null, accessory: null, pet: null }
     };
 }
 
-async function loadStats() {
+// ZMODYFIKOWANA FUNKCJA: Teraz jest synchroniczna i działa w dwóch trybach
+function loadStats() {
     if (currentUser) {
         // Użytkownik zalogowany - dane pochodzą z obiektu currentUser
-        console.log("Ładowanie statystyk z serwera...");
-        return parseStats(currentUser);
+        return parseStatsFromDB(currentUser);
     } else {
         // Tryb gościa - dane pochodzą z localStorage
-        console.log("Ładowanie statystyk z localStorage (Tryb Gościa)...");
         const defaultStats = { highScore: 0, totalChops: 0, coins: 0, unlockedAchievements: [], unlockedItems: [], equippedItems: { character: null, hat: null, axe: null, accessory: null, pet: null } };
-        const stats = JSON.parse(localStorage.getItem('timbermanStats')) || defaultStats;
-        return stats;
+        const statsFromStorage = JSON.parse(localStorage.getItem('timbermanStats'));
+        return { ...defaultStats, ...statsFromStorage };
     }
 }
 
+// ZMODYFIKOWANA FUNKCJA: Teraz jest asynchroniczna i zapisuje dane na serwerze lub w localStorage
 async function updateAndSaveStats(currentScore, oldStats) {
-    // Oblicz nowe statystyki
     const newStats = {
         ...oldStats,
         highScore: Math.max(oldStats.highScore, currentScore),
@@ -153,7 +148,6 @@ async function updateAndSaveStats(currentScore, oldStats) {
         coins: oldStats.coins + Math.round(currentScore * 0.1 * (1 + (activeBonuses.coinMultiplier || 0)))
     };
     
-    // Sprawdź nowe osiągnięcia
     for (const id in achievementsData) {
         if (!newStats.unlockedAchievements.includes(id) && achievementsData[id].condition(newStats)) {
             newStats.unlockedAchievements.push(id);
@@ -162,32 +156,23 @@ async function updateAndSaveStats(currentScore, oldStats) {
     }
 
     if (currentUser) {
-        // Użytkownik zalogowany - wyślij dane na serwer
         console.log("Zapisywanie statystyk na serwerze...");
         try {
             const response = await fetch(`${BACKEND_URL}/api/stats`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({
-                    highScore: newStats.highScore,
-                    totalChops: newStats.totalChops,
-                    coins: newStats.coins,
-                    unlockedAchievements: newStats.unlockedAchievements,
-                    unlockedItems: newStats.unlockedItems,
-                    equippedItems: newStats.equippedItems
-                })
+                body: JSON.stringify(newStats)
             });
             if (!response.ok) throw new Error('Błąd zapisu na serwerze');
             const updatedUser = await response.json();
-            currentUser = updatedUser; // Zaktualizuj dane lokalne
-            return parseStats(updatedUser);
+            currentUser = updatedUser; // Zaktualizuj dane lokalne o odpowiedź z serwera
+            return parseStatsFromDB(updatedUser);
         } catch (error) {
             console.error("Nie udało się zapisać statystyk na serwerze:", error);
-            return newStats; // Zwróć nowe statystyki, mimo że nie zostały zapisane
+            return newStats;
         }
     } else {
-        // Tryb gościa - zapisz w localStorage
         console.log("Zapisywanie statystyk w localStorage (Tryb Gościa)...");
         localStorage.setItem('timbermanStats', JSON.stringify(newStats));
         return newStats;
@@ -196,9 +181,9 @@ async function updateAndSaveStats(currentScore, oldStats) {
 
 async function animateStatUpdate(oldStats, score) {
     const newStats = await updateAndSaveStats(score, oldStats);
-    // ... reszta funkcji animacji pozostaje bez zmian, ale używamy 'newStats' zwróconych z serwera/localStorage
     const duration = 1500;
     const startTime = performance.now();
+    
     const statBoxes = [document.getElementById('coins-stat-box'), document.getElementById('highscore-stat-box'), document.getElementById('totalchops-stat-box')];
     statBoxes.forEach(box => box.classList.add('stat-update-animation'));
 
@@ -206,7 +191,7 @@ async function animateStatUpdate(oldStats, score) {
         const elapsedTime = currentTime - startTime;
         const progress = Math.min(elapsedTime / duration, 1);
         const chopGain = score * progress;
-        const coinGain = Math.round(score * 0.1 * (1 + (activeBonuses.coinMultiplier || 0))) * progress;
+        const coinGain = (newStats.coins - oldStats.coins) * progress;
         const currentTotalChops = Math.floor(oldStats.totalChops + chopGain);
         const currentCoins = oldStats.coins + coinGain;
         const currentHighScore = oldStats.highScore < newStats.highScore ? Math.floor(oldStats.highScore + ((newStats.highScore - oldStats.highScore) * progress)) : oldStats.highScore;
@@ -242,6 +227,7 @@ function populateAchievementsPreview(stats) {
         return;
     }
     recentAchievements.forEach(id => {
+        if (!achievementsData[id]) return;
         const achievement = achievementsData[id];
         const slot = document.createElement('div');
         slot.className = 'item-slot rounded-md achievement-preview-slot unlocked has-tooltip'; 
@@ -251,32 +237,30 @@ function populateAchievementsPreview(stats) {
     });
 }
 
-async function populateAchievementsModal() {
+function populateAchievementsModal() {
     achievementsGrid.innerHTML = '';
-    const stats = await loadStats();
+    const stats = loadStats();
     for (const id in achievementsData) {
         const achievement = achievementsData[id];
         const isUnlocked = stats.unlockedAchievements.includes(id);
         const card = document.createElement('div');
-        card.className = 'achievement-card';
-        if (isUnlocked) card.classList.add('unlocked');
+        card.className = 'achievement-card ' + (isUnlocked ? 'unlocked' : '');
         card.innerHTML = `<div class="icon">${isUnlocked ? achievement.icon : '?'}</div><div class="title">${achievement.name}</div><div class="description">${isUnlocked ? achievement.description : 'Zablokowane'}</div>`;
         achievementsGrid.appendChild(card);
     }
 }
 
-async function populateShopModal(categoryKey) {
+function populateShopModal(categoryKey) {
     shopGrid.innerHTML = '';
     const categoryName = categoryNames[categoryKey];
     shopModalTitle.textContent = categoryName;
-    const stats = await loadStats();
+    const stats = loadStats();
     const itemsInCategory = Object.values(shopData).filter(item => item.category === categoryKey);
 
     itemsInCategory.forEach(item => {
         const isOwned = stats.unlockedItems.includes(item.id);
         const card = document.createElement('div');
-        card.className = 'shop-item-slot';
-        if (isOwned) card.classList.add('owned');
+        card.className = 'shop-item-slot ' + (isOwned ? 'owned' : '');
         let bottomContent = isOwned ? `<div class="owned-text">POSIADANE</div>` : `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${item.price} monet</div><button class="buy-button">KUP</button></div>`;
         card.innerHTML = `<div class="text-4xl">${item.icon}</div><div class="font-bold text-base">${item.name}</div><div class="text-sm text-gray-300 px-1 leading-tight">${item.description}</div>${bottomContent}`;
         if (!isOwned) {
@@ -289,9 +273,9 @@ async function populateShopModal(categoryKey) {
     });
 }
 
-async function populateShopPreview() {
+function populateShopPreview() {
     shopPreviewContainer.innerHTML = '';
-    const stats = await loadStats();
+    const stats = loadStats();
     const categories = {};
     Object.values(shopData).forEach(item => {
         if (!categories[item.category]) {
@@ -299,7 +283,6 @@ async function populateShopPreview() {
         }
         categories[item.category].items.push(item);
     });
-
     for (const categoryKey in categories) {
         const category = categories[categoryKey];
         const categoryContainer = document.createElement('div');
@@ -321,17 +304,18 @@ async function populateShopPreview() {
         categoryContainer.appendChild(title);
         categoryContainer.appendChild(previewGrid);
         shopPreviewContainer.appendChild(categoryContainer);
-        categoryContainer.addEventListener('click', async () => {
-            await populateShopModal(categoryKey);
+        categoryContainer.addEventListener('click', () => {
+            populateShopModal(categoryKey);
             openModal(shopModal);
         });
     }
 }
 
+
 // --- Logika gry ---
 
 async function buyItem(itemId, cardElement) {
-    let stats = await loadStats();
+    let stats = loadStats();
     const item = shopData[itemId];
 
     if (stats.coins < item.price) {
@@ -351,18 +335,18 @@ async function buyItem(itemId, cardElement) {
         }
         return;
     }
-
-    if (stats.unlockedItems.includes(itemId)) {
+    if (stats.unlockedItems.includes(item.id)) {
         showNotification('Masz już ten przedmiot!', 'error');
         return;
     }
 
     stats.coins -= item.price;
-    stats.unlockedItems.push(itemId);
-    const updatedStats = await updateAndSaveStats(0, stats); // Zapisz zmiany
+    stats.unlockedItems.push(item.id);
+    const updatedStats = await updateAndSaveStats(0, stats);
+    
     showNotification(`Kupiono: ${item.name}!`, 'success');
     updateStatsUI(updatedStats);
-    await populateShopModal(item.category);
+    populateShopModal(item.category);
 }
 
 function showNotification(message, type = 'success') {
@@ -374,7 +358,7 @@ function showNotification(message, type = 'success') {
 }
 
 async function equipItem(itemId) {
-    let stats = await loadStats();
+    let stats = loadStats();
     const item = shopData[itemId];
     const slot = categoryToSlotMap[item.category];
     stats.equippedItems[slot] = itemId;
@@ -384,7 +368,7 @@ async function equipItem(itemId) {
 }
 
 async function unequipItem(category) {
-    let stats = await loadStats();
+    let stats = loadStats();
     const slot = categoryToSlotMap[category];
     stats.equippedItems[slot] = null;
     const updatedStats = await updateAndSaveStats(0, stats);
@@ -392,15 +376,18 @@ async function unequipItem(category) {
     closeModal(equipmentModal);
 }
 
-async function updateEquipmentPanel(stats) {
+function updateEquipmentPanel(stats) {
     for (const slot in stats.equippedItems) {
         const itemId = stats.equippedItems[slot];
         const slotElement = document.getElementById(`equipment-slot-${slot}`);
-        if (itemId) {
-            const item = shopData[itemId];
-            slotElement.innerHTML = `<span class="text-3xl">${item.icon}</span>`;
+        if(!slotElement) continue;
+        if (itemId && shopData[itemId]) {
+            slotElement.innerHTML = `<span class="text-3xl">${shopData[itemId].icon}</span>`;
         } else {
-            const defaultIcons = { character: `<svg ...>...</svg>`, axe: '斧', hat: '🧢', accessory: '🧣', pet: '🐾' };
+            const defaultIcons = {
+                character: `<svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>`,
+                axe: '斧', hat: '🧢', accessory: '🧣', pet: '🐾'
+            };
             slotElement.innerHTML = defaultIcons[slot];
         }
     }
@@ -409,10 +396,10 @@ async function updateEquipmentPanel(stats) {
 async function populateEquipmentSelectionModal(category) {
     equipmentGrid.innerHTML = '';
     equipmentModalTitle.textContent = `Wybierz: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
-    const stats = await loadStats();
+    const stats = loadStats();
     const ownedItemsInCategory = stats.unlockedItems.map(id => shopData[id]).filter(item => item && item.category === category);
     if (ownedItemsInCategory.length === 0) {
-        equipmentGrid.innerHTML = `<p ...>Nie posiadasz żadnych przedmiotów...</p>`;
+        equipmentGrid.innerHTML = `<p class="col-span-4 text-center text-gray-500">Nie posiadasz żadnych przedmiotów z tej kategorii.</p>`;
     } else {
         ownedItemsInCategory.forEach(item => {
             const card = document.createElement('div');
@@ -433,14 +420,16 @@ async function init() {
     tree = [];
     particles = [];
     timer = MAX_TIME;
-    const stats = await loadStats();
+    const stats = loadStats();
     petSaveUsed = false;
     activeBonuses = { pointsPerChop: 0, timerSlowdown: 0, timeGainBonus: 0, coinMultiplier: 0, oneTimeSave: 0 };
-    for(const slot in stats.equippedItems) {
-        const itemId = stats.equippedItems[slot];
-        if(itemId && shopData[itemId]) {
-            const bonus = shopData[itemId].bonus;
-            activeBonuses[bonus.type] += bonus.value;
+    if (stats.equippedItems) {
+        for(const slot in stats.equippedItems) {
+            const itemId = stats.equippedItems[slot];
+            if(itemId && shopData[itemId]) {
+                const bonus = shopData[itemId].bonus;
+                activeBonuses[bonus.type] += bonus.value;
+            }
         }
     }
     const initialSegments = Math.ceil(canvas.height / SEGMENT_HEIGHT) + 2;
@@ -584,7 +573,7 @@ async function gameOver() {
     if(gameState === 'gameOver') return;
     gameState = 'gameOver';
     clearInterval(gameLoopInterval);
-    const oldStats = await loadStats();
+    const oldStats = loadStats();
     await animateStatUpdate(oldStats, score);
     messageTitle.textContent = 'Koniec Gry!';
     messageText.textContent = `Twój wynik: ${score}.`;
@@ -687,17 +676,14 @@ async function checkLoginStatus() {
         const user = await response.json();
         currentUser = user; // Zapisz dane użytkownika globalnie
         updateUIAfterLogin(user);
-        const stats = await loadStats(); // Załaduj statystyki z serwera
-        updateStatsUI(stats);
-        updateEquipmentPanel(stats);
-        populateAchievementsPreview(stats);
-        populateShopPreview();
     } catch (error) {
         console.log('Błąd sprawdzania statusu logowania:', error.message);
         currentUser = null;
         showLoginButton();
-        // Załaduj dane z localStorage dla gościa
-        const stats = await loadStats();
+    } finally {
+        // Ta część wykona się ZAWSZE, niezależnie od tego czy logowanie się udało, czy nie
+        // Dzięki temu statystyki (z serwera lub localStorage) ładujemy tylko RAZ.
+        const stats = loadStats();
         updateStatsUI(stats);
         updateEquipmentPanel(stats);
         populateAchievementsPreview(stats);
@@ -723,7 +709,9 @@ function showLoginButton() {
     loginButton.classList.remove('bg-green-600', 'cursor-default');
     userProfile.classList.add('hidden');
     userProfile.classList.remove('flex');
-    mainAvatarContainer.innerHTML = `<svg ...>...</svg>`;
+    mainAvatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+    </svg>`;
     mainUsername.textContent = 'Gość';
 }
 
