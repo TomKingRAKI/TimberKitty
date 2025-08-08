@@ -26,7 +26,6 @@ body {
         .item-slot {
             background-color: rgba(0,0,0,0.3);
             border: 1px dashed rgba(255,255,255,0.2);
-            height: 3rem; /* 48px */
             width: 100%;
             display: flex;
             align-items: center;
@@ -295,4 +294,55 @@ body {
 .nav-button:hover, .nav-button.active {
     color: #f59e0b; /* amber-500 */
     background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Style dla Huba Ekwipunku */
+.item-slot-placeholder {
+    width: 3rem;
+    height: 3rem;
+}
+
+#equipment-slot-hat,
+#equipment-slot-pet {
+    align-self: center; /* Wycentruj czapkę i zwierzaka w poziomie */
+}
+
+.category-button {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1.5rem 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.category-button:hover {
+    transform: scale(1.05);
+    border-color: #f59e0b; /* amber-500 */
+    color: #f59e0b;
+}
+
+.tab-button {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    color: #9ca3af; /* gray-400 */
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+
+.tab-button:hover {
+    color: #fff;
+}
+
+.tab-button.active {
+    color: #f59e0b; /* amber-500 */
+    border-bottom-color: #f59e0b;
+}
+
+.tab-content.hidden {
+    display: none;
 }

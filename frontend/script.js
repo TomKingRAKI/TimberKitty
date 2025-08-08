@@ -1,8 +1,13 @@
 // --- Ustawienia gry ---
 const BACKEND_URL = 'https://timberman-backend.onrender.com';
+
+// Elementy UI
 const authButton = document.getElementById('auth-button');
 const mainAvatarContainer = document.getElementById('main-avatar-container');
 const mainUsername = document.getElementById('main-username');
+const coinsStatEl = document.getElementById('coinsStat');
+
+// Elementy gry
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
@@ -11,29 +16,37 @@ const messageTitle = document.getElementById('message-title');
 const messageText = document.getElementById('message-text');
 const startButton = document.getElementById('startButton');
 const timerBar = document.getElementById('timer-bar');
-const highScoreStatEl = document.getElementById('highScoreStat');
-const totalChopsStatEl = document.getElementById('totalChopsStat');
-const coinsStatEl = document.getElementById('coinsStat');
-// Osiągnięcia
+const resetButton = document.getElementById('resetButton');
+
+// Przyciski nawigacyjne
 const navShopButton = document.getElementById('nav-shop-button');
 const navEquipmentButton = document.getElementById('nav-equipment-button');
-const navAchievementsButton = document.getElementById('nav-achievements-button');
-const achievementsModal = document.getElementById('achievements-modal');
-const closeAchievementsButton = document.getElementById('close-achievements-button');
-const achievementsGrid = document.getElementById('achievements-grid');
-const achievementsPreview = document.getElementById('achievements-preview');
-// Sklep
-const shopPreviewContainer = document.getElementById('shop-preview-container');
+const navAccountButton = document.getElementById('nav-account-button');
+const desktopEquipmentButton = document.getElementById('desktop-equipment-button');
+const desktopAccountButton = document.getElementById('desktop-account-button');
+
+// Modale
 const shopModal = document.getElementById('shop-modal');
 const closeShopButton = document.getElementById('close-shop-button');
 const shopGrid = document.getElementById('shop-grid');
 const shopModalTitle = document.getElementById('shop-modal-title');
+const shopHubModal = document.getElementById('shop-hub-modal');
+const closeShopHubButton = document.getElementById('close-shop-hub-button');
+const shopHubGrid = document.getElementById('shop-hub-grid');
+const inventoryHubModal = document.getElementById('inventory-hub-modal');
+const closeInventoryHubButton = document.getElementById('close-inventory-hub-button');
 const equipmentModal = document.getElementById('equipment-modal');
 const closeEquipmentButton = document.getElementById('close-equipment-button');
 const equipmentGrid = document.getElementById('equipment-grid');
 const equipmentModalTitle = document.getElementById('equipment-modal-title');
 const unequipButton = document.getElementById('unequip-button');
+const accountHubModal = document.getElementById('account-hub-modal');
+const closeAccountHubButton = document.getElementById('close-account-hub-button');
+
+// Inne
 const notificationContainer = document.getElementById('notification-container');
+const bottomNav = document.getElementById('bottom-nav');
+const shopPreviewContainer = document.getElementById('shop-preview-container');
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
@@ -181,40 +194,51 @@ async function animateStatUpdate(oldStats, score) {
     const newStats = await updateAndSaveStats(score, oldStats);
     const duration = 1500;
     const startTime = performance.now();
-    
-    const statBoxes = [document.getElementById('coins-stat-box'), document.getElementById('highscore-stat-box'), document.getElementById('totalchops-stat-box')];
-    statBoxes.forEach(box => box.classList.add('stat-update-animation'));
+
+    // POPRAWKA 1: Animujemy tylko istniejący element
+    const coinsStatBox = document.getElementById('coins-stat-box');
+    if (coinsStatBox) {
+        coinsStatBox.classList.add('stat-update-animation');
+    }
 
     function animationStep(currentTime) {
         const elapsedTime = currentTime - startTime;
         const progress = Math.min(elapsedTime / duration, 1);
-        const chopGain = score * progress;
-        const coinGain = (newStats.coins - oldStats.coins) * progress;
-        const currentTotalChops = Math.floor(oldStats.totalChops + chopGain);
-        const currentCoins = oldStats.coins + coinGain;
-        const currentHighScore = oldStats.highScore < newStats.highScore ? Math.floor(oldStats.highScore + ((newStats.highScore - oldStats.highScore) * progress)) : oldStats.highScore;
 
-        totalChopsStatEl.textContent = currentTotalChops;
-        coinsStatEl.textContent = currentCoins.toFixed(1);
-        highScoreStatEl.textContent = currentHighScore;
+        // Animujemy tylko przyrost monet
+        const coinGain = (newStats.coins - oldStats.coins) * progress;
+        const currentCoins = oldStats.coins + coinGain;
+        coinsStatEl.textContent = currentCoins.toFixed(2);
 
         if (progress < 1) {
             requestAnimationFrame(animationStep);
         } else {
-            updateStatsUI(newStats);
-            populateAchievementsPreview(newStats);
-            setTimeout(() => {
-                statBoxes.forEach(box => box.classList.remove('stat-update-animation'));
-            }, 500);
+            // Po animacji, zaktualizuj wszystkie statystyki (te w modalu też)
+            updateStatsUI(newStats); 
+            if (coinsStatBox) {
+                setTimeout(() => {
+                    coinsStatBox.classList.remove('stat-update-animation');
+                }, 500);
+            }
         }
     }
     requestAnimationFrame(animationStep);
 }
 
 function updateStatsUI(stats) {
-    highScoreStatEl.textContent = stats.highScore;
-    totalChopsStatEl.textContent = stats.totalChops;
-    coinsStatEl.textContent = stats.coins.toFixed(1);
+    // Aktualizuj widoczne na stałe monety
+    coinsStatEl.textContent = stats.coins.toFixed(2);
+
+    // Znajdź elementy w modalu i zaktualizuj je
+    const highScoreBox = document.getElementById('highscore-stat-box-modal');
+    const totalChopsBox = document.getElementById('totalchops-stat-box-modal');
+
+    if (highScoreBox) {
+        highScoreBox.innerHTML = `<p class="text-gray-400 text-sm">Najlepszy Wynik</p><p class="text-2xl font-bold">${stats.highScore}</p>`;
+    }
+    if (totalChopsBox) {
+        totalChopsBox.innerHTML = `<p class="text-gray-400 text-sm">Suma Ściętych</p><p class="text-2xl font-bold">${stats.totalChops}</p>`;
+    }
 }
 
 function populateAchievementsPreview(stats) {
@@ -235,8 +259,9 @@ function populateAchievementsPreview(stats) {
     });
 }
 
-function populateAchievementsModal() {
-    achievementsGrid.innerHTML = '';
+function populateAchievementsGrid() {
+    const achievementsGridModal = document.getElementById('achievements-grid-modal');
+    achievementsGridModal.innerHTML = '';
     const stats = loadStats();
     for (const id in achievementsData) {
         const achievement = achievementsData[id];
@@ -244,7 +269,7 @@ function populateAchievementsModal() {
         const card = document.createElement('div');
         card.className = 'achievement-card ' + (isUnlocked ? 'unlocked' : '');
         card.innerHTML = `<div class="icon">${isUnlocked ? achievement.icon : '?'}</div><div class="title">${achievement.name}</div><div class="description">${isUnlocked ? achievement.description : 'Zablokowane'}</div>`;
-        achievementsGrid.appendChild(card);
+        achievementsGridModal.appendChild(card);
     }
 }
 
@@ -691,11 +716,64 @@ async function checkLoginStatus() {
         // Dzięki temu statystyki (z serwera lub localStorage) ładujemy tylko RAZ.
         const stats = loadStats();
         updateStatsUI(stats);
-        updateEquipmentPanel(stats);
-        populateAchievementsPreview(stats);
         populateShopPreview();
     }
 }
+
+function openInventoryHub() {
+    const stats = loadStats();
+    updateEquipmentPanel(stats); // Wypełnij hub aktualnie założonymi przedmiotami
+    openModal(inventoryHubModal);
+}
+
+function openShopHub() {
+    shopHubGrid.innerHTML = ''; // Wyczyść siatkę przed wypełnieniem
+
+    // Dynamicznie stwórz przyciski dla każdej kategorii
+    for (const categoryKey in categoryNames) {
+        const button = document.createElement('button');
+        button.className = 'category-button';
+        button.textContent = categoryNames[categoryKey]; // Ustaw nazwę kategorii
+        button.dataset.category = categoryKey; // Zapisz klucz kategorii
+
+        button.addEventListener('click', () => {
+            closeModal(shopHubModal); // Zamknij hub
+            populateShopModal(categoryKey); // Wypełnij modal przedmiotami z tej kategorii
+            openModal(shopModal); // Otwórz modal z przedmiotami
+        });
+
+        shopHubGrid.appendChild(button);
+    }
+
+    openModal(shopHubModal); // Otwórz hub z kategoriami
+}
+
+function openAccountHub() {
+    const stats = loadStats();
+    updateStatsUI(stats); // Upewnij się, że staty w modalu są aktualne
+    populateAchievementsGrid(); // Wypełnij siatkę osiągnięć
+    openModal(accountHubModal);
+}
+
+// Logika przełączania zakładek w modalu Konta
+const tabs = document.querySelectorAll('.tab-button');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        tabs.forEach(item => item.classList.remove('active'));
+        tab.classList.add('active');
+
+        const target = tab.dataset.tab;
+        tabContents.forEach(content => {
+            if (content.id === `${target}-tab-content`) {
+                content.classList.remove('hidden');
+            } else {
+                content.classList.add('hidden');
+            }
+        });
+    });
+});
 
 function updateUIAfterLogin(user) {
     // Zmień przycisk w przycisk "Wyloguj"
@@ -723,35 +801,44 @@ function showLoginButton() {
 }
 
 // Event Listeners
-navShopButton.addEventListener('click', () => {
-    // Otwiera modal z pierwszą kategorią sklepu
-    const firstCategory = Object.keys(categoryNames)[0];
-    populateShopModal(firstCategory);
-    openModal(shopModal);
-});
+// Event Listeners
+navShopButton.addEventListener('click', openShopHub);
+navAccountButton.addEventListener('click', openAccountHub);
+desktopAccountButton.addEventListener('click', openAccountHub);
 
-navEquipmentButton.addEventListener('click', () => {
-    // Domyślnie otwiera modal wyboru postaci
-    populateEquipmentSelectionModal('characters');
+closeShopButton.addEventListener('click', () => {
+    const isMobileView = getComputedStyle(bottomNav).display !== 'none';
+    if (isMobileView) {
+        closeModal(shopModal);
+        openShopHub();
+    } else {
+        closeModal(shopModal);
+    }
 });
-
-navAchievementsButton.addEventListener('click', () => {
-    populateAchievementsModal();
-    openModal(achievementsModal);
-});
-closeAchievementsButton.addEventListener('click', () => closeModal(achievementsModal));
-achievementsModal.addEventListener('click', (e) => { if (e.target === achievementsModal) closeModal(achievementsModal); });
-
-closeShopButton.addEventListener('click', () => closeModal(shopModal));
 shopModal.addEventListener('click', (e) => { if (e.target === shopModal) closeModal(shopModal); });
 
-closeEquipmentButton.addEventListener('click', () => closeModal(equipmentModal));
+closeShopHubButton.addEventListener('click', () => closeModal(shopHubModal));
+shopHubModal.addEventListener('click', (e) => { if (e.target === shopHubModal) closeModal(shopHubModal); });
+
+closeInventoryHubButton.addEventListener('click', () => closeModal(inventoryHubModal));
+inventoryHubModal.addEventListener('click', (e) => { if (e.target === inventoryHubModal) closeModal(inventoryHubModal); });
+
+closeEquipmentButton.addEventListener('click', () => {
+    closeModal(equipmentModal);
+    openInventoryHub();
+});
 equipmentModal.addEventListener('click', (e) => { if (e.target === equipmentModal) closeModal(equipmentModal); });
 
-document.querySelectorAll('[data-category]').forEach(slot => {
+closeAccountHubButton.addEventListener('click', () => closeModal(accountHubModal));
+accountHubModal.addEventListener('click', (e) => { if (e.target === accountHubModal) closeModal(accountHubModal); });
+
+document.querySelectorAll('#inventory-hub-modal .equipment-slot').forEach(slot => {
     slot.addEventListener('click', () => {
         const category = slot.dataset.category;
-        populateEquipmentSelectionModal(category);
+        if (category) {
+            closeModal(inventoryHubModal);
+            populateEquipmentSelectionModal(category);
+        }
     });
 });
 
@@ -782,10 +869,11 @@ window.onload = () => {
 
 authButton.addEventListener('click', () => {
     if (currentUser) {
-        // Jeśli użytkownik jest zalogowany, wyloguj go
         window.location.href = `${BACKEND_URL}/auth/logout`;
     } else {
-        // Jeśli nie, rozpocznij proces logowania
         window.location.href = `${BACKEND_URL}/auth/google`;
     }
 });
+
+navEquipmentButton.addEventListener('click', openInventoryHub);
+desktopEquipmentButton.addEventListener('click', openInventoryHub);
