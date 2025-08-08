@@ -145,7 +145,7 @@ async function updateAndSaveStats(currentScore, oldStats) {
         ...oldStats,
         highScore: Math.max(oldStats.highScore, currentScore),
         totalChops: oldStats.totalChops + currentScore,
-        coins: oldStats.coins + Math.round(currentScore * 0.1 * (1 + (activeBonuses.coinMultiplier || 0)))
+        coins: oldStats.coins + (currentScore * 0.1 * (1 + (activeBonuses.coinMultiplier || 0)))
     };
     
     for (const id in achievementsData) {
@@ -197,7 +197,7 @@ async function animateStatUpdate(oldStats, score) {
         const currentHighScore = oldStats.highScore < newStats.highScore ? Math.floor(oldStats.highScore + ((newStats.highScore - oldStats.highScore) * progress)) : oldStats.highScore;
 
         totalChopsStatEl.textContent = currentTotalChops;
-        coinsStatEl.textContent = currentCoins.toFixed(0);
+        coinsStatEl.textContent = currentCoins.toFixed(1);
         highScoreStatEl.textContent = currentHighScore;
 
         if (progress < 1) {
