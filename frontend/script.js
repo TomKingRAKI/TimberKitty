@@ -15,7 +15,9 @@ const highScoreStatEl = document.getElementById('highScoreStat');
 const totalChopsStatEl = document.getElementById('totalChopsStat');
 const coinsStatEl = document.getElementById('coinsStat');
 // Osiągnięcia
-const achievementsButton = document.getElementById('achievements-button');
+const navShopButton = document.getElementById('nav-shop-button');
+const navEquipmentButton = document.getElementById('nav-equipment-button');
+const navAchievementsButton = document.getElementById('nav-achievements-button');
 const achievementsModal = document.getElementById('achievements-modal');
 const closeAchievementsButton = document.getElementById('close-achievements-button');
 const achievementsGrid = document.getElementById('achievements-grid');
@@ -713,7 +715,19 @@ function showLoginButton() {
 }
 
 // Event Listeners
-achievementsButton.addEventListener('click', () => {
+navShopButton.addEventListener('click', () => {
+    // Otwiera modal z pierwszą kategorią sklepu
+    const firstCategory = Object.keys(categoryNames)[0];
+    populateShopModal(firstCategory);
+    openModal(shopModal);
+});
+
+navEquipmentButton.addEventListener('click', () => {
+    // Domyślnie otwiera modal wyboru postaci
+    populateEquipmentSelectionModal('characters');
+});
+
+navAchievementsButton.addEventListener('click', () => {
     populateAchievementsModal();
     openModal(achievementsModal);
 });
