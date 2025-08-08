@@ -47,6 +47,7 @@ const closeAccountHubButton = document.getElementById('close-account-hub-button'
 const notificationContainer = document.getElementById('notification-container');
 const bottomNav = document.getElementById('bottom-nav');
 const shopPreviewContainer = document.getElementById('shop-preview-container');
+const loadingOverlay = document.getElementById('loading-overlay');
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
@@ -716,9 +717,11 @@ async function checkLoginStatus() {
     } finally {
         // Ta część wykona się ZAWSZE, niezależnie od tego czy logowanie się udało, czy nie
         // Dzięki temu statystyki (z serwera lub localStorage) ładujemy tylko RAZ.
+        loadingOverlay.style.display = 'none';
         const stats = loadStats();
         updateStatsUI(stats);
         populateShopPreview();
+        
     }
 }
 
