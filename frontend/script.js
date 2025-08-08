@@ -158,7 +158,7 @@ async function updateAndSaveStats(currentScore, oldStats) {
         totalChops: oldStats.totalChops + currentScore,
         coins: oldStats.coins + (currentScore * 0.1 * (1 + (activeBonuses.coinMultiplier || 0)))
     };
-    
+
     for (const id in achievementsData) {
         if (!newStats.unlockedAchievements.includes(id) && achievementsData[id].condition(newStats)) {
             newStats.unlockedAchievements.push(id);
@@ -214,7 +214,7 @@ async function animateStatUpdate(oldStats, score) {
             requestAnimationFrame(animationStep);
         } else {
             // Po animacji, zaktualizuj wszystkie statystyki (te w modalu też)
-            updateStatsUI(newStats); 
+            updateStatsUI(newStats);
             if (coinsStatBox) {
                 setTimeout(() => {
                     coinsStatBox.classList.remove('stat-update-animation');
@@ -252,8 +252,8 @@ function populateAchievementsPreview(stats) {
         if (!achievementsData[id]) return;
         const achievement = achievementsData[id];
         const slot = document.createElement('div');
-        slot.className = 'item-slot rounded-md achievement-preview-slot unlocked has-tooltip'; 
-        slot.dataset.tooltip = achievement.description; 
+        slot.className = 'item-slot rounded-md achievement-preview-slot unlocked has-tooltip';
+        slot.dataset.tooltip = achievement.description;
         slot.innerHTML = achievement.icon;
         achievementsPreview.appendChild(slot);
     });
@@ -366,7 +366,7 @@ async function buyItem(itemId, cardElement) {
     stats.coins -= item.price;
     stats.unlockedItems.push(item.id);
     const updatedStats = await updateAndSaveStats(0, stats);
-    
+
     showNotification(`Kupiono: ${item.name}!`, 'success');
     updateStatsUI(updatedStats);
     populateShopModal(item.category);
@@ -388,6 +388,7 @@ async function equipItem(itemId) {
     const updatedStats = await updateAndSaveStats(0, stats);
     updateEquipmentPanel(updatedStats);
     closeModal(equipmentModal);
+    openInventoryHub();
 }
 
 async function unequipItem(category) {
@@ -397,6 +398,7 @@ async function unequipItem(category) {
     const updatedStats = await updateAndSaveStats(0, stats);
     updateEquipmentPanel(updatedStats);
     closeModal(equipmentModal);
+    openInventoryHub();
 }
 
 function updateEquipmentPanel(stats) {
@@ -455,9 +457,9 @@ async function init() {
     petSaveUsed = false;
     activeBonuses = { pointsPerChop: 0, timerSlowdown: 0, timeGainBonus: 0, coinMultiplier: 0, oneTimeSave: 0 };
     if (stats.equippedItems) {
-        for(const slot in stats.equippedItems) {
+        for (const slot in stats.equippedItems) {
             const itemId = stats.equippedItems[slot];
-            if(itemId && shopData[itemId]) {
+            if (itemId && shopData[itemId]) {
                 const bonus = shopData[itemId].bonus;
                 activeBonuses[bonus.type] += bonus.value;
             }
@@ -467,15 +469,15 @@ async function init() {
     for (let i = 0; i < initialSegments; i++) {
         if (i < 2) tree.push({ branch: null });
         else {
-            const lastBranch = tree[i-1].branch;
+            const lastBranch = tree[i - 1].branch;
             let newBranchSide = Math.random() < 0.5 ? 'left' : 'right';
-            if(lastBranch && lastBranch !== newBranchSide) tree.push({ branch: null });
+            if (lastBranch && lastBranch !== newBranchSide) tree.push({ branch: null });
             else tree.push({ branch: Math.random() < 0.35 ? newBranchSide : null });
         }
     }
     scoreElement.textContent = score;
     messageOverlay.style.display = 'none';
-    if(gameLoopInterval) clearInterval(gameLoopInterval);
+    if (gameLoopInterval) clearInterval(gameLoopInterval);
     gameLoopInterval = setInterval(gameLoop, 1000 / 60);
     draw();
 }
@@ -539,7 +541,7 @@ function drawTrunkSegment(x, y, width, height) {
     ctx.fillStyle = TRUNK_COLOR;
     ctx.fillRect(x, y, width, height);
     ctx.fillStyle = TRUNK_DARK_COLOR;
-    for(let i = 0; i < 3; i++) ctx.fillRect(x + (i * width / 3) + 5, y, 2, height);
+    for (let i = 0; i < 3; i++) ctx.fillRect(x + (i * width / 3) + 5, y, 2, height);
     ctx.strokeStyle = TRUNK_DARK_COLOR;
     ctx.strokeRect(x, y, width, height);
 }
@@ -580,15 +582,15 @@ function drawPlayer() {
     ctx.scale(scaleX, 1);
     const bodyHeight = PLAYER_HEIGHT * 0.5, headRadius = PLAYER_HEIGHT * 0.2, legHeight = PLAYER_HEIGHT * 0.5;
     ctx.fillStyle = PLAYER_PANTS_COLOR;
-    ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT/2 + bodyHeight, PLAYER_WIDTH, legHeight);
+    ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT / 2 + bodyHeight, PLAYER_WIDTH, legHeight);
     ctx.fillStyle = PLAYER_SHIRT_COLOR;
-    ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT/2, PLAYER_WIDTH, bodyHeight);
+    ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT / 2, PLAYER_WIDTH, bodyHeight);
     ctx.fillStyle = PLAYER_SKIN_COLOR;
     ctx.beginPath();
-    ctx.arc(0, -PLAYER_HEIGHT/2 - headRadius + bodyHeight, headRadius, 0, Math.PI * 2);
+    ctx.arc(0, -PLAYER_HEIGHT / 2 - headRadius + bodyHeight, headRadius, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = PLAYER_SHIRT_COLOR;
-    ctx.fillRect(-headRadius, -PLAYER_HEIGHT/2 - headRadius*2 + bodyHeight, headRadius*2, headRadius);
+    ctx.fillRect(-headRadius, -PLAYER_HEIGHT / 2 - headRadius * 2 + bodyHeight, headRadius * 2, headRadius);
     if (player.isChopping) {
         ctx.fillStyle = '#C0C0C0';
         ctx.beginPath();
@@ -601,7 +603,7 @@ function drawPlayer() {
 }
 
 async function gameOver() {
-    if(gameState === 'gameOver') return;
+    if (gameState === 'gameOver') return;
     gameState = 'gameOver';
     clearInterval(gameLoopInterval);
     const oldStats = loadStats();
@@ -614,7 +616,7 @@ async function gameOver() {
 
 function performChop(sideToChop) {
     if (gameState !== 'playing') return;
-    const segmentToCut = tree[0]; 
+    const segmentToCut = tree[0];
     if (segmentToCut && segmentToCut.branch === sideToChop) {
         if (activeBonuses.oneTimeSave > 0 && !petSaveUsed) {
             petSaveUsed = true;
@@ -676,7 +678,7 @@ function performChopBasedOnInput(event) {
 function handleKeyboardInput(event) {
     if (gameState !== 'playing') return;
     let side = null;
-    switch(event.key.toLowerCase()) {
+    switch (event.key.toLowerCase()) {
         case 'arrowleft': case 'a': case 'j': side = 'left'; break;
         case 'arrowright': case 'd': case 'l': side = 'right'; break;
     }
@@ -859,12 +861,12 @@ function showStartScreen() {
 window.onresize = () => {
     canvas.width = gameContainer.clientWidth;
     canvas.height = window.innerHeight * 0.7;
-    if(gameState !== 'start') draw();
+    if (gameState !== 'start') draw();
 };
 
 window.onload = () => {
     showStartScreen();
-    checkLoginStatus(); 
+    checkLoginStatus();
 };
 
 authButton.addEventListener('click', () => {

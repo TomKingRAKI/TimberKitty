@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +11,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-800 flex flex-col items-center justify-center min-h-screen text-white p-4 overflow-x-hidden md:pb-4 pb-24">
 
-    <header class="w-full max-w-7xl mx-auto flex flex-col items-center gap-4 mb-4 md:flex-row md:justify-center md:relative md:h-16">
+<body
+    class="bg-gray-800 flex flex-col items-center justify-center min-h-screen text-white p-4 overflow-x-hidden md:pb-4 pb-24">
+
+    <header
+        class="w-full max-w-7xl mx-auto flex flex-col items-center gap-4 mb-4 md:flex-row md:justify-center md:relative md:h-16">
         <h1 class="text-4xl md:text-6xl font-bold text-shadow text-center">
             TimberKitty
         </h1>
@@ -24,46 +28,178 @@
     </header>
 
     <main class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-center items-center md:items-start gap-6">
-        <div id="stats-panel" class="w-full md:w-1/4 panel rounded-lg p-4 flex flex-col items-center gap-4 order-2 md:order-1">
+        <div id="stats-panel"
+            class="w-full md:w-1/4 panel rounded-lg p-4 flex flex-col items-center gap-4 order-2 md:order-1">
             <h2 class="text-2xl font-bold text-shadow text-center">Profil Gracza</h2>
-            <div id="main-avatar-container" class="w-24 h-24 bg-gray-700 rounded-full border-4 border-gray-500 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            <div id="main-avatar-container"
+                class="w-24 h-24 bg-gray-700 rounded-full border-4 border-gray-500 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clip-rule="evenodd" />
                 </svg>
             </div>
             <div id="main-username" class="text-xl font-bold text-shadow -mt-2 mb-2">Gość</div>
-            <div id="coins-stat-box" class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center transition-shadow duration-300">
+            <div id="coins-stat-box"
+                class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center transition-shadow duration-300">
                 <p class="text-gray-400 text-sm">Monety</p>
                 <p id="coinsStat" class="text-2xl font-bold text-yellow-400">0.00</p>
             </div>
             <div class="w-full mt-6 pt-4 border-t border-gray-700/50 hidden md:flex flex-col gap-3">
                 <h3 class="text-lg font-bold text-shadow text-center text-gray-400">Menu</h3>
-                <button id="desktop-equipment-button" class="panel-button w-full bg-gray-700/50 hover:bg-gray-600/50 px-4 py-3 rounded-lg font-bold">
+                <button id="desktop-equipment-button"
+                    class="panel-button w-full bg-gray-700/50 hover:bg-gray-600/50 px-4 py-3 rounded-lg font-bold">
                     Ekwipunek 🎒
                 </button>
-                <button id="desktop-account-button" class="panel-button w-full bg-gray-700/50 hover:bg-gray-600/50 px-4 py-3 rounded-lg font-bold">
+                <button id="desktop-account-button"
+                    class="panel-button w-full bg-gray-700/50 hover:bg-gray-600/50 px-4 py-3 rounded-lg font-bold">
                     Konto 👤
                 </button>
             </div>
         </div>
         <div class="w-full max-w-sm md:max-w-md order-1 md:order-2">
             <div id="game-container" class="relative w-full">
-                <div id="timer-bar-container" class="w-full h-6 bg-gray-700 border-2 border-gray-600 rounded-md mb-2 overflow-hidden"><div id="timer-bar" class="h-full bg-red-500 transition-width duration-100 linear"></div></div>
+                <div id="timer-bar-container"
+                    class="w-full h-6 bg-gray-700 border-2 border-gray-600 rounded-md mb-2 overflow-hidden">
+                    <div id="timer-bar" class="h-full bg-red-500 transition-width duration-100 linear"></div>
+                </div>
                 <div id="score" class="absolute top-10 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow">0</div>
                 <canvas id="gameCanvas"></canvas>
-                <div id="message-overlay" class="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4"><h2 id="message-title" class="text-4xl font-bold mb-2 text-shadow">Gotowy?</h2><p id="message-text" class="text-xl text-shadow mb-4">Kliknij przycisk, aby rozpocząć!</p><button id="startButton" class="px-8 py-3 bg-green-500 hover:bg-green-600 rounded-lg text-2xl font-bold transition-transform transform hover:scale-105 text-shadow">Graj!</button><button id="resetButton" class="text-sm text-gray-400 hover:text-red-500 underline mt-4">Zresetuj postęp</button></div>
+                <div id="message-overlay"
+                    class="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4">
+                    <h2 id="message-title" class="text-4xl font-bold mb-2 text-shadow">Gotowy?</h2>
+                    <p id="message-text" class="text-xl text-shadow mb-4">Kliknij przycisk, aby rozpocząć!</p><button
+                        id="startButton"
+                        class="px-8 py-3 bg-green-500 hover:bg-green-600 rounded-lg text-2xl font-bold transition-transform transform hover:scale-105 text-shadow">Graj!</button><button
+                        id="resetButton" class="text-sm text-gray-400 hover:text-red-500 underline mt-4">Zresetuj
+                        postęp</button>
+                </div>
             </div>
-            <div class="mt-4 text-center text-gray-400 text-sm"><p>Użyj klawiszy (A/D, J/L, ←/→) lub kliknij, aby ścinać drzewo.</p><p>Omijaj gałęzie!</p></div>
+            <div class="mt-4 text-center text-gray-400 text-sm">
+                <p>Użyj klawiszy (A/D, J/L, ←/→) lub kliknij, aby ścinać drzewo.</p>
+                <p>Omijaj gałęzie!</p>
+            </div>
         </div>
-        <div id="shop-panel" class="w-full md:w-1/4 panel rounded-lg p-4 flex-col items-center gap-4 order-3 hidden md:flex"><h2 class="text-2xl font-bold text-shadow text-center mb-4">Sklep</h2><div id="shop-preview-container" class="w-full flex flex-col gap-4"></div></div>
+        <div id="shop-panel"
+            class="w-full md:w-1/4 panel rounded-lg p-4 flex-col items-center gap-4 order-3 hidden md:flex">
+            <h2 class="text-2xl font-bold text-shadow text-center mb-4">Sklep</h2>
+            <div id="shop-preview-container" class="w-full flex flex-col gap-4"></div>
+        </div>
     </main>
-    <footer id="bottom-nav" class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center z-40"><button id="nav-shop-button" class="nav-button"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span>Sklep</span></button><button id="nav-equipment-button" class="nav-button"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg><span>Ekwipunek</span></button><button id="nav-account-button" class="nav-button"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span>Konto</span></button></footer>
-    <div id="shop-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"><div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg"><div class="flex justify-between items-center mb-4"><h2 id="shop-modal-title" class="text-3xl font-bold text-shadow">Sklep</h2><button id="close-shop-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button></div><div id="shop-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div></div></div>
-    <div id="account-hub-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"><div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg"><div class="flex justify-between items-center"><h2 class="text-3xl font-bold text-shadow">Konto Gracza</h2><button id="close-account-hub-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button></div><div class="w-full mt-4"><nav class="flex flex-wrap border-b border-gray-700"><button data-tab="stats" class="tab-button active">Statystyki</button><button data-tab="achievements" class="tab-button">Osiągnięcia</button><button data-tab="profile" class="tab-button">Profil</button></nav><div class="pt-4"><div id="stats-tab-content" class="tab-content"><div id="highscore-stat-box-modal" class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center mb-2"></div><div id="totalchops-stat-box-modal" class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center"></div><button class="panel-button w-full mt-6 p-3 rounded-lg font-bold opacity-50 cursor-not-allowed" disabled>Ranking 📈</button></div><div id="achievements-tab-content" class="tab-content hidden"><div id="achievements-grid-modal" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div></div><div id="profile-tab-content" class="tab-content hidden flex flex-col gap-4"><button class="panel-button w-full p-3 rounded-lg font-bold opacity-50 cursor-not-allowed" disabled>Edytuj Profil ✏️</button></div></div></div></div></div>
-    <div id="inventory-hub-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"><div class="modal-content panel w-11/12 md:w-auto p-6 rounded-lg"><div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-shadow">Ekwipunek</h2><button id="close-inventory-hub-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button></div><div class="grid grid-cols-3 gap-2 sm:gap-4 items-center"><div></div><div id="equipment-slot-hat" data-category="hats" class="item-slot equipment-slot rounded-md cursor-pointer w-16 h-16 sm:w-24 sm:h-24 mx-auto" title="Czapka">🧢</div><div></div><div id="equipment-slot-axe" data-category="axes" class="item-slot equipment-slot rounded-md cursor-pointer self-center w-16 h-16 sm:w-24 sm:h-24 mx-auto" title="Siekiera">斧</div><div id="equipment-slot-character" data-category="characters" class="w-24 h-40 sm:w-40 sm:h-60 item-slot equipment-slot rounded-md flex items-center justify-center cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" class="h-16 sm:h-20 w-16 sm:w-20 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div><div id="equipment-slot-accessory" data-category="accessories" class="item-slot equipment-slot rounded-md cursor-pointer self-center w-16 h-16 sm:w-24 sm:h-24 mx-auto" title="Akcesoria">🧣</div><div></div><div id="equipment-slot-pet" data-category="pets" class="item-slot equipment-slot rounded-md cursor-pointer w-16 h-16 sm:w-24 sm:h-24 mx-auto" title="Zwierzaczek">🐾</div><div></div></div></div></div>
-    <div id="shop-hub-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"><div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg"><div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-shadow">Kategorie Sklepu</h2><button id="close-shop-hub-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button></div><div id="shop-hub-grid" class="grid grid-cols-2 gap-4"></div></div></div>
-    <div id="equipment-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"><div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg"><div class="flex justify-between items-center mb-4"><h2 id="equipment-modal-title" class="text-3xl font-bold text-shadow">Wybierz przedmiot</h2><button id="close-equipment-button" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button></div><button id="unequip-button" class="w-full p-2 mb-4 bg-red-700 hover:bg-red-600 rounded-md">Zdejmij przedmiot</button><div id="equipment-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div></div></div>
+    <footer id="bottom-nav" class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center z-40"><button
+            id="nav-shop-button" class="nav-button"><svg class="w-7 h-7" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                </path>
+            </svg><span>Sklep</span></button><button id="nav-equipment-button" class="nav-button"><svg class="w-7 h-7"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+            </svg><span>Ekwipunek</span></button><button id="nav-account-button" class="nav-button"><svg class="w-7 h-7"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg><span>Konto</span></button></footer>
+    <div id="shop-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="shop-modal-title" class="text-3xl font-bold text-shadow">Sklep</h2><button
+                    id="close-shop-button"
+                    class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+            </div>
+            <div id="shop-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+    </div>
+    <div id="account-hub-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
+            <div class="flex justify-between items-center">
+                <h2 class="text-3xl font-bold text-shadow">Konto Gracza</h2><button id="close-account-hub-button"
+                    class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+            </div>
+            <div class="w-full mt-4">
+                <nav class="flex flex-wrap border-b border-gray-700"><button data-tab="stats"
+                        class="tab-button active">Statystyki</button><button data-tab="achievements"
+                        class="tab-button">Osiągnięcia</button><button data-tab="profile"
+                        class="tab-button">Profil</button></nav>
+                <div class="pt-4">
+                    <div id="stats-tab-content" class="tab-content">
+                        <div id="highscore-stat-box-modal"
+                            class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center mb-2"></div>
+                        <div id="totalchops-stat-box-modal"
+                            class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center"></div><button
+                            class="panel-button w-full mt-6 p-3 rounded-lg font-bold opacity-50 cursor-not-allowed"
+                            disabled>Ranking 📈</button>
+                    </div>
+                    <div id="achievements-tab-content" class="tab-content hidden">
+                        <div id="achievements-grid-modal" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                    </div>
+                    <div id="profile-tab-content" class="tab-content hidden flex flex-col gap-4"><button
+                            class="panel-button w-full p-3 rounded-lg font-bold opacity-50 cursor-not-allowed"
+                            disabled>Edytuj Profil ✏️</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="inventory-hub-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content panel w-11/12 md:w-auto p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-3xl font-bold text-shadow">Ekwipunek</h2><button id="close-inventory-hub-button"
+                    class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+            </div>
+            <div class="grid grid-cols-3 gap-2 sm:gap-4 items-center">
+                <div></div>
+                <div id="equipment-slot-hat" data-category="hats"
+                    class="item-slot equipment-slot rounded-md cursor-pointer w-16 h-16 sm:w-24 sm:h-24 mx-auto"
+                    title="Czapka">🧢</div>
+                <div></div>
+                <div id="equipment-slot-axe" data-category="axes"
+                    class="item-slot equipment-slot rounded-md cursor-pointer self-center w-16 h-16 sm:w-24 sm:h-24 mx-auto"
+                    title="Siekiera">斧</div>
+                <div id="equipment-slot-character" data-category="characters"
+                    class="w-24 h-40 sm:w-40 sm:h-60 item-slot equipment-slot rounded-md flex items-center justify-center cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 sm:h-20 w-16 sm:w-20 text-gray-600"
+                        viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd"></path>
+                    </svg></div>
+                <div id="equipment-slot-accessory" data-category="accessories"
+                    class="item-slot equipment-slot rounded-md cursor-pointer self-center w-16 h-16 sm:w-24 sm:h-24 mx-auto"
+                    title="Akcesoria">🧣</div>
+                <div></div>
+                <div id="equipment-slot-pet" data-category="pets"
+                    class="item-slot equipment-slot rounded-md cursor-pointer w-16 h-16 sm:w-24 sm:h-24 mx-auto"
+                    title="Zwierzaczek">🐾</div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+    <div id="shop-hub-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-3xl font-bold text-shadow">Kategorie Sklepu</h2><button id="close-shop-hub-button"
+                    class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+            </div>
+            <div id="shop-hub-grid" class="grid grid-cols-2 gap-4"></div>
+        </div>
+    </div>
+    <div id="equipment-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="equipment-modal-title" class="text-3xl font-bold text-shadow">Wybierz przedmiot</h2><button
+                    id="close-equipment-button"
+                    class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+            </div><button id="unequip-button" class="w-full p-2 mb-4 bg-red-700 hover:bg-red-600 rounded-md">Zdejmij
+                przedmiot</button>
+            <div id="equipment-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+    </div>
     <div id="notification-container" class="fixed top-5 right-5 z-[100] flex flex-col items-end gap-3"></div>
     <script src="script.js"></script>
 </body>
+
 </html>
