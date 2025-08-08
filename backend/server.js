@@ -1,114 +1,155 @@
-const cors = require('cors');
-
-// Krok 1: Importowanie bibliotek
-require('dotenv').config(); // Ładuje zmienne z pliku .env
+// --- Importowanie bibliotek ---
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const cors = require('cors');
+const { Pool } = require('pg'); // Do obsługi bazy danych
 
-// Krok 2: Inicjalizacja aplikacji Express
+// --- Konfiguracja Połączenia z Bazą Danych ---
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
+
+// --- Inicjalizacja Aplikacji Express ---
 const app = express();
 app.set('trust proxy', 1);
-app.use(cors({
-    origin: 'https://timberkitty.netlify.app', // Zezwól na żądania tylko z Twojego frontendu
-    credentials: true                          // Zezwól na przesyłanie ciasteczek (ważne dla sesji)
-}));
-const PORT = 3000;
+app.use(express.json()); // Middleware do parsowania JSON w ciele zapytań POST
 
-// Krok 3: Konfiguracja sesji
-// Sesja pozwala serwerowi "pamiętać" zalogowanego użytkownika między zapytaniami
+// --- Konfiguracja CORS ---
+app.use(cors({
+    origin: 'https://timberkitty.netlify.app',
+    credentials: true
+}));
+
+// --- Konfiguracja Sesji ---
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false, // Lepsza praktyka: nie twórz sesji, dopóki ktoś się nie zaloguje
+    saveUninitialized: false,
     cookie: {
-        secure: true, // Wymagane, gdy aplikacja jest na HTTPS (a na Renderze jest)
-        sameSite: 'none', // KLUCZOWE: Zezwól na wysyłanie ciasteczka z innej domeny
-        httpOnly: true, // Zwiększa bezpieczeństwo, ciasteczko niedostępne dla JS po stronie klienta
-        maxAge: 1000 * 60 * 60 * 24 // Ciasteczko ważne przez 1 dzień
+        secure: true,
+        sameSite: 'none',
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 7 // Sesja ważna przez 7 dni
     }
 }));
 
-// Krok 4: Inicjalizacja Passport.js
+// --- Inicjalizacja Passport.js ---
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Krok 5: Konfiguracja "Strategii Google"
-// Tutaj mówimy Passportowi, jak ma się komunikować z Google
+// --- ZMODYFIKOWANA STRATEGIA GOOGLE Z OBSŁUGĄ BAZY DANYCH ---
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback" // Na ten adres Google odeśle użytkownika po zalogowaniu
+    callbackURL: "/auth/google/callback"
   },
-  (accessToken, refreshToken, profile, done) => {
-    // Ta funkcja uruchomi się, gdy Google potwierdzi tożsamość użytkownika
-    console.log('Otrzymaliśmy profil od Google:');
-    console.log(profile);
+  async (accessToken, refreshToken, profile, done) => {
+    const { id, displayName, photos } = profile;
 
-    // NA RAZIE: Po prostu zwracamy profil bez zapisu do bazy danych
-    // W następnym kroku dodamy tutaj logikę bazy danych
-    return done(null, profile);
+    try {
+        // Sprawdź, czy użytkownik już istnieje w bazie danych
+        const existingUser = await pool.query('SELECT * FROM users WHERE google_id = $1', [id]);
+
+        if (existingUser.rows.length > 0) {
+            // Użytkownik istnieje, zwróć jego dane z bazy
+            console.log('Użytkownik znaleziony:', existingUser.rows[0]);
+            return done(null, existingUser.rows[0]);
+        }
+
+        // Użytkownik nie istnieje, stwórz nowego
+        const newUser = await pool.query(
+            'INSERT INTO users (google_id, display_name, avatar_url) VALUES ($1, $2, $3) RETURNING *',
+            [id, displayName, photos[0].value]
+        );
+        console.log('Stworzono nowego użytkownika:', newUser.rows[0]);
+        return done(null, newUser.rows[0]);
+
+    } catch (err) {
+        return done(err, null);
+    }
   }
 ));
 
-// Krok 6: Serializacja i Deserializacja użytkownika
-// Mówimy Passportowi, jak zapisać użytkownika w sesji i jak go z niej odczytać
+// --- ZMODYFIKOWANA SERIALIZACJA I DESERIALIZACJA ---
 passport.serializeUser((user, done) => {
-    done(null, user);
+    done(null, user.id); // Zapisujemy w sesji tylko ID użytkownika z naszej bazy
 });
 
-passport.deserializeUser((user, done) => {
-    done(null, user);
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+        done(null, user.rows[0]); // Odczytujemy pełne dane z bazy na podstawie ID
+    } catch (err) {
+        done(err, null);
+    }
 });
 
-
+// =======================================================
 // --- ADRESY URL (ROUTING) ---
+// =======================================================
 
-// Testowy adres
-app.get('/', (req, res) => {
-    res.send('Serwer Timberman działa! Jesteśmy gotowi do pracy.');
-});
+// --- Endpointy Autoryzacji ---
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Adres, na który gra przekieruje użytkownika, aby zacząć logowanie
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] }) // Prosimy Google o profil i email
-);
-
-// Adres, na który Google odeśle użytkownika po zalogowaniu
 app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/' }), // Jeśli się nie uda, wróć na stronę główną
+  passport.authenticate('google', { failureRedirect: 'https://timberkitty.netlify.app' }),
   (req, res) => {
-    // Sukces! Użytkownik jest zalogowany. Na razie przekierujmy go na stronę główną.
-    // W przyszłości zmienimy to na adres Twojej gry na Netlify
     res.redirect('https://timberkitty.netlify.app'); 
   }
 );
 
-// Adres, który sprawdzi frontend, aby dowiedzieć się, kto jest zalogowany
+app.get('/auth/logout', (req, res, next) => {
+    req.logout(err => {
+        if (err) { return next(err); }
+        req.session.destroy(() => {
+            res.clearCookie('connect.sid');
+            res.redirect('https://timberkitty.netlify.app');
+        });
+    });
+});
+
+// --- NOWE ENDPOINTY API DO ZARZĄDZANIA STATYSTYKAMI ---
+
+// Endpoint do pobierania PEŁNYCH danych zalogowanego gracza (w tym statystyk)
 app.get('/api/me', (req, res) => {
     if (req.user) {
-        // Jeśli użytkownik jest w sesji (zalogowany), odeślij jego dane
         res.json(req.user);
     } else {
-        // Jeśli nie, odeślij błąd "Unauthorized"
         res.status(401).json({ message: 'Użytkownik niezalogowany' });
     }
 });
 
-// Adres do wylogowania użytkownika
-app.get('/auth/logout', (req, res) => {
-    req.logout(err => {
-        if (err) { return next(err); }
-        // Po wylogowaniu przekieruj z powrotem na stronę główną
-        // W przyszłości wstawisz tu adres swojej gry na Netlify
-        res.redirect('/'); 
-    });
-});
+// Endpoint do zapisywania statystyk po grze
+app.post('/api/stats', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Musisz być zalogowany, aby zapisać postęp.' });
+    }
 
+    const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems } = req.body;
+    const userId = req.user.id;
+
+    try {
+        const result = await pool.query(
+            `UPDATE users 
+             SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6 
+             WHERE id = $7 RETURNING *`,
+            [highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems, userId]
+        );
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error('Błąd zapisu statystyk:', err);
+        res.status(500).json({ message: 'Błąd serwera podczas zapisywania postępu.' });
+    }
+});
 
 // --- URUCHOMIENIE SERWERA ---
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Serwer uruchomiony na http://localhost:${PORT}`);
+    console.log(`Serwer uruchomiony na porcie ${PORT}`);
 });
-
