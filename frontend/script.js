@@ -216,7 +216,7 @@ async function animateStatUpdate(oldStats, score) {
 function updateStatsUI(stats) {
     highScoreStatEl.textContent = stats.highScore;
     totalChopsStatEl.textContent = stats.totalChops;
-    coinsStatEl.textContent = stats.coins.toFixed(0);
+    coinsStatEl.textContent = stats.coins.toFixed(1);
 }
 
 function populateAchievementsPreview(stats) {
