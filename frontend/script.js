@@ -1,10 +1,6 @@
 // --- Ustawienia gry ---
 const BACKEND_URL = 'https://timberman-backend.onrender.com';
-const loginButton = document.getElementById('login-button');
-const userProfile = document.getElementById('user-profile');
-const userAvatar = document.getElementById('user-avatar');
-const userName = document.getElementById('user-name');
-const logoutButton = document.getElementById('logout-button');
+const authButton = document.getElementById('auth-button');
 const mainAvatarContainer = document.getElementById('main-avatar-container');
 const mainUsername = document.getElementById('main-username');
 const canvas = document.getElementById('gameCanvas');
@@ -692,23 +688,24 @@ async function checkLoginStatus() {
 }
 
 function updateUIAfterLogin(user) {
-    loginButton.textContent = 'Zalogowano!';
-    loginButton.disabled = true;
-    loginButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-    loginButton.classList.add('bg-green-600', 'cursor-default');
-    userProfile.classList.add('hidden');
-    const userAvatarUrl = user.avatar_url; // Używamy avatar_url z naszej bazy
+    // Zmień przycisk w przycisk "Wyloguj"
+    authButton.textContent = 'Wyloguj się';
+    authButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    authButton.classList.add('bg-red-600', 'hover:bg-red-700'); // Czerwony kolor dla wylogowania
+
+    // Aktualizuj główny panel statystyk
+    const userAvatarUrl = user.avatar_url;
     mainAvatarContainer.innerHTML = `<img src="${userAvatarUrl}" alt="Avatar" class="w-full h-full rounded-full">`;
-    mainUsername.textContent = user.display_name; // Używamy display_name z naszej bazy
+    mainUsername.textContent = user.display_name;
 }
 
 function showLoginButton() {
-    loginButton.textContent = 'Zaloguj się z Google';
-    loginButton.disabled = false;
-    loginButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
-    loginButton.classList.remove('bg-green-600', 'cursor-default');
-    userProfile.classList.add('hidden');
-    userProfile.classList.remove('flex');
+    // Zmień przycisk w przycisk "Zaloguj"
+    authButton.textContent = 'Zaloguj się z Google';
+    authButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+    authButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+
+    // Przywróć domyślny wygląd panelu statystyk
     mainAvatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
     </svg>`;
@@ -761,10 +758,12 @@ window.onload = () => {
     checkLoginStatus(); 
 };
 
-loginButton.addEventListener('click', () => {
-    window.location.href = `${BACKEND_URL}/auth/google`;
-});
-
-logoutButton.addEventListener('click', () => {
-    window.location.href = `${BACKEND_URL}/auth/logout`;
+authButton.addEventListener('click', () => {
+    if (currentUser) {
+        // Jeśli użytkownik jest zalogowany, wyloguj go
+        window.location.href = `${BACKEND_URL}/auth/logout`;
+    } else {
+        // Jeśli nie, rozpocznij proces logowania
+        window.location.href = `${BACKEND_URL}/auth/google`;
+    }
 });
