@@ -76,12 +76,14 @@ const BRANCH_COLOR = '#228B22';
 const BRANCH_DARK_COLOR = '#006400';
 
 // Zmienne stanu gry
-let player = { side: 'left', isChopping: false };
+let player = { side: 'left', frame: 'idle' };
 let tree = [];
 let particles = [];
 let score = 0;
 let gameState = 'start';
 let currentUser = null; // Przechowuje pełne dane zalogowanego użytkownika z bazy
+let animationTimeout1 = null;
+let animationTimeout2 = null;
 
 // Zmienne timera
 let timer = 100;
@@ -89,6 +91,35 @@ const MAX_TIME = 100;
 let gameLoopInterval = null;
 let activeBonuses = {};
 let petSaveUsed = false;
+
+// NOWY KOD: Wczytywanie grafik (spritów) postaci
+const playerSprites = {};
+const spritePaths = {
+    idle: 'assets/kitty_idle_right.png',
+    swing: 'assets/kitty_swing_right.png',
+    chop: 'assets/kitty_chop_right.png'
+};
+
+function loadSprites() {
+    let loadedCount = 0;
+    const totalSprites = Object.keys(spritePaths).length;
+    
+    return new Promise((resolve, reject) => {
+        for (const key in spritePaths) {
+            const img = new Image();
+            img.src = spritePaths[key];
+            playerSprites[key] = img;
+            img.onload = () => {
+                loadedCount++;
+                if (loadedCount === totalSprites) {
+                    console.log('Wszystkie grafiki postaci załadowane!');
+                    resolve();
+                }
+            };
+            img.onerror = () => reject(new Error(`Nie udało się załadować grafiki: ${spritePaths[key]}`));
+        }
+    });
+}
 
 // --- Baza Danych Osiągnięć i Sklepu ---
 const achievementsData = {
@@ -501,19 +532,27 @@ function updateParticles() {
 }
 
 function draw() {
+    // Krok 1: Wyczyść cały ekran przed rysowaniem nowej klatki
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Krok 2: Narysuj tło (niebo) - jest najgłębiej
     ctx.fillStyle = SKY_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Krok 3: Narysuj drzewo i jego gałęzie
     tree.forEach((segment, index) => {
         const y = canvas.height - (index + 1) * SEGMENT_HEIGHT;
         drawTrunkSegment(TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
         if (segment.branch) drawBranch(TRUNK_X, y, segment.branch);
     });
+
+    // Krok 4: Narysuj elementy, które są "za" graczem, ale "przed" drzewem
     drawParticles();
     drawGrass();
+
+    // Krok 5: Narysuj gracza (NA SAMYM KOŃCU, aby był na wierzchu)
     drawPlayer();
 }
-
 function drawParticles() {
     particles.forEach(p => {
         ctx.save();
@@ -570,36 +609,35 @@ function drawGrass() {
 
 function drawPlayer() {
     const playerY = canvas.height - PLAYER_HEIGHT;
-    let playerX, scaleX = 1;
+    let playerX, scaleX;
+
     if (player.side === 'left') {
         playerX = TRUNK_X - PLAYER_WIDTH - 5;
-        scaleX = -1;
+        scaleX = -1; // Ustaw odbicie lustrzane dla lewej strony
     } else {
         playerX = TRUNK_X + TRUNK_WIDTH + 5;
-        scaleX = 1;
+        scaleX = 1;  // Bez odbicia dla prawej strony
     }
+
+    // Wybierz odpowiednią klatkę animacji (zawsze z prawego zestawu)
+    let spriteToDraw;
+    if (player.frame === 'idle') {
+        spriteToDraw = playerSprites.idle;
+    } else if (player.frame === 'swing') {
+        spriteToDraw = playerSprites.swing;
+    } else { // 'chop'
+        spriteToDraw = playerSprites.chop;
+    }
+
     ctx.save();
     ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT / 2);
-    ctx.scale(scaleX, 1);
-    const bodyHeight = PLAYER_HEIGHT * 0.5, headRadius = PLAYER_HEIGHT * 0.2, legHeight = PLAYER_HEIGHT * 0.5;
-    ctx.fillStyle = PLAYER_PANTS_COLOR;
-    ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT / 2 + bodyHeight, PLAYER_WIDTH, legHeight);
-    ctx.fillStyle = PLAYER_SHIRT_COLOR;
-    ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT / 2, PLAYER_WIDTH, bodyHeight);
-    ctx.fillStyle = PLAYER_SKIN_COLOR;
-    ctx.beginPath();
-    ctx.arc(0, -PLAYER_HEIGHT / 2 - headRadius + bodyHeight, headRadius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = PLAYER_SHIRT_COLOR;
-    ctx.fillRect(-headRadius, -PLAYER_HEIGHT / 2 - headRadius * 2 + bodyHeight, headRadius * 2, headRadius);
-    if (player.isChopping) {
-        ctx.fillStyle = '#C0C0C0';
-        ctx.beginPath();
-        ctx.moveTo(PLAYER_WIDTH * 0.4, -PLAYER_HEIGHT * 0.1);
-        ctx.lineTo(PLAYER_WIDTH * 0.7, -PLAYER_HEIGHT * 0.2);
-        ctx.lineTo(PLAYER_WIDTH * 0.6, PLAYER_HEIGHT * 0.1);
-        ctx.fill();
+    ctx.scale(scaleX, 1); // Zastosuj odbicie lustrzane (lub nie)
+
+    // Narysuj grafikę na canvasie, zawsze wycentrowaną
+    if (spriteToDraw && spriteToDraw.complete) {
+        ctx.drawImage(spriteToDraw, -PLAYER_WIDTH / 2, -PLAYER_HEIGHT / 2, PLAYER_WIDTH, PLAYER_HEIGHT);
     }
+
     ctx.restore();
 }
 
@@ -617,6 +655,7 @@ async function gameOver() {
 
 function performChop(sideToChop) {
     if (gameState !== 'playing') return;
+
     const segmentToCut = tree[0];
     if (segmentToCut && segmentToCut.branch === sideToChop) {
         if (activeBonuses.oneTimeSave > 0 && !petSaveUsed) {
@@ -634,14 +673,18 @@ function performChop(sideToChop) {
             return;
         }
     }
+
+    // --- NOWA, BŁYSKAWICZNA LOGIKA ---
+
+    // 1. Logika gry wykonuje się NATYCHMIAST, bez czekania na animację
     player.side = sideToChop;
-    player.isChopping = true;
     score += (1 + activeBonuses.pointsPerChop);
     scoreElement.textContent = score;
     let timeGain = 5 - (score / 50);
     if (timeGain < 1) timeGain = 1;
     timer += (timeGain + activeBonuses.timeGainBonus);
     if (timer > MAX_TIME) timer = MAX_TIME;
+
     const choppedSegment = tree.shift();
     if (choppedSegment) {
         particles.push({
@@ -659,12 +702,26 @@ function performChop(sideToChop) {
         else newBranch = potentialSide;
     }
     tree.push({ branch: newBranch });
+
     const segmentNextToPlayer = tree[0];
     if (segmentNextToPlayer && segmentNextToPlayer.branch === player.side) {
         setTimeout(gameOver, 50);
         return;
     }
-    setTimeout(() => { player.isChopping = false; }, 50);
+
+    // 2. Animacja jest tylko dodatkiem wizualnym i restartuje się przy każdym kliknięciu
+    clearTimeout(animationTimeout1);
+    clearTimeout(animationTimeout2);
+
+    player.frame = 'swing';
+
+    animationTimeout1 = setTimeout(() => {
+        player.frame = 'chop';
+    }, 75);
+
+    animationTimeout2 = setTimeout(() => {
+        player.frame = 'idle';
+    }, 150);
 }
 
 function handleMouseInput(event) { performChopBasedOnInput(event); }
@@ -867,9 +924,15 @@ window.onresize = () => {
     if (gameState !== 'start') draw();
 };
 
-window.onload = () => {
-    showStartScreen();
-    checkLoginStatus();
+window.onload = async () => {
+    try {
+        await loadSprites(); // Czekaj na załadowanie wszystkich grafik
+        showStartScreen();
+        checkLoginStatus();
+    } catch (error) {
+        console.error("Nie udało się załadować zasobów gry:", error);
+        // Można tu wyświetlić komunikat o błędzie dla gracza
+    }
 };
 
 authButton.addEventListener('click', () => {
