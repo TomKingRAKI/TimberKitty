@@ -63,6 +63,8 @@ const PLAYER_WIDTH = TRUNK_WIDTH * 0.6;
 const BRANCH_WIDTH = TRUNK_WIDTH * 1.2;
 const BRANCH_HEIGHT = SEGMENT_HEIGHT * 0.4;
 const GROUND_HEIGHT = 20;
+const PLAYER_OFFSET_X = 15;
+const LUNGE_MULTIPLIER = 1.7; 
 
 // Kolory
 const SKY_COLOR = '#87CEEB';
@@ -611,15 +613,7 @@ function drawPlayer() {
     const playerY = canvas.height - PLAYER_HEIGHT;
     let playerX, scaleX;
 
-    if (player.side === 'left') {
-        playerX = TRUNK_X - PLAYER_WIDTH - 5;
-        scaleX = -1; // Ustaw odbicie lustrzane
-    } else {
-        playerX = TRUNK_X + TRUNK_WIDTH + 5;
-        scaleX = 1;  // Bez odbicia
-    }
-
-    // Wybierz odpowiednią klatkę animacji (zawsze z prawego zestawu)
+    // Wybierz odpowiednią klatkę animacji
     let spriteToDraw;
     if (player.frame === 'idle') {
         spriteToDraw = playerSprites.idle;
@@ -629,28 +623,29 @@ function drawPlayer() {
         spriteToDraw = playerSprites.chop;
     }
 
-    // Sprawdź, czy grafika jest załadowana, aby uniknąć błędów
     if (spriteToDraw && spriteToDraw.complete && spriteToDraw.naturalWidth > 0) {
 
-        // --- KLUCZOWA ZMIANA ---
-        // Oblicz poprawne proporcje oryginalnej grafiki
         const aspectRatio = spriteToDraw.naturalWidth / spriteToDraw.naturalHeight;
-
-        // Ustaw nową, dynamiczną szerokość na podstawie stałej wysokości i proporcji
         const dynamicWidth = PLAYER_HEIGHT * aspectRatio;
-        // --- KONIEC ZMIANY ---
+        const widthDifference = dynamicWidth - PLAYER_WIDTH;
+
+        if (player.side === 'left') {
+            // Lewa strona - działała dobrze, zostaje bez zmian
+            playerX = (TRUNK_X - PLAYER_WIDTH - PLAYER_OFFSET_X) + widthDifference;
+            scaleX = -1;
+        } else { // Prawa strona
+            // POPRAWKA TUTAJ: Mnożymy przesunięcie, aby było bardziej wyraziste
+            playerX = (TRUNK_X + TRUNK_WIDTH + PLAYER_OFFSET_X) - (widthDifference * LUNGE_MULTIPLIER);
+            scaleX = 1;
+        }
 
         ctx.save();
-        ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT / 2);
+        ctx.translate(playerX + dynamicWidth / 2, playerY + PLAYER_HEIGHT / 2);
         ctx.scale(scaleX, 1);
-
-        // Rysuj z nową, dynamiczną szerokością, centrując obraz
         ctx.drawImage(spriteToDraw, -dynamicWidth / 2, -PLAYER_HEIGHT / 2, dynamicWidth, PLAYER_HEIGHT);
-
         ctx.restore();
     }
 }
-
 async function gameOver() {
     if (gameState === 'gameOver') return;
     gameState = 'gameOver';
