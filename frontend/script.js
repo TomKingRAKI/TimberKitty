@@ -613,10 +613,10 @@ function drawPlayer() {
 
     if (player.side === 'left') {
         playerX = TRUNK_X - PLAYER_WIDTH - 5;
-        scaleX = -1; // Ustaw odbicie lustrzane dla lewej strony
+        scaleX = -1; // Ustaw odbicie lustrzane
     } else {
         playerX = TRUNK_X + TRUNK_WIDTH + 5;
-        scaleX = 1;  // Bez odbicia dla prawej strony
+        scaleX = 1;  // Bez odbicia
     }
 
     // Wybierz odpowiednią klatkę animacji (zawsze z prawego zestawu)
@@ -629,16 +629,26 @@ function drawPlayer() {
         spriteToDraw = playerSprites.chop;
     }
 
-    ctx.save();
-    ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT / 2);
-    ctx.scale(scaleX, 1); // Zastosuj odbicie lustrzane (lub nie)
+    // Sprawdź, czy grafika jest załadowana, aby uniknąć błędów
+    if (spriteToDraw && spriteToDraw.complete && spriteToDraw.naturalWidth > 0) {
 
-    // Narysuj grafikę na canvasie, zawsze wycentrowaną
-    if (spriteToDraw && spriteToDraw.complete) {
-        ctx.drawImage(spriteToDraw, -PLAYER_WIDTH / 2, -PLAYER_HEIGHT / 2, PLAYER_WIDTH, PLAYER_HEIGHT);
+        // --- KLUCZOWA ZMIANA ---
+        // Oblicz poprawne proporcje oryginalnej grafiki
+        const aspectRatio = spriteToDraw.naturalWidth / spriteToDraw.naturalHeight;
+
+        // Ustaw nową, dynamiczną szerokość na podstawie stałej wysokości i proporcji
+        const dynamicWidth = PLAYER_HEIGHT * aspectRatio;
+        // --- KONIEC ZMIANY ---
+
+        ctx.save();
+        ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT / 2);
+        ctx.scale(scaleX, 1);
+
+        // Rysuj z nową, dynamiczną szerokością, centrując obraz
+        ctx.drawImage(spriteToDraw, -dynamicWidth / 2, -PLAYER_HEIGHT / 2, dynamicWidth, PLAYER_HEIGHT);
+
+        ctx.restore();
     }
-
-    ctx.restore();
 }
 
 async function gameOver() {
