@@ -168,7 +168,7 @@ function parseStatsFromDB(dbUser) {
         totalChops: Number(dbUser.total_chops || 0),
         coins: Number(dbUser.coins || 0),
         unlockedAchievements: dbUser.unlocked_achievements || [],
-        unlockedItems: dbUser.unlocked_items || [],
+        unlockedItems: dbUser.unlocked_items || {}, // ZMIANA: z [] na {}
         equippedItems: dbUser.equipped_items || { character: null, hat: null, axe: null, accessory: null, pet: null }
     };
 }
@@ -176,11 +176,9 @@ function parseStatsFromDB(dbUser) {
 // ZMODYFIKOWANA FUNKCJA: Teraz jest synchroniczna i działa w dwóch trybach
 function loadStats() {
     if (currentUser) {
-        // Użytkownik zalogowany - dane pochodzą z obiektu currentUser
         return parseStatsFromDB(currentUser);
     } else {
-        // Tryb gościa - dane pochodzą z localStorage
-        const defaultStats = { highScore: 0, totalChops: 0, coins: 0, unlockedAchievements: [], unlockedItems: [], equippedItems: { character: null, hat: null, axe: null, accessory: null, pet: null } };
+        const defaultStats = { highScore: 0, totalChops: 0, coins: 0, unlockedAchievements: [], unlockedItems: {}, equippedItems: { character: null, hat: null, axe: null, accessory: null, pet: null } }; // ZMIANA: z [] na {}
         const statsFromStorage = JSON.parse(localStorage.getItem('timbermanStats'));
         return { ...defaultStats, ...statsFromStorage };
     }
@@ -317,17 +315,23 @@ function populateShopModal(categoryKey) {
     const itemsInCategory = Object.values(shopData).filter(item => item.category === categoryKey);
 
     itemsInCategory.forEach(item => {
-        const isOwned = stats.unlockedItems.includes(item.id);
+        const quantityOwned = stats.unlockedItems[item.id] || 0; // Sprawdź ilość, a nie czy istnieje
         const card = document.createElement('div');
-        card.className = 'shop-item-slot ' + (isOwned ? 'owned' : '');
-        let bottomContent = isOwned ? `<div class="owned-text">POSIADANE</div>` : `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${item.price} monet</div><button class="buy-button">KUP</button></div>`;
-        card.innerHTML = `<div class="text-4xl">${item.icon}</div><div class="font-bold text-base">${item.name}</div><div class="text-sm text-gray-300 px-1 leading-tight">${item.description}</div>${bottomContent}`;
-        if (!isOwned) {
-            card.querySelector('.buy-button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                buyItem(item.id, card);
-            });
-        }
+        card.className = 'shop-item-slot'; // Usunięto .owned, bo przycisk jest zawsze aktywny
+
+        // Przycisk KUP jest teraz zawsze widoczny
+        let bottomContent = `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${item.price} monet</div><button class="buy-button">KUP</button></div>`;
+        
+        // Dodaj wskaźnik ilości, jeśli posiadamy przedmiot
+        let quantityBadge = quantityOwned > 0 ? `<div class="item-quantity-badge">x${quantityOwned}</div>` : '';
+
+        card.innerHTML = `${quantityBadge}<div class="text-4xl">${item.icon}</div><div class="font-bold text-base">${item.name}</div><div class="text-sm text-gray-300 px-1 leading-tight">${item.description}</div>${bottomContent}`;
+        
+        card.querySelector('.buy-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            buyItem(item.id, card);
+        });
+        
         shopGrid.appendChild(card);
     });
 }
@@ -353,11 +357,13 @@ function populateShopPreview() {
         const previewGrid = document.createElement('div');
         previewGrid.className = 'grid grid-cols-4 gap-3 w-full';
         category.items.slice(0, 4).forEach(item => {
-            const isOwned = stats.unlockedItems.includes(item.id);
+            const quantityOwned = stats.unlockedItems[item.id] || 0;
             const slot = document.createElement('div');
-            slot.className = 'item-slot rounded-md';
-            if (isOwned) slot.classList.add('opacity-50');
-            slot.innerHTML = item.icon;
+            slot.className = 'item-slot rounded-md relative'; // Dodano relative dla wskaźnika
+            if (quantityOwned === 0) slot.classList.add('opacity-50');
+            
+            let quantityBadge = quantityOwned > 0 ? `<div class="item-quantity-badge" style="top:0; right:0;">x${quantityOwned}</div>` : '';
+            slot.innerHTML = `${item.icon}${quantityBadge}`;
             previewGrid.appendChild(slot);
         });
         categoryContainer.appendChild(title);
@@ -378,6 +384,7 @@ async function buyItem(itemId, cardElement) {
     const item = shopData[itemId];
 
     if (stats.coins < item.price) {
+        // ... logika braku monet (bez zmian)
         if (!cardElement.classList.contains('shake-error')) {
             cardElement.classList.add('shake-error');
             const button = cardElement.querySelector('.buy-button');
@@ -394,18 +401,21 @@ async function buyItem(itemId, cardElement) {
         }
         return;
     }
-    if (stats.unlockedItems.includes(item.id)) {
-        showNotification('Masz już ten przedmiot!', 'error');
-        return;
-    }
 
     stats.coins -= item.price;
-    stats.unlockedItems.push(item.id);
-    const updatedStats = await updateAndSaveStats(0, stats);
+    
+    // NOWA LOGIKA: Zwiększ ilość przedmiotu
+    const currentQuantity = stats.unlockedItems[itemId] || 0;
+    stats.unlockedItems[itemId] = currentQuantity + 1;
 
+    const updatedStats = await updateAndSaveStats(0, stats);
+    
     showNotification(`Kupiono: ${item.name}!`, 'success');
     updateStatsUI(updatedStats);
+    // Odśwież widok sklepu, aby pokazać nową ilość
     populateShopModal(item.category);
+    // Odśwież też podgląd sklepu
+    populateShopPreview();
 }
 
 function showNotification(message, type = 'success') {
@@ -464,16 +474,27 @@ function updateEquipmentPanel(stats) {
 
 async function populateEquipmentSelectionModal(category) {
     equipmentGrid.innerHTML = '';
-    equipmentModalTitle.textContent = `Wybierz: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+    equipmentModalTitle.textContent = `Wybierz: ${categoryNames[category] || category}`;
     const stats = loadStats();
-    const ownedItemsInCategory = stats.unlockedItems.map(id => shopData[id]).filter(item => item && item.category === category);
+
+    // NOWA LOGIKA: Filtruj przedmioty, które gracz posiada (ilość > 0)
+    const ownedItemsInCategory = Object.keys(stats.unlockedItems)
+        .map(id => shopData[id])
+        .filter(item => item && item.category === category);
+
     if (ownedItemsInCategory.length === 0) {
         equipmentGrid.innerHTML = `<p class="col-span-4 text-center text-gray-500">Nie posiadasz żadnych przedmiotów z tej kategorii.</p>`;
     } else {
         ownedItemsInCategory.forEach(item => {
+            const quantity = stats.unlockedItems[item.id];
             const card = document.createElement('div');
-            card.className = 'equipment-selection-item';
-            card.innerHTML = `<span>${item.icon}</span><span class="item-name">${item.name}</span>`;
+            card.className = 'equipment-selection-item relative'; // Dodano relative
+            // Dodaj wskaźnik ilości
+            card.innerHTML = `
+                <div class="item-quantity-badge">x${quantity}</div>
+                <span>${item.icon}</span>
+                <span class="item-name">${item.name}</span>
+            `;
             card.addEventListener('click', () => equipItem(item.id));
             equipmentGrid.appendChild(card);
         });

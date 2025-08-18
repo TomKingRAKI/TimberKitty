@@ -528,3 +528,16 @@ canvas {
     opacity: 0;
     visibility: hidden;
 }
+
+.item-quantity-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #f59e0b; /* amber-500 */
+    color: #111827; /* gray-900 */
+    font-size: 0.75rem; /* 12px */
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    border: 1px solid #1f2937;
+}
