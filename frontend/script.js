@@ -48,6 +48,8 @@ const notificationContainer = document.getElementById('notification-container');
 const bottomNav = document.getElementById('bottom-nav');
 const shopPreviewContainer = document.getElementById('shop-preview-container');
 const loadingOverlay = document.getElementById('loading-overlay');
+const progressBarFill = document.getElementById('progress-bar-fill');
+const loadingStatusText = document.getElementById('loading-status-text');
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
@@ -755,6 +757,43 @@ function openModal(modal) {
     modal.classList.add('is-opening');
 }
 
+let loadingInterval = null;
+
+function startLoadingAnimation() {
+    let progress = 0;
+    const stages = [
+        { percent: 30, text: 'Budzenie Kici...' },
+        { percent: 70, text: 'Łączenie z serwerem...' },
+        { percent: 95, text: 'Prawie gotowe...' }
+    ];
+    let currentStage = 0;
+
+    loadingOverlay.style.display = 'flex';
+    loadingOverlay.style.opacity = '1';
+
+    loadingInterval = setInterval(() => {
+        if (currentStage < stages.length && progress >= stages[currentStage].percent) {
+            loadingStatusText.textContent = stages[currentStage].text;
+            currentStage++;
+        }
+        if (progress < 95) {
+            progress += 1;
+            progressBarFill.style.width = `${progress}%`;
+        }
+    }, 50); // Szybkość animacji
+}
+
+function finishLoadingAnimation() {
+    clearInterval(loadingInterval);
+    progressBarFill.style.width = '100%';
+    loadingStatusText.textContent = 'Gotowe!';
+
+    // Poczekaj chwilę, aby gracz zobaczył 100%, a następnie dodaj klasę ukrywającą
+    setTimeout(() => {
+        loadingOverlay.classList.add('hidden');
+    }, 500); // Pół sekundy pauzy, aby zobaczyć napis "Gotowe!"
+}
+
 function closeModal(modal) {
     modal.classList.remove('is-opening');
     modal.classList.add('is-closing');
@@ -770,20 +809,17 @@ async function checkLoginStatus() {
         const response = await fetch(`${BACKEND_URL}/api/me`, { credentials: 'include' });
         if (!response.ok) throw new Error('Użytkownik niezalogowany');
         const user = await response.json();
-        currentUser = user; // Zapisz dane użytkownika globalnie
+        currentUser = user;
         updateUIAfterLogin(user);
     } catch (error) {
         console.log('Błąd sprawdzania statusu logowania:', error.message);
         currentUser = null;
         showLoginButton();
     } finally {
-        // Ta część wykona się ZAWSZE, niezależnie od tego czy logowanie się udało, czy nie
-        // Dzięki temu statystyki (z serwera lub localStorage) ładujemy tylko RAZ.
-        loadingOverlay.style.display = 'none';
+        finishLoadingAnimation(); // Zakończ animację
         const stats = loadStats();
         updateStatsUI(stats);
         populateShopPreview();
-        
     }
 }
 
@@ -931,12 +967,12 @@ window.onresize = () => {
 
 window.onload = async () => {
     try {
-        await loadSprites(); // Czekaj na załadowanie wszystkich grafik
+        startLoadingAnimation(); // Rozpocznij animację
+        await loadSprites();
         showStartScreen();
         checkLoginStatus();
     } catch (error) {
         console.error("Nie udało się załadować zasobów gry:", error);
-        // Można tu wyświetlić komunikat o błędzie dla gracza
     }
 };
 

@@ -28,9 +28,13 @@
     </header>
 
     <main class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-center items-center md:items-start gap-6">
-        <div id="loading-overlay" class="absolute inset-0 bg-gray-800/80 flex flex-col justify-center items-center z-50 rounded-lg">
-            <div class="spinner"></div>
-            <p class="text-xl font-bold mt-4 text-shadow">Łączenie z serwerem...</p>
+
+        <div id="loading-overlay" class="absolute inset-0 bg-gray-800/95 flex flex-col justify-center items-center z-50 rounded-lg transition-opacity duration-500">
+            <div id="loading-logo" class="text-6xl font-bold text-shadow mb-8">TimberKitty</div>
+            <div id="progress-bar-container" class="w-3/4 max-w-md h-6 bg-gray-900 rounded-full border-2 border-gray-700 overflow-hidden">
+                <div id="progress-bar-fill" class="h-full bg-amber-500 rounded-full" style="width: 0%;"></div>
+            </div>
+            <p id="loading-status-text" class="text-lg font-bold mt-4 text-shadow text-gray-400">Inicjalizacja...</p>
         </div>
         <div id="stats-panel"
             class="w-full md:w-1/4 panel rounded-lg p-4 flex flex-col items-center gap-4 order-2 md:order-1">
