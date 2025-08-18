@@ -135,16 +135,26 @@ app.post('/api/stats', async (req, res) => {
         return res.status(401).json({ message: 'Musisz być zalogowany, aby zapisać postęp.' });
     }
 
+    // Pobieramy nowe statystyki z ciała zapytania
     const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems } = req.body;
     const userId = req.user.id;
 
     try {
+        // --- KLUCZOWA POPRAWKA: Ręczna konwersja na JSON ---
+        // Zanim wyślemy obiekty do bazy danych, zamieniamy je na tekst.
+        // Baza danych (PostgreSQL) sama zamieni ten tekst z powrotem na typ jsonb.
+        const unlockedItemsJSON = JSON.stringify(unlockedItems);
+        const equippedItemsJSON = JSON.stringify(equippedItems);
+        // --- KONIEC POPRAWKI ---
+
         const result = await pool.query(
             `UPDATE users 
              SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6 
              WHERE id = $7 RETURNING *`,
-            [highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems, userId]
+            // Przekazujemy do zapytania nasze nowe, sformatowane zmienne
+            [highScore, totalChops, coins, unlockedAchievements, unlockedItemsJSON, equippedItemsJSON, userId]
         );
+
         res.status(200).json(result.rows[0]);
     } catch (err) {
         console.error('Błąd zapisu statystyk:', err);
