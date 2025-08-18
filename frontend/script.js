@@ -211,6 +211,7 @@ async function updateAndSaveStats(currentScore, oldStats) {
             });
             if (!response.ok) throw new Error('Błąd zapisu na serwerze');
             const updatedUser = await response.json();
+            console.log('2. Serwer odesłał zaktualizowane dane użytkownika:', updatedUser);
             currentUser = updatedUser; // Zaktualizuj dane lokalne o odpowiedź z serwera
             return parseStatsFromDB(updatedUser);
         } catch (error) {
@@ -408,6 +409,8 @@ async function buyItem(itemId, cardElement) {
     const currentQuantity = stats.unlockedItems[itemId] || 0;
     stats.unlockedItems[itemId] = currentQuantity + 1;
 
+    console.log('1. Przed wysłaniem na serwer, ekwipunek wygląda tak:', stats.unlockedItems);
+
     const updatedStats = await updateAndSaveStats(0, stats);
     
     showNotification(`Kupiono: ${item.name}!`, 'success');
@@ -473,6 +476,7 @@ function updateEquipmentPanel(stats) {
 }
 
 async function populateEquipmentSelectionModal(category) {
+    console.log('3. Ekwipunek w momencie otwarcia modala:', loadStats().unlockedItems);
     equipmentGrid.innerHTML = '';
     equipmentModalTitle.textContent = `Wybierz: ${categoryNames[category] || category}`;
     const stats = loadStats();
