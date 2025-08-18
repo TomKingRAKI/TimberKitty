@@ -63,10 +63,14 @@ passport.use(new GoogleStrategy({
         }
 
         // Użytkownik nie istnieje, stwórz nowego
+        // --- POPRAWKA TUTAJ ---
+        // Dodajemy unlocked_items i przekazujemy pusty obiekt {} jako domyślną wartość
         const newUser = await pool.query(
-            'INSERT INTO users (google_id, display_name, avatar_url) VALUES ($1, $2, $3) RETURNING *',
-            [id, displayName, photos[0].value]
+            'INSERT INTO users (google_id, display_name, avatar_url, unlocked_items) VALUES ($1, $2, $3, $4) RETURNING *',
+            [id, displayName, photos[0].value, {}]
         );
+        // --- KONIEC POPRAWKI ---
+
         console.log('Stworzono nowego użytkownika:', newUser.rows[0]);
         return done(null, newUser.rows[0]);
 
