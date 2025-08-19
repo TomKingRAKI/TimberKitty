@@ -139,7 +139,8 @@ function loadSprites() {
 const gameSounds = {};
 const soundPaths = {
     reel_roll: 'sfx/reel_tick.wav',
-    reel_stop: 'sfx/reel_stop.wav'
+    reel_stop: 'sfx/reel_stop.wav',
+    chop: 'sfx/chop.mp3'
 };
 
 function loadSounds() {
@@ -956,6 +957,11 @@ function performChop(sideToChop) {
 
     // 1. Logika gry wykonuje się NATYCHMIAST, bez czekania na animację
     player.side = sideToChop;
+        if (gameSounds.chop) {
+        const chopSound = gameSounds.chop.cloneNode();
+        chopSound.volume = 0.7; // Możesz dostosować głośność
+        chopSound.play();
+    }
     score += (1 + activeBonuses.pointsPerChop);
     scoreElement.textContent = score;
     let timeGain = 5 - (score / 50);
