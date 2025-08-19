@@ -497,7 +497,7 @@ async function playLootboxAnimation(wonItem, boxData) {
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
     const reelItems = [];
-    const reelLength = 150; // Długość rolki
+    const reelLength = 500; // Długość rolki
 
     for (let i = 0; i < reelLength; i++) {
         // Wybierz losowy przedmiot z puli
