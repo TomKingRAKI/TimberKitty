@@ -136,6 +136,38 @@ function loadSprites() {
     });
 }
 
+const gameSounds = {};
+const soundPaths = {
+    reel_roll: 'sfx/reel_roll.wav',
+    reel_stop: 'sfx/reel_stop.wav'
+};
+
+function loadSounds() {
+    console.log('Ładowanie dźwięków...');
+    return new Promise((resolve, reject) => {
+        let loadedCount = 0;
+        const totalSounds = Object.keys(soundPaths).length;
+        if (totalSounds === 0) resolve();
+
+        for (const key in soundPaths) {
+            const audio = new Audio();
+            audio.src = soundPaths[key];
+            gameSounds[key] = audio;
+
+            // Czekamy, aż przeglądarka będzie gotowa do odtworzenia dźwięku
+            audio.addEventListener('canplaythrough', () => {
+                loadedCount++;
+                if (loadedCount === totalSounds) {
+                    console.log('Wszystkie dźwięki załadowane!');
+                    resolve();
+                }
+            }, { once: true });
+
+            audio.onerror = () => reject(new Error(`Nie udało się załadować dźwięku: ${soundPaths[key]}`));
+        }
+    });
+}
+
 // --- Baza Danych Osiągnięć i Sklepu ---
 const achievementsData = {
     'chop10': { name: 'Początkujący', description: 'Zetnij 10 drzew.', icon: '🪵', condition: (stats) => stats.totalChops >= 10 },
@@ -500,67 +532,92 @@ async function openLootbox(boxId, cardElement) {
 }
 
 async function playLootboxAnimation(wonItem, boxData) {
-    // 1. Przygotuj JEDNĄ, DŁUGĄ rolkę
+    // --- CZĘŚĆ 1: Płynna, zapętlona animacja "mieszania" ---
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
-    animationReel.style.transform = 'translateX(0px)'; // Resetuj pozycję
 
-    const reelItems = [];
-    const reelLength = 100; // Ustawiamy stałą, dużą długość
-    const winnerIndex = reelLength - 10; // Zwycięzca jest blisko końca
-
-    for (let i = 0; i < reelLength; i++) {
+    const shufflePool = [];
+    const shuffleLength = 8;
+    for (let i = 0; i < shuffleLength; i++) {
         const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
-        reelItems.push(randomLoot);
+        shufflePool.push(randomLoot);
     }
-    reelItems[winnerIndex] = wonItem;
+    const finalShufflePool = [...shufflePool, ...shufflePool];
 
-    reelItems.forEach(loot => {
+    finalShufflePool.forEach(loot => {
         const itemData = shopData[loot.itemId];
         const itemDiv = document.createElement('div');
         itemDiv.className = `reel-item rarity-${loot.rarity}`;
-        itemDiv.innerHTML = `<span>${itemData.icon}</span>`;
+        itemDiv.innerHTML = `<div class="reel-item-content"><span>${itemData.icon}</span></div>`;
         animationReel.appendChild(itemDiv);
     });
 
-    // 2. Otwórz modal i przygotuj obliczenia
-    openModal(lootboxAnimationModal);
+    animationReel.style.transition = 'none';
+    animationReel.style.transform = 'translateX(0px)';
+    animationReel.classList.add('reel-shuffling'); 
 
-    const itemWidth = 120 + 20; // 140px
-    const viewportWidth = document.getElementById('animation-viewport').clientWidth;
-    const centerOffset = (viewportWidth / 2) - (itemWidth / 2);
-    const finalPosition = -(winnerIndex * itemWidth - centerOffset);
-
-    // 3. Uruchom płynną animację w JavaScript
-    let startTime = null;
-    const duration = 7000; // 7 sekund
-
-    function animationStep(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const elapsedTime = timestamp - startTime;
-        const progress = Math.min(elapsedTime / duration, 1);
-
-        // Funkcja zwalniania/przyspieszania (startuje wolno, przyspiesza, zwalnia na końcu)
-        const easedProgress = progress < 0.5 
-            ? 4 * progress * progress * progress 
-            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-        const currentPosition = easedProgress * finalPosition;
-        animationReel.style.transform = `translateX(${currentPosition}px)`;
-
-        if (progress < 1) {
-            requestAnimationFrame(animationStep);
-        } else {
-            // Animacja zakończona
-            closeModal(lootboxAnimationModal); // Zamknij modal animacji
-            // Znajdź pełne dane wylosowanego przedmiotu
-            const wonItemData = shopData[wonItem.itemId];
-            // Pokaż nowy modal z prezentacją
-            showItemRevealModal(wonItemData, wonItem.rarity);
-        }
+    // Odtwórz dźwięk kręcenia się rolki w pętli
+    if (gameSounds.reel_roll) {
+        gameSounds.reel_roll.loop = true;
+        gameSounds.reel_roll.play();
     }
 
-    requestAnimationFrame(animationStep);
+    openModal(lootboxAnimationModal);
+
+    // --- CZĘŚĆ 2: Finałowa animacja zwalniania i pokazania wyniku ---
+    setTimeout(() => {
+        animationReel.classList.remove('reel-shuffling');
+
+        const finalReelItems = [];
+        const finalReelLength = 30;
+        const winnerIndex = finalReelLength - 5; 
+
+        for (let i = 0; i < finalReelLength; i++) {
+            const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
+            finalReelItems.push(randomLoot);
+        }
+        finalReelItems[winnerIndex] = wonItem;
+
+        animationReel.innerHTML = '';
+        finalReelItems.forEach(loot => {
+            const itemData = shopData[loot.itemId];
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `reel-item rarity-${loot.rarity}`;
+            itemDiv.innerHTML = `<div class="reel-item-content"><span>${itemData.icon}</span></div>`;
+            animationReel.appendChild(itemDiv);
+        });
+
+        const itemWidth = 120 + 20;
+        const viewportWidth = document.getElementById('animation-viewport').clientWidth;
+        const centerOffset = (viewportWidth / 2) - (itemWidth / 2);
+        const finalPosition = -(winnerIndex * itemWidth - centerOffset);
+
+        const startPosition = viewportWidth;
+        animationReel.style.transition = 'none';
+        animationReel.style.transform = `translateX(${startPosition}px)`;
+
+        setTimeout(() => {
+            animationReel.style.transition = 'transform 5s cubic-bezier(0.2, 1, 0.3, 1)';
+            animationReel.style.transform = `translateX(${finalPosition}px)`;
+        }, 50);
+
+        // Zatrzymaj dźwięk kręcenia i odtwórz dźwięk wygranej
+        setTimeout(() => {
+            if (gameSounds.reel_roll) {
+                gameSounds.reel_roll.pause();
+                gameSounds.reel_roll.currentTime = 0; // Zresetuj dźwięk
+            }
+            if (gameSounds.reel_stop) {
+                gameSounds.reel_stop.play();
+            }
+
+            const winnerDiv = animationReel.children[winnerIndex];
+            winnerDiv.classList.add('winner');
+            winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
+            animationCloseButton.classList.remove('hidden');
+        }, 5050);
+
+    }, 3000);
 }
 
 function showItemRevealModal(wonItemData, rarity) {
@@ -1185,7 +1242,11 @@ window.onresize = () => {
 window.onload = async () => {
     try {
         startLoadingAnimation(); // Rozpocznij animację
-        await loadSprites();
+        // Uruchom ładowanie obu zasobów równocześnie
+        await Promise.all([
+            loadSprites(),
+            loadSounds()
+        ]);
         showStartScreen();
         checkLoginStatus();
     } catch (error) {
