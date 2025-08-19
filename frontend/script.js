@@ -497,7 +497,11 @@ async function playLootboxAnimation(wonItem, boxData) {
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
     const reelItems = [];
-    const reelLength = 10; // Długość rolki
+
+    // --- POPRAWKA TUTAJ ---
+    const reelLength = 150; // Znacznie dłuższa rolka, aby nie było pustki
+    const winnerIndex = reelLength - 8; // Umieśćmy zwycięzcę trochę dalej od końca
+    // --- KONIEC POPRAWKI ---
 
     for (let i = 0; i < reelLength; i++) {
         // Wybierz losowy przedmiot z puli
@@ -505,8 +509,7 @@ async function playLootboxAnimation(wonItem, boxData) {
         reelItems.push(randomLoot);
     }
 
-    // 2. Wstaw wygrany przedmiot w konkretne miejsce (np. 3 od końca)
-    const winnerIndex = reelLength - 4;
+    // 2. Wstaw wygrany przedmiot w konkretne miejsce
     reelItems[winnerIndex] = wonItem;
 
     // 3. Stwórz elementy HTML dla każdego przedmiotu na rolce
