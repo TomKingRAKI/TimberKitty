@@ -496,8 +496,8 @@ async function playLootboxAnimation(wonItem, boxData) {
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
     const reelItems = [];
-    const reelLength = 50;
-    const winnerIndex = reelLength - 1;
+    const reelLength = 150;
+    const winnerIndex = reelLength - 8;
 
     for (let i = 0; i < reelLength; i++) {
         const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
@@ -517,7 +517,7 @@ async function playLootboxAnimation(wonItem, boxData) {
     animationReel.style.transform = 'translateX(0px)';
 
     const itemWidth = 120 + 20;
-    const centerOffset = (canvas.width / 2) - (itemWidth / 2);
+    const centerOffset = (window.innerWidth / 2) - (itemWidth / 2);
     const randomJitter = (Math.random() - 0.5) * (itemWidth * 0.6);
     const finalPosition = - (winnerIndex * itemWidth - centerOffset + randomJitter);
 
