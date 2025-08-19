@@ -525,7 +525,7 @@ async function playLootboxAnimation(wonItem, boxData) {
     const finalPosition = - (winnerIndex * itemWidth - centerOffset + randomJitter);
 
     let startTime = null;
-    const duration = 7000; // Czas trwania animacji w milisekundach
+    const duration = 4000; // Czas trwania animacji w milisekundach
 
     function animationStep(timestamp) {
         if (!startTime) startTime = timestamp;
