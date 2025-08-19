@@ -138,7 +138,7 @@ function loadSprites() {
 
 const gameSounds = {};
 const soundPaths = {
-    reel_roll: 'sfx/reel_roll.wav',
+    reel_roll: 'sfx/reel_tick.wav',
     reel_stop: 'sfx/reel_stop.wav'
 };
 
@@ -538,8 +538,8 @@ async function playLootboxAnimation(wonItem, boxData) {
     animationReel.style.transform = 'translateX(0px)'; // Resetuj pozycję
 
     const reelItems = [];
-    const reelLength = 100; // Ustawiamy stałą, dużą długość
-    const winnerIndex = reelLength - 10; // Zwycięzca jest blisko końca
+    const reelLength = 100;
+    const winnerIndex = reelLength - 10;
 
     for (let i = 0; i < reelLength; i++) {
         const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
@@ -567,12 +567,14 @@ async function playLootboxAnimation(wonItem, boxData) {
     let startTime = null;
     const duration = 7000; // 7 sekund
 
+    // NOWA ZMIENNA do śledzenia dźwięku
+    let lastTickIndex = -1;
+
     function animationStep(timestamp) {
         if (!startTime) startTime = timestamp;
         const elapsedTime = timestamp - startTime;
         const progress = Math.min(elapsedTime / duration, 1);
 
-        // Funkcja zwalniania/przyspieszania (startuje wolno, przyspiesza, zwalnia na końcu)
         const easedProgress = progress < 0.5 
             ? 4 * progress * progress * progress 
             : 1 - Math.pow(-2 * progress + 2, 3) / 2;
@@ -580,14 +582,31 @@ async function playLootboxAnimation(wonItem, boxData) {
         const currentPosition = easedProgress * finalPosition;
         animationReel.style.transform = `translateX(${currentPosition}px)`;
 
+        // --- NOWA LOGIKA DŹWIĘKU ---
+        // Oblicz, nad którym przedmiotem jest teraz wskaźnik
+        const currentIndex = Math.floor((Math.abs(currentPosition) + centerOffset) / itemWidth);
+
+        // Jeśli wskaźnik przesunął się na nowy przedmiot, odtwórz dźwięk
+        if (currentIndex > lastTickIndex) {
+            lastTickIndex = currentIndex;
+            if (gameSounds.reel_tick) {
+                // Klonujemy dźwięk, aby mógł się odtwarzać wielokrotnie i szybko
+                const tickSound = gameSounds.reel_tick.cloneNode();
+                tickSound.volume = 0.5; // Możesz dostosować głośność
+                tickSound.play();
+            }
+        }
+        // --- KONIEC LOGIKI DŹWIĘKU ---
+
         if (progress < 1) {
             requestAnimationFrame(animationStep);
         } else {
             // Animacja zakończona
-            closeModal(lootboxAnimationModal); // Zamknij modal animacji
-            // Znajdź pełne dane wylosowanego przedmiotu
+            if (gameSounds.reel_stop) {
+                gameSounds.reel_stop.play();
+            }
+            closeModal(lootboxAnimationModal);
             const wonItemData = shopData[wonItem.itemId];
-            // Pokaż nowy modal z prezentacją
             showItemRevealModal(wonItemData, wonItem.rarity);
         }
     }
