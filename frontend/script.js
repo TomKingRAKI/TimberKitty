@@ -475,7 +475,7 @@ async function openLootbox(boxId, cardElement) {
                 closeModal(shopModal); // Zamknij modal sklepu, aby zrobić miejsce
         playLootboxAnimation(
             lootBoxData[boxId].lootPool.find(i => i.itemId === data.wonItem.id), // Znajdź info o rzadkości
-            boxData[boxId]
+            lootBoxData[boxId]
         );
 
         // Zaktualizuj dane w tle, gdy animacja trwa
