@@ -1193,23 +1193,24 @@ function openInventoryHub() {
 function openShopHub() {
     shopHubGrid.innerHTML = ''; // Wyczyść siatkę przed wypełnieniem
 
-    // Dynamicznie stwórz przyciski dla każdej skrzynki
-    for (const boxId in lootBoxData) {
-        const box = lootBoxData[boxId];
+    // Dynamicznie stwórz przyciski dla każdej kategorii
+    for (const categoryKey in categoryNames) {
         const button = document.createElement('button');
-        button.className = 'category-button'; // Użyjemy tego samego stylu co w kategoriach
-        button.innerHTML = `<div class="text-4xl">${box.icon}</div><div>${box.name}</div>`;
+        button.className = 'category-button';
+        button.textContent = categoryNames[categoryKey];
+        button.dataset.category = categoryKey;
 
         button.addEventListener('click', () => {
-            closeModal(shopHubModal); // Zamknij hub
-            populateShopModalWithBox(box.id); // Wypełnij modal wybraną skrzynką
-            openModal(shopModal); // Otwórz modal ze skrzynką
+            closeModal(shopHubModal);
+            // POPRAWKA TUTAJ: Używamy poprawnej nazwy funkcji z "es" na końcu
+            populateShopModalWithBoxes(categoryKey); 
+            openModal(shopModal);
         });
 
         shopHubGrid.appendChild(button);
     }
 
-    openModal(shopHubModal); // Otwórz hub z kategoriami
+    openModal(shopHubModal);
 }
 
 function openAccountHub() {
