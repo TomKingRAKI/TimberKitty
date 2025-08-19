@@ -493,19 +493,19 @@ async function openLootbox(boxId, cardElement) {
 }
 
 async function playLootboxAnimation(wonItem, boxData) {
+    // --- CZĘŚĆ 1: Nieskończona, zapętlona animacja "mieszania" ---
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
-    const reelItems = [];
-    const reelLength = 150;
-    const winnerIndex = reelLength - 40;
+    animationReel.classList.add('reel-shuffling'); // Włącz animację pętli
 
-    for (let i = 0; i < reelLength; i++) {
+    // Stwórz krótką, podwójną rolkę (np. 2x4 itemy) do zapętlania
+    const shufflePool = [];
+    for (let i = 0; i < 8; i++) {
         const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
-        reelItems.push(randomLoot);
+        shufflePool.push(randomLoot);
     }
-    reelItems[winnerIndex] = wonItem;
 
-    reelItems.forEach(loot => {
+    shufflePool.forEach(loot => {
         const itemData = shopData[loot.itemId];
         const itemDiv = document.createElement('div');
         itemDiv.className = `reel-item rarity-${loot.rarity}`;
@@ -514,39 +514,57 @@ async function playLootboxAnimation(wonItem, boxData) {
     });
 
     openModal(lootboxAnimationModal);
-    animationReel.style.transform = 'translateX(0px)';
 
-    const itemWidth = 120 + 20;
-    const centerOffset = (window.innerWidth / 2) - (itemWidth / 2);
-    const randomJitter = (Math.random() - 0.5) * (itemWidth * 0.6);
-    const finalPosition = - (winnerIndex * itemWidth - centerOffset + randomJitter);
+    // --- CZĘŚĆ 2: Finałowa animacja zwalniania i pokazania wyniku ---
+    // Po kilku sekundach "mieszania", zatrzymaj pętlę i przygotuj finałową rolkę
+    setTimeout(() => {
+        animationReel.classList.remove('reel-shuffling'); // Wyłącz animację pętli
 
-    let startTime = null;
-    // --- ZMIANA 1: Wydłużamy czas animacji ---
-    const duration = 10000; // 10 sekund zamiast 7
+        // Przygotuj krótką, finałową rolkę z wygranym przedmiotem w środku
+        const finalReelItems = [];
+        const finalReelLength = 15; // np. 15 przedmiotów
+        const winnerIndex = Math.floor(finalReelLength / 2); // Zwycięzca idealnie na środku
 
-    function animationStep(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const elapsedTime = timestamp - startTime;
-        const progress = Math.min(elapsedTime / duration, 1);
+        for (let i = 0; i < finalReelLength; i++) {
+            const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
+            finalReelItems.push(randomLoot);
+        }
+        finalReelItems[winnerIndex] = wonItem;
 
-        // --- ZMIANA 2: Używamy stałej, liniowej prędkości ---
-        const easedProgress = progress; // Usunięto skomplikowaną funkcję zwalniania
+        // Wypełnij HTML nową, finałową rolką
+        animationReel.innerHTML = '';
+        finalReelItems.forEach(loot => {
+            const itemData = shopData[loot.itemId];
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `reel-item rarity-${loot.rarity}`;
+            itemDiv.innerHTML = `<span>${itemData.icon}</span>`;
+            animationReel.appendChild(itemDiv);
+        });
 
-        const currentPosition = easedProgress * finalPosition;
-        animationReel.style.transform = `translateX(${currentPosition}px)`;
+        // Ustaw rolkę w pozycji startowej (daleko po lewej)
+        const itemWidth = 120 + 20; // 140px
+        const viewportWidth = document.getElementById('animation-viewport').clientWidth;
+        const startPosition = -((finalReelLength - 5) * itemWidth);
+        animationReel.style.transition = 'none';
+        animationReel.style.transform = `translateX(${startPosition}px)`;
 
-        if (progress < 1) {
-            requestAnimationFrame(animationStep);
-        } else {
+        // Uruchom animację zwalniania do pozycji końcowej
+        setTimeout(() => {
+            const centerOffset = (viewportWidth / 2) - (itemWidth / 2);
+            const finalPosition = -(winnerIndex * itemWidth - centerOffset);
+            animationReel.style.transition = 'transform 3s cubic-bezier(0.2, 1, 0.3, 1)';
+            animationReel.style.transform = `translateX(${finalPosition}px)`;
+        }, 50);
+
+        // Po zakończeniu animacji zwalniania
+        setTimeout(() => {
             const winnerDiv = animationReel.children[winnerIndex];
             winnerDiv.classList.add('winner');
             winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
             animationCloseButton.classList.remove('hidden');
-        }
-    }
+        }, 3050);
 
-    requestAnimationFrame(animationStep);
+    }, 4000); // Czas trwania animacji "mieszania" (4 sekundy)
 }
 
 function populateShopModalWithBox(boxId) {

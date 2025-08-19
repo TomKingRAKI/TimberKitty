@@ -544,15 +544,22 @@ canvas {
 
 /* --- Style dla Animacji Otwierania Skrzynki --- */
 #animation-reel {
-    /* Płynne przejście dla transformacji, czyli przewijania */
-    transition: transform 7s cubic-bezier(0.2, 1, 0.3, 1);
+    /* Ta klasa będzie dodawana przez JS, aby uruchomić animację pętli */
+}
+.reel-shuffling {
+    animation: shuffle 0.5s linear infinite;
+}
+
+@keyframes shuffle {
+    from { transform: translateX(0); }
+    to { transform: translateX(-560px); } /* 4 itemy * 140px szerokości */
 }
 
 .reel-item {
     width: 120px;
     height: 120px;
     margin: 0 10px;
-    flex-shrink: 0; /* Zapobiega kurczeniu się przedmiotów */
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -560,7 +567,7 @@ canvas {
     border: 4px solid;
     border-radius: 8px;
     font-size: 4rem;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .reel-item.winner {
@@ -568,7 +575,6 @@ canvas {
     box-shadow: 0 0 30px var(--winner-color);
 }
 
-/* Kolory rzadkości */
-.rarity-common { border-color: #6b7280; } /* gray-500 */
-.rarity-rare { border-color: #3b82f6; } /* blue-500 */
-.rarity-legendary { border-color: #f59e0b; } /* amber-500 */
+.rarity-common { border-color: #6b7280; }
+.rarity-rare { border-color: #3b82f6; }
+.rarity-legendary { border-color: #f59e0b; }
