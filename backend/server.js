@@ -139,15 +139,20 @@ app.post('/api/stats', async (req, res) => {
         const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems } = req.body;
         const userId = req.user.id;
 
+        // --- KLUCZOWA POPRAWKA ---
+        // Ręcznie formatujemy tablicę JS na format zrozumiały dla PostgreSQL ('{item1,item2}')
+        const achievementsArrayLiteral = `{${unlockedAchievements.join(',')}}`;
+        // --- KONIEC POPRAWKI ---
+
         const unlockedItemsJSON = JSON.stringify(unlockedItems);
         const equippedItemsJSON = JSON.stringify(equippedItems);
 
-        // Używamy bezpośrednio puli połączeń, bez ręcznego BEGIN/COMMIT
         const result = await pool.query(
             `UPDATE users 
              SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6 
              WHERE id = $7 RETURNING *`,
-            [highScore, totalChops, coins, unlockedAchievements, unlockedItemsJSON, equippedItemsJSON, userId]
+            // Przekazujemy do zapytania naszą nową, sformatowaną tablicę
+            [highScore, totalChops, coins, achievementsArrayLiteral, unlockedItemsJSON, equippedItemsJSON, userId]
         );
 
         res.status(200).json(result.rows[0]);
