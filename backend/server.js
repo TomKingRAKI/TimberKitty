@@ -1,3 +1,5 @@
+console.log('--- SERVER.JS v2 --- URUCHAMIAM NAJNOWSZĄ WERSJĘ KODU ---');
+
 // --- Importowanie bibliotek ---
 require('dotenv').config();
 const express = require('express');
