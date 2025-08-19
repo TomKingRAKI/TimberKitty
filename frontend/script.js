@@ -493,26 +493,19 @@ async function openLootbox(boxId, cardElement) {
 }
 
 async function playLootboxAnimation(wonItem, boxData) {
-    // 1. Przygotuj rolkę z przedmiotami
+    // 1. Przygotuj rolkę z przedmiotami (tak jak wcześniej)
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
     const reelItems = [];
-
-    // --- POPRAWKA TUTAJ ---
-    const reelLength = 150; // Znacznie dłuższa rolka, aby nie było pustki
-    const winnerIndex = reelLength - 8; // Umieśćmy zwycięzcę trochę dalej od końca
-    // --- KONIEC POPRAWKI ---
+    const reelLength = 150;
+    const winnerIndex = reelLength - 8;
 
     for (let i = 0; i < reelLength; i++) {
-        // Wybierz losowy przedmiot z puli
         const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
         reelItems.push(randomLoot);
     }
-
-    // 2. Wstaw wygrany przedmiot w konkretne miejsce
     reelItems[winnerIndex] = wonItem;
 
-    // 3. Stwórz elementy HTML dla każdego przedmiotu na rolce
     reelItems.forEach(loot => {
         const itemData = shopData[loot.itemId];
         const itemDiv = document.createElement('div');
@@ -521,31 +514,47 @@ async function playLootboxAnimation(wonItem, boxData) {
         animationReel.appendChild(itemDiv);
     });
 
-    // 4. Uruchom animację
+    // 2. Otwórz modal i przygotuj się do animacji
     openModal(lootboxAnimationModal);
+    animationReel.style.transform = 'translateX(0px)'; // Reset pozycji
 
-    // Ustaw rolkę w pozycji startowej (bez animacji)
-    animationReel.style.transition = 'none';
-    animationReel.style.transform = 'translateX(0px)';
+    // 3. --- NOWA LOGIKA ANIMACJI W JAVASCRIPT ---
+    const itemWidth = 120 + 20; // szerokość itemu + marginesy
+    const centerOffset = (canvas.width / 2) - (itemWidth / 2);
+    const randomJitter = (Math.random() - 0.5) * (itemWidth * 0.6);
+    const finalPosition = - (winnerIndex * itemWidth - centerOffset + randomJitter);
 
-    // Po krótkiej chwili, uruchom właściwą animację przewijania
-    setTimeout(() => {
-        const itemWidth = 120 + 20; // szerokość itemu + marginesy
-        const centerOffset = (canvas.width / 2) - (itemWidth / 2);
-        const randomJitter = (Math.random() - 0.5) * (itemWidth * 0.6);
-        const finalPosition = - (winnerIndex * itemWidth - centerOffset + randomJitter);
+    let startTime = null;
+    const duration = 7000; // Czas trwania animacji w milisekundach
 
-        animationReel.style.transition = 'transform 7s cubic-bezier(0.1, 0.7, 0.3, 1)';
-        animationReel.style.transform = `translateX(${finalPosition}px)`;
-    }, 100); // krótka pauza
+    function animationStep(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsedTime = timestamp - startTime;
 
-    // 5. Po zakończeniu animacji
-    setTimeout(() => {
-        const winnerDiv = animationReel.children[winnerIndex];
-        winnerDiv.classList.add('winner');
-        winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
-        animationCloseButton.classList.remove('hidden');
-    }, 7100); // Czas trwania animacji + mały bufor
+        // Oblicz postęp animacji (od 0 do 1)
+        const progress = Math.min(elapsedTime / duration, 1);
+
+        // Zastosuj "easing" - animacja zwalnia na końcu
+        const easedProgress = 1 - Math.pow(1 - progress, 4); 
+
+        // Oblicz aktualną pozycję rolki
+        const currentPosition = easedProgress * finalPosition;
+        animationReel.style.transform = `translateX(${currentPosition}px)`;
+
+        if (progress < 1) {
+            // Kontynuuj animację do następnej klatki
+            requestAnimationFrame(animationStep);
+        } else {
+            // Animacja zakończona
+            const winnerDiv = animationReel.children[winnerIndex];
+            winnerDiv.classList.add('winner');
+            winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
+            animationCloseButton.classList.remove('hidden');
+        }
+    }
+
+    // Rozpocznij pętlę animacji
+    requestAnimationFrame(animationStep);
 }
 
 function populateShopModalWithBox(boxId) {
