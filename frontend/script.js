@@ -1145,17 +1145,17 @@ function openInventoryHub() {
 function openShopHub() {
     shopHubGrid.innerHTML = ''; // Wyczyść siatkę przed wypełnieniem
 
-    // Dynamicznie stwórz przyciski dla każdej kategorii
-    for (const categoryKey in categoryNames) {
+    // Dynamicznie stwórz przyciski dla każdej skrzynki
+    for (const boxId in lootBoxData) {
+        const box = lootBoxData[boxId];
         const button = document.createElement('button');
-        button.className = 'category-button';
-        button.textContent = categoryNames[categoryKey]; // Ustaw nazwę kategorii
-        button.dataset.category = categoryKey; // Zapisz klucz kategorii
+        button.className = 'category-button'; // Użyjemy tego samego stylu co w kategoriach
+        button.innerHTML = `<div class="text-4xl">${box.icon}</div><div>${box.name}</div>`;
 
         button.addEventListener('click', () => {
             closeModal(shopHubModal); // Zamknij hub
-            populateShopModal(categoryKey); // Wypełnij modal przedmiotami z tej kategorii
-            openModal(shopModal); // Otwórz modal z przedmiotami
+            populateShopModalWithBox(box.id); // Wypełnij modal wybraną skrzynką
+            openModal(shopModal); // Otwórz modal ze skrzynką
         });
 
         shopHubGrid.appendChild(button);
@@ -1265,16 +1265,23 @@ i18next.on('languageChanged', () => {
     updateContent();
 });
 
-navShopButton.addEventListener('click', () => {
-    // Na telefonie, po prostu otwórz modal z pierwszą skrzynką
-    const firstBoxId = Object.keys(lootBoxData)[0];
-    populateShopModalWithBox(firstBoxId);
-    openModal(shopModal);
-});
+navShopButton.addEventListener('click', openShopHub);
 navAccountButton.addEventListener('click', openAccountHub);
 desktopAccountButton.addEventListener('click', openAccountHub);
 
-closeShopButton.addEventListener('click', () => closeModal(shopModal));
+closeShopButton.addEventListener('click', () => {
+    // Sprawdź, czy dolny pasek nawigacyjny jest aktualnie widoczny
+    const isMobileView = getComputedStyle(bottomNav).display !== 'none';
+
+    if (isMobileView) {
+        // Jeśli tak (jesteśmy na telefonie), wróć do huba sklepu
+        closeModal(shopModal);
+        openShopHub();
+    } else {
+        // Jeśli nie (jesteśmy na PC), po prostu zamknij modal
+        closeModal(shopModal);
+    }
+});
 shopModal.addEventListener('click', (e) => { if (e.target === shopModal) closeModal(shopModal); });
 
 closeShopHubButton.addEventListener('click', () => closeModal(shopHubModal));
