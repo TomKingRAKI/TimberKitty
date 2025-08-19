@@ -493,19 +493,23 @@ async function openLootbox(boxId, cardElement) {
 }
 
 async function playLootboxAnimation(wonItem, boxData) {
-    // --- CZĘŚĆ 1: Nieskończona, zapętlona animacja "mieszania" ---
+    // --- CZĘŚĆ 1: Płynna, zapętlona animacja "mieszania" ---
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
-    animationReel.classList.add('reel-shuffling'); // Włącz animację pętli
 
-    // Stwórz krótką, podwójną rolkę (np. 2x4 itemy) do zapętlania
+    // POPRAWKA 1: Tworzymy idealnie zapętlającą się rolkę
+    // Generujemy bazowy zestaw (np. 8 unikalnych itemów), a potem go duplikujemy,
+    // aby animacja CSS mogła się płynnie zapętlić.
     const shufflePool = [];
-    for (let i = 0; i < 8; i++) {
+    const shuffleLength = 8;
+    for (let i = 0; i < shuffleLength; i++) {
         const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
         shufflePool.push(randomLoot);
     }
+    // Duplikujemy zawartość, aby animacja była płynna
+    const finalShufflePool = [...shufflePool, ...shufflePool];
 
-    shufflePool.forEach(loot => {
+    finalShufflePool.forEach(loot => {
         const itemData = shopData[loot.itemId];
         const itemDiv = document.createElement('div');
         itemDiv.className = `reel-item rarity-${loot.rarity}`;
@@ -513,17 +517,21 @@ async function playLootboxAnimation(wonItem, boxData) {
         animationReel.appendChild(itemDiv);
     });
 
+    // Resetujemy pozycję i włączamy animację w CSS
+    animationReel.style.transition = 'none';
+    animationReel.style.transform = 'translateX(0px)';
+    animationReel.classList.add('reel-shuffling'); 
+
     openModal(lootboxAnimationModal);
 
     // --- CZĘŚĆ 2: Finałowa animacja zwalniania i pokazania wyniku ---
-    // Po kilku sekundach "mieszania", zatrzymaj pętlę i przygotuj finałową rolkę
     setTimeout(() => {
-        animationReel.classList.remove('reel-shuffling'); // Wyłącz animację pętli
+        animationReel.classList.remove('reel-shuffling'); // Wyłącz animację pętli w CSS
 
         // Przygotuj krótką, finałową rolkę z wygranym przedmiotem w środku
         const finalReelItems = [];
-        const finalReelLength = 15; // np. 15 przedmiotów
-        const winnerIndex = Math.floor(finalReelLength / 2); // Zwycięzca idealnie na środku
+        const finalReelLength = 30; // Dłuższa rolka dla lepszego efektu
+        const winnerIndex = finalReelLength - 5; 
 
         for (let i = 0; i < finalReelLength; i++) {
             const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
@@ -541,18 +549,20 @@ async function playLootboxAnimation(wonItem, boxData) {
             animationReel.appendChild(itemDiv);
         });
 
-        // Ustaw rolkę w pozycji startowej (daleko po lewej)
+        // POPRAWKA 2: Poprawne obliczenia dla animacji w lewo
         const itemWidth = 120 + 20; // 140px
         const viewportWidth = document.getElementById('animation-viewport').clientWidth;
-        const startPosition = -((finalReelLength - 5) * itemWidth);
+        const centerOffset = (viewportWidth / 2) - (itemWidth / 2);
+        const finalPosition = -(winnerIndex * itemWidth - centerOffset);
+
+        // Ustawiamy pozycję startową tuż za prawą krawędzią ekranu, aby wjechała płynnie
+        const startPosition = viewportWidth;
         animationReel.style.transition = 'none';
         animationReel.style.transform = `translateX(${startPosition}px)`;
 
         // Uruchom animację zwalniania do pozycji końcowej
         setTimeout(() => {
-            const centerOffset = (viewportWidth / 2) - (itemWidth / 2);
-            const finalPosition = -(winnerIndex * itemWidth - centerOffset);
-            animationReel.style.transition = 'transform 3s cubic-bezier(0.2, 1, 0.3, 1)';
+            animationReel.style.transition = 'transform 5s cubic-bezier(0.2, 1, 0.3, 1)';
             animationReel.style.transform = `translateX(${finalPosition}px)`;
         }, 50);
 
@@ -562,9 +572,9 @@ async function playLootboxAnimation(wonItem, boxData) {
             winnerDiv.classList.add('winner');
             winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
             animationCloseButton.classList.remove('hidden');
-        }, 3050);
+        }, 5050);
 
-    }, 4000); // Czas trwania animacji "mieszania" (4 sekundy)
+    }, 3000); // Czas trwania animacji "mieszania" (3 sekundy)
 }
 
 function populateShopModalWithBox(boxId) {
