@@ -592,8 +592,8 @@ async function openLootbox(boxId, cardElement) {
         // TODO: W przyszłości tutaj uruchomimy animację otwierania skrzynki
                 closeModal(shopModal); // Zamknij modal sklepu, aby zrobić miejsce
         playLootboxAnimation(
-            lootBoxData[boxId].lootPool.find(i => i.itemId === data.wonItem.id), // Znajdź info o rzadkości
-            lootBoxData[boxId]
+            boxData.lootPool.find(i => i.itemId === data.wonItem.id),
+            boxData
         );
 
         // Zaktualizuj dane w tle, gdy animacja trwa
