@@ -547,6 +547,15 @@ canvas {
     /* Płynne przejście będzie teraz kontrolowane w całości przez JavaScript */
 }
 
+.reel-item-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
 .reel-item {
     width: 120px;
     height: 120px;
@@ -562,8 +571,11 @@ canvas {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.reel-item.winner {
+.reel-item.winner .reel-item-content { /* Celujemy teraz w wewnętrzny element */
     transform: scale(1.2);
+}
+
+.reel-item.winner { /* Zewnętrzny element dostaje tylko cień */
     box-shadow: 0 0 30px var(--winner-color);
 }
 

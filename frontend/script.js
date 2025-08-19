@@ -512,7 +512,7 @@ async function playLootboxAnimation(wonItem, boxData) {
         const itemData = shopData[loot.itemId];
         const itemDiv = document.createElement('div');
         itemDiv.className = `reel-item rarity-${loot.rarity}`;
-        itemDiv.innerHTML = `<span>${itemData.icon}</span>`;
+        itemDiv.innerHTML = `<div class="reel-item-content"><span>${itemData.icon}</span></div>`;
         animationReel.appendChild(itemDiv);
     });
 
