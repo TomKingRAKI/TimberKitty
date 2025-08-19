@@ -218,6 +218,19 @@
         Kontynuuj
     </button>
 </div>
+<div id="item-reveal-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[70] p-4">
+    <div id="reveal-modal-content" class="modal-content panel flex flex-col items-center gap-4 p-8 rounded-lg text-center">
+        <h2 class="text-2xl font-bold text-gray-400 -mb-2">Zdobyto Nowy Przedmiot!</h2>
+        <div id="reveal-item-rarity" class="text-xl font-bold">Rzadkość</div>
+        <div id="reveal-item-icon" class="w-48 h-48 item-slot flex justify-center items-center text-8xl rounded-lg">
+            </div>
+        <h3 id="reveal-item-name" class="text-4xl font-bold text-shadow">Nazwa Przedmiotu</h3>
+        <p id="reveal-item-description" class="text-lg text-gray-300 max-w-sm"></p>
+        <button id="reveal-close-button" class="mt-4 px-8 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-2xl">
+            Super!
+        </button>
+    </div>
+</div>
     <div id="notification-container" class="fixed top-5 right-5 z-[100] flex flex-col items-end gap-3"></div>
     <script src="script.js"></script>
 </body>

@@ -54,6 +54,13 @@ const lootboxAnimationModal = document.getElementById('lootbox-animation-modal')
 const animationReel = document.getElementById('animation-reel');
 const animationTicker = document.getElementById('animation-ticker');
 const animationCloseButton = document.getElementById('animation-close-button');
+const itemRevealModal = document.getElementById('item-reveal-modal');
+const revealModalContent = document.getElementById('reveal-modal-content');
+const revealItemRarity = document.getElementById('reveal-item-rarity');
+const revealItemIcon = document.getElementById('reveal-item-icon');
+const revealItemName = document.getElementById('reveal-item-name');
+const revealItemDescription = document.getElementById('reveal-item-description');
+const revealCloseButton = document.getElementById('reveal-close-button');
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
@@ -545,14 +552,33 @@ async function playLootboxAnimation(wonItem, boxData) {
             requestAnimationFrame(animationStep);
         } else {
             // Animacja zakończona
-            const winnerDiv = animationReel.children[winnerIndex];
-            winnerDiv.classList.add('winner');
-            winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
-            animationCloseButton.classList.remove('hidden');
+            closeModal(lootboxAnimationModal); // Zamknij modal animacji
+            // Znajdź pełne dane wylosowanego przedmiotu
+            const wonItemData = shopData[wonItem.itemId];
+            // Pokaż nowy modal z prezentacją
+            showItemRevealModal(wonItemData, wonItem.rarity);
         }
     }
 
     requestAnimationFrame(animationStep);
+}
+
+function showItemRevealModal(wonItemData, rarity) {
+    // Wyczyść stare klasy rzadkości
+    revealModalContent.classList.remove('reveal-common', 'reveal-rare', 'reveal-legendary');
+    revealItemRarity.classList.remove('rarity-common', 'rarity-rare', 'rarity-legendary');
+
+    // Dodaj nowe, poprawne klasy
+    revealModalContent.classList.add(`reveal-${rarity}`);
+    revealItemRarity.classList.add(`rarity-${rarity}`);
+
+    // Wypełnij modal danymi przedmiotu
+    revealItemIcon.innerHTML = `<span>${wonItemData.icon}</span>`;
+    revealItemName.textContent = wonItemData.name;
+    revealItemDescription.textContent = wonItemData.description;
+    revealItemRarity.textContent = rarity.charAt(0).toUpperCase() + rarity.slice(1); // np. "Rare"
+
+    openModal(itemRevealModal);
 }
 
 function populateShopModalWithBox(boxId) {
@@ -1180,4 +1206,8 @@ desktopEquipmentButton.addEventListener('click', openInventoryHub);
 
 animationCloseButton.addEventListener('click', () => {
     closeModal(lootboxAnimationModal);
+});
+
+revealCloseButton.addEventListener('click', () => {
+    closeModal(itemRevealModal);
 });

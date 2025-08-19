@@ -586,3 +586,18 @@ canvas {
 .rarity-common { border-color: #6b7280; }
 .rarity-rare { border-color: #3b82f6; }
 .rarity-legendary { border-color: #f59e0b; }
+
+/* Style dla modala prezentacji przedmiotu */
+#reveal-modal-content {
+    border-width: 4px;
+    transition: border-color 0.3s ease;
+}
+
+/* Kolory ramek w zależności od rzadkości */
+.reveal-common { border-color: #6b7280; }
+.reveal-rare { border-color: #3b82f6; }
+.reveal-legendary { border-color: #f59e0b; }
+
+#reveal-item-rarity.rarity-common { color: #6b7280; }
+#reveal-item-rarity.rarity-rare { color: #3b82f6; }
+#reveal-item-rarity.rarity-legendary { color: #f59e0b; }
