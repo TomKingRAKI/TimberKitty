@@ -1237,12 +1237,27 @@ function showLoginButton() {
 // Event Listeners
 // Event Listeners
 
-plButton.addEventListener('click', () => {
-    i18next.changeLanguage('pl');
-});
+function safeChangeLanguage(lng) {
+  const i18n = window.i18next;
+  if (i18n && i18n.isInitialized) {
+    i18n.changeLanguage(lng);
+  } else {
+    // zapamiętaj wybór i poczekaj aż i18next będzie gotowy
+    localStorage.setItem('i18nextLng', lng);
+    const iv = setInterval(() => {
+      if (window.i18next && i18next.isInitialized) {
+        clearInterval(iv);
+        i18next.changeLanguage(lng);
+      }
+    }, 50);
+  }
+}
 
-enButton.addEventListener('click', () => {
-    i18next.changeLanguage('en');
+plButton.addEventListener('click', () => safeChangeLanguage('pl'));
+enButton.addEventListener('click', () => safeChangeLanguage('en'));
+
+i18next.on('languageChanged', () => {
+  updateContent();
 });
 
 // i18next automatycznie wykryje zmianę i uruchomi tę funkcję
