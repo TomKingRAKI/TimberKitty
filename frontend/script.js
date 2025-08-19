@@ -1292,7 +1292,6 @@ window.onresize = () => {
 window.onload = async () => {
     try {
         // Czekaj na załadowanie tłumaczeń
-        await i18next.init(i18next.options);
         updateContent();
         console.log('Tłumaczenia załadowane!');
 
