@@ -135,39 +135,26 @@ app.post('/api/stats', async (req, res) => {
         return res.status(401).json({ message: 'Musisz być zalogowany, aby zapisać postęp.' });
     }
 
-    // Pobieramy klienta z puli połączeń
-    const client = await pool.connect();
-
     try {
-        // Rozpoczynamy transakcję
-        await client.query('BEGIN');
-
         const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems } = req.body;
         const userId = req.user.id;
 
         const unlockedItemsJSON = JSON.stringify(unlockedItems);
         const equippedItemsJSON = JSON.stringify(equippedItems);
 
-        const result = await client.query(
+        // Używamy bezpośrednio puli połączeń, bez ręcznego BEGIN/COMMIT
+        const result = await pool.query(
             `UPDATE users 
              SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6 
              WHERE id = $7 RETURNING *`,
             [highScore, totalChops, coins, unlockedAchievements, unlockedItemsJSON, equippedItemsJSON, userId]
         );
 
-        // Zatwierdzamy transakcję - to jest kluczowy moment!
-        await client.query('COMMIT');
-
         res.status(200).json(result.rows[0]);
 
     } catch (err) {
-        // W razie błędu, wycofujemy wszystkie zmiany w transakcji
-        await client.query('ROLLBACK');
-        console.error('Błąd zapisu statystyk (transakcja wycofana):', err);
+        console.error('Błąd zapisu statystyk:', err);
         res.status(500).json({ message: 'Błąd serwera podczas zapisywania postępu.' });
-    } finally {
-        // Niezależnie od wyniku, ZAWSZE zwalniamy klienta z powrotem do puli
-        client.release();
     }
 });
 
