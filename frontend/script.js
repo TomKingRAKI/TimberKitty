@@ -234,70 +234,89 @@ const shopData = {
 
 // --- Baza Danych Skrzynek (Lootboxów) ---
 const lootBoxData = {
-    'box_hats': {
-        id: 'box_hats',
-        name: 'Skrzynia Kapelusznika',
-        price: 200,
-        description: 'Zawiera losową czapkę.',
-        category: 'hats',
-        icon: '📦',
-        lootPool: [
-            // Im wyższa "waga" (weight), tym większa szansa na wylosowanie
-            { itemId: 'hat_tophat', rarity: 'common', weight: 10 },
-            { itemId: 'hat_grad', rarity: 'rare', weight: 4 },
-            { itemId: 'hat_crown', rarity: 'legendary', weight: 1 }
-        ]
-    },
-    'box_axes': {
-        id: 'box_axes',
-        name: 'Skrzynia Drwala',
-        price: 400,
-        description: 'Zawiera losową siekierę.',
-        category: 'axes',
-        icon: '📦',
-        lootPool: [
-            { itemId: 'axe_sword', rarity: 'common', weight: 10 },
-            { itemId: 'axe_pickaxe', rarity: 'rare', weight: 4 },
-            { itemId: 'axe_golden', rarity: 'legendary', weight: 1 }
-        ]
-    },
-    'box_characters': {
-        id: 'box_characters',
-        name: 'Skrzynia Bohaterów',
-        price: 800,
-        description: 'Odblokowuje losową postać.',
-        category: 'characters',
-        icon: '🎁',
-        lootPool: [
-            { itemId: 'char_santa', rarity: 'common', weight: 10 },
-            { itemId: 'char_vampire', rarity: 'rare', weight: 4 },
-            { itemId: 'char_robot', rarity: 'legendary', weight: 1 }
-        ]
-    },
-    'box_accessories': {
-        id: 'box_accessories',
-        name: 'Paczka z Akcesoriami',
-        price: 500,
-        description: 'Zawiera losowe akcesorium.',
-        category: 'accessories',
-        icon: '🎁',
-        lootPool: [
-            { itemId: 'acc_glasses', rarity: 'common', weight: 6 },
-            { itemId: 'acc_scarf', rarity: 'rare', weight: 3 }
-        ]
-    },
-    'box_pets': {
-        id: 'box_pets',
-        name: 'Kosz ze Zwierzakiem',
-        price: 3000,
-        description: 'Może zawierać uroczego towarzysza.',
-        category: 'pets',
-        icon: '🎀',
-        lootPool: [
-            { itemId: 'pet_dog', rarity: 'legendary', weight: 1 },
-            { itemId: 'pet_cat', rarity: 'legendary', weight: 1 }
-        ]
-    }
+    'hats': [
+        {
+            id: 'box_hats_1',
+            name: 'Zwykła Skrzynia Kapelusznika',
+            price: 200,
+            description: 'Zawiera pospolite i rzadkie czapki.',
+            icon: '📦',
+            enabled: true,
+            lootPool: [
+                { itemId: 'hat_tophat', rarity: 'common', weight: 10 },
+                { itemId: 'hat_grad', rarity: 'rare', weight: 4 }
+            ]
+        },
+        {
+            id: 'box_hats_2',
+            name: 'Legendarna Skrzynia Koronna',
+            price: 1500,
+            description: 'Gwarantowana legendarna czapka!',
+            icon: '👑',
+            enabled: false, // Ta skrzynka jest na razie niedostępna
+            lootPool: [
+                { itemId: 'hat_crown', rarity: 'legendary', weight: 1 }
+            ]
+        }
+    ],
+    'axes': [
+        {
+            id: 'box_axes_1',
+            name: 'Skrzynia Drwala',
+            price: 400,
+            description: 'Zawiera losową siekierę.',
+            icon: '📦',
+            enabled: true,
+            lootPool: [
+                { itemId: 'axe_sword', rarity: 'common', weight: 10 },
+                { itemId: 'axe_pickaxe', rarity: 'rare', weight: 4 },
+                { itemId: 'axe_golden', rarity: 'legendary', weight: 1 }
+            ]
+        }
+    ],
+    'characters': [
+        {
+            id: 'box_characters_1',
+            name: 'Skrzynia Bohaterów',
+            price: 800,
+            description: 'Odblokowuje losową postać.',
+            icon: '🎁',
+            enabled: true,
+            lootPool: [
+                { itemId: 'char_santa', rarity: 'common', weight: 10 },
+                { itemId: 'char_vampire', rarity: 'rare', weight: 4 },
+                { itemId: 'char_robot', rarity: 'legendary', weight: 1 }
+            ]
+        }
+    ],
+    'accessories': [
+         {
+            id: 'box_accessories_1',
+            name: 'Paczka z Akcesoriami',
+            price: 500,
+            description: 'Zawiera losowe akcesorium.',
+            icon: '🎁',
+            enabled: true,
+            lootPool: [
+                { itemId: 'acc_glasses', rarity: 'common', weight: 6 },
+                { itemId: 'acc_scarf', rarity: 'rare', weight: 3 }
+            ]
+        }
+    ],
+    'pets': [
+        {
+            id: 'box_pets_1',
+            name: 'Kosz ze Zwierzakiem',
+            price: 3000,
+            description: 'Może zawierać uroczego towarzysza.',
+            icon: '🎀',
+            enabled: true,
+            lootPool: [
+                { itemId: 'pet_dog', rarity: 'legendary', weight: 1 },
+                { itemId: 'pet_cat', rarity: 'legendary', weight: 1 }
+            ]
+        }
+    ]
 };
 
 const categoryToSlotMap = {
@@ -488,29 +507,38 @@ function populateShopModal(categoryKey) {
 
 function populateShopPreview() {
     shopPreviewContainer.innerHTML = '';
-
-    // Iterujemy teraz po skrzynkach, a nie po przedmiotach
-    Object.values(lootBoxData).forEach(box => {
+    // Iterujemy po naszych starych, dobrych nazwach kategorii
+    for (const categoryKey in categoryNames) {
         const categoryContainer = document.createElement('div');
         categoryContainer.className = 'w-full shop-category-preview rounded-lg p-2';
 
         categoryContainer.addEventListener('click', () => {
-            populateShopModalWithBox(box.id); // Używamy nowej funkcji
+            populateShopModalWithBoxes(categoryKey); // Otwórz modal ze skrzynkami z tej kategorii
             openModal(shopModal);
         });
 
         const title = document.createElement('h3');
         title.className = 'text-xl font-bold text-shadow mb-2 flex justify-between items-center';
-        title.innerHTML = `<span>${box.name}</span><span class="font-bold text-xl text-gray-500">${box.icon}</span>`;
+        title.innerHTML = `<span>${categoryNames[categoryKey]}</span><span class="font-bold text-xl text-gray-500">+</span>`;
 
-        const description = document.createElement('p');
-        description.className = 'text-sm text-gray-400';
-        description.textContent = box.description;
+        const previewGrid = document.createElement('div');
+        previewGrid.className = 'flex gap-3 w-full'; // Zmieniono na flex dla lepszego wyglądu
+
+        // Pokaż ikonki skrzynek z danej kategorii
+        if (lootBoxData[categoryKey]) {
+            lootBoxData[categoryKey].slice(0, 4).forEach(box => {
+                const slot = document.createElement('div');
+                slot.className = 'item-slot rounded-md text-2xl';
+                if (!box.enabled) slot.classList.add('opacity-50');
+                slot.innerHTML = box.icon;
+                previewGrid.appendChild(slot);
+            });
+        }
 
         categoryContainer.appendChild(title);
-        categoryContainer.appendChild(description);
+        categoryContainer.appendChild(previewGrid);
         shopPreviewContainer.appendChild(categoryContainer);
-    });
+    }
 }
 
 
@@ -523,7 +551,21 @@ async function openLootbox(boxId, cardElement) {
     }
 
     const buyButton = cardElement.querySelector('.buy-button');
-    if (buyButton.disabled) return; // Zapobiegaj wielokrotnym kliknięciom
+    if (buyButton.disabled) return;
+
+    // ZNAJDŹ SKRZYNKĘ W NOWEJ STRUKTURZE DANYCH
+    let boxData = null;
+    for (const category in lootBoxData) {
+        const foundBox = lootBoxData[category].find(b => b.id === boxId);
+        if (foundBox) {
+            boxData = foundBox;
+            break;
+        }
+    }
+    if (!boxData) {
+         showNotification('Nie znaleziono takiej skrzynki!', 'error');
+         return;
+    }
 
     buyButton.textContent = 'Otwieram...';
     buyButton.disabled = true;
@@ -669,41 +711,47 @@ function showItemRevealModal(wonItemData, rarity) {
     openModal(itemRevealModal);
 }
 
-function populateShopModalWithBox(boxId) {
-    const box = lootBoxData[boxId];
-    if (!box) return;
+function populateShopModalWithBoxes(categoryKey) {
+    const boxes = lootBoxData[categoryKey];
+    if (!boxes) return;
 
-    shopGrid.innerHTML = ''; // Wyczyść starą siatkę
-    shopModalTitle.textContent = box.name;
+    shopGrid.innerHTML = '';
+    shopModalTitle.textContent = categoryNames[categoryKey];
 
-    // Stwórz jedną, dużą kartę dla skrzynki
-    const card = document.createElement('div');
-    card.className = 'shop-item-slot col-span-2 md:col-span-4'; // Rozciągnij na całą szerokość
+    boxes.forEach(box => {
+        const card = document.createElement('div');
+        card.className = 'shop-item-slot col-span-2 md:col-span-4';
+        if (!box.enabled) {
+            card.classList.add('opacity-50', 'cursor-not-allowed');
+        }
 
-    // Lista możliwych nagród do wyświetlenia
-    const possibleLoot = box.lootPool.map(loot => {
-        const item = shopData[loot.itemId];
-        return `<span class="text-2xl" title="${item.name}">${item.icon}</span>`;
-    }).join(' ');
+        const possibleLoot = box.lootPool.map(loot => {
+            const item = shopData[loot.itemId];
+            return `<span class="text-2xl" title="${item.name}">${item.icon}</span>`;
+        }).join(' ');
 
-    let bottomContent = `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${box.price} monet</div><button class="buy-button">KUP i OTWÓRZ</button></div>`;
+        let bottomContent = box.enabled
+            ? `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${box.price} monet</div><button class="buy-button">KUP i OTWÓRZ</button></div>`
+            : `<div class="owned-text">WKRÓTCE DOSTĘPNE</div>`;
 
-    card.innerHTML = `
-        <div class="text-6xl">${box.icon}</div>
-        <div class="font-bold text-base">${box.description}</div>
-        <div class="text-sm text-gray-400 px-1 leading-tight mt-4">Możliwa zawartość:</div>
-        <div class="flex gap-2 justify-center">${possibleLoot}</div>
-        ${bottomContent}
-    `;
+        card.innerHTML = `
+            <div class="text-6xl">${box.icon}</div>
+            <div class="font-bold text-base">${box.name}</div>
+            <div class="text-sm text-gray-400 px-1 leading-tight">${box.description}</div>
+            <div class="text-sm text-gray-400 px-1 leading-tight mt-4">Możliwa zawartość:</div>
+            <div class="flex gap-2 justify-center">${possibleLoot}</div>
+            ${bottomContent}
+        `;
 
-    card.querySelector('.buy-button').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openLootbox(boxId, card);
+        if (box.enabled) {
+            card.querySelector('.buy-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                openLootbox(box.id, card); // Przekazujemy ID konkretnej skrzynki
+            });
+        }
+        shopGrid.appendChild(card);
     });
-
-    shopGrid.appendChild(card);
 }
-
 function showNotification(message, type = 'success') {
     const notif = document.createElement('div');
     notif.className = `notification ${type}`;
