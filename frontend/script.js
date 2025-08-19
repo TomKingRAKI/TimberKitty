@@ -2,21 +2,38 @@
 const BACKEND_URL = 'https://timberman-backend.onrender.com';
 
 // --- Konfiguracja Tłumaczeń (i18next) ---
-i18next
-    .use(i18nextHttpBackend) // Użyj wtyczki do wczytywania plików
-    .use(i18nextBrowserLanguageDetector) // Użyj wtyczki do wykrywania języka
+function initI18n() {
+  const i18n = window.i18next;
+  const Backend = window.i18nextHttpBackend;
+  const Detector = window.i18nextBrowserLanguageDetector;
+
+  if (!i18n) {
+    console.error('i18next core nie jest załadowany.');
+    return;
+  }
+  if (!Backend || !Detector) {
+    // Pluginy jeszcze nie są dostępne — spróbujemy za chwilę.
+    setTimeout(initI18n, 30);
+    return;
+  }
+
+  i18n
+    .use(Backend)
+    .use(Detector)
     .init({
-        fallbackLng: 'pl', // Język awaryjny
-        debug: true, // Włącz tryb debugowania
-        detection: {
-            // Kolejność wykrywania: najpierw localStorage, potem język przeglądarki
-            order: ['localStorage', 'navigator'],
-            caches: ['localStorage']
-        },
-        backend: {
-            loadPath: 'locales/{{lng}}/translation.json'
-        }
+      fallbackLng: 'pl',
+      debug: true,
+      detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'] },
+      backend: { loadPath: 'locales/{{lng}}/translation.json' }
+    }, (err) => {
+      if (err) console.error('i18next init error:', err);
+      // Po inicjalizacji przetłumacz widoczne teksty
+      if (typeof updateContent === 'function') updateContent();
     });
+}
+
+// Odpal próbę inicjalizacji (jeśli pluginów jeszcze nie ma, funkcja sama ponowi próbę)
+initI18n();
 
 // Elementy UI
 const authButton = document.getElementById('auth-button');
@@ -1155,6 +1172,7 @@ function openAccountHub() {
 }
 
 function updateContent() {
+     if (!window.i18next || !i18next.isInitialized) return;
     const elements = document.querySelectorAll('[data-i18n]');
     elements.forEach(el => {
         const key = el.getAttribute('data-i18n');
