@@ -493,7 +493,6 @@ async function openLootbox(boxId, cardElement) {
 }
 
 async function playLootboxAnimation(wonItem, boxData) {
-    // 1. Przygotuj rolkę z przedmiotami (tak jak wcześniej)
     animationReel.innerHTML = '';
     animationCloseButton.classList.add('hidden');
     const reelItems = [];
@@ -514,38 +513,32 @@ async function playLootboxAnimation(wonItem, boxData) {
         animationReel.appendChild(itemDiv);
     });
 
-    // 2. Otwórz modal i przygotuj się do animacji
     openModal(lootboxAnimationModal);
-    animationReel.style.transform = 'translateX(0px)'; // Reset pozycji
+    animationReel.style.transform = 'translateX(0px)';
 
-    // 3. --- NOWA LOGIKA ANIMACJI W JAVASCRIPT ---
-    const itemWidth = 120 + 20; // szerokość itemu + marginesy
+    const itemWidth = 120 + 20;
     const centerOffset = (canvas.width / 2) - (itemWidth / 2);
     const randomJitter = (Math.random() - 0.5) * (itemWidth * 0.6);
     const finalPosition = - (winnerIndex * itemWidth - centerOffset + randomJitter);
 
     let startTime = null;
-    const duration = 4000; // Czas trwania animacji w milisekundach
+    // --- ZMIANA 1: Wydłużamy czas animacji ---
+    const duration = 10000; // 10 sekund zamiast 7
 
     function animationStep(timestamp) {
         if (!startTime) startTime = timestamp;
         const elapsedTime = timestamp - startTime;
-
-        // Oblicz postęp animacji (od 0 do 1)
         const progress = Math.min(elapsedTime / duration, 1);
 
-        // Zastosuj "easing" - animacja zwalnia na końcu
-        const easedProgress = 1 - Math.pow(1 - progress, 4); 
+        // --- ZMIANA 2: Używamy stałej, liniowej prędkości ---
+        const easedProgress = progress; // Usunięto skomplikowaną funkcję zwalniania
 
-        // Oblicz aktualną pozycję rolki
         const currentPosition = easedProgress * finalPosition;
         animationReel.style.transform = `translateX(${currentPosition}px)`;
 
         if (progress < 1) {
-            // Kontynuuj animację do następnej klatki
             requestAnimationFrame(animationStep);
         } else {
-            // Animacja zakończona
             const winnerDiv = animationReel.children[winnerIndex];
             winnerDiv.classList.add('winner');
             winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
@@ -553,7 +546,6 @@ async function playLootboxAnimation(wonItem, boxData) {
         }
     }
 
-    // Rozpocznij pętlę animacji
     requestAnimationFrame(animationStep);
 }
 
