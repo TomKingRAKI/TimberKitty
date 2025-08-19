@@ -1,0 +1,46 @@
+{
+  "title": "TimberKitty",
+  "buttons": {
+    "loading": "Ładowanie...",
+    "logout": "Wyloguj się",
+    "login": "Zaloguj się z Google"
+  },
+  "statsPanel": {
+    "title": "Profil Gracza",
+    "guest": "Gość",
+    "coins": "Monety",
+    "menu": "Menu",
+    "equipment": "Ekwipunek 🎒",
+    "account": "Konto 👤"
+  },
+  "startScreen": {
+    "ready": "Gotowy?",
+    "prompt": "Kliknij przycisk, aby rozpocząć!",
+    "play": "Graj!",
+    "reset": "Zresetuj postęp"
+  },
+  "instructions": {
+    "controls": "Użyj klawiszy (A/D, J/L, ←/→) lub kliknij, aby ścinać drzewo.",
+    "avoid": "Omijaj gałęzie!"
+  },
+  "shopPanel": {
+    "title": "Sklep"
+  },
+  "accountHub": {
+    "title": "Konto Gracza",
+    "tabs": {
+      "stats": "Statystyki",
+      "achievements": "Osiągnięcia",
+      "profile": "Profil"
+    },
+    "stats_tab": {
+      "high_score": "Najlepszy Wynik",
+      "total_chops": "Suma Ściętych",
+      "leaderboard": "Ranking 📈"
+    },
+    "profile_tab": {
+      "equipment": "Ekwipunek 🎒",
+      "edit_profile": "Edytuj Profil ✏️"
+    }
+  }
+}

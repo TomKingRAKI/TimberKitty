@@ -1,0 +1,46 @@
+{
+  "title": "TimberKitty",
+  "buttons": {
+    "loading": "Loading...",
+    "logout": "Log Out",
+    "login": "Log in with Google"
+  },
+  "statsPanel": {
+    "title": "Player Profile",
+    "guest": "Guest",
+    "coins": "Coins",
+    "menu": "Menu",
+    "equipment": "Equipment 🎒",
+    "account": "Account 👤"
+  },
+  "startScreen": {
+    "ready": "Ready?",
+    "prompt": "Click the button to start!",
+    "play": "Play!",
+    "reset": "Reset progress"
+  },
+  "instructions": {
+    "controls": "Use keys (A/D, J/L, ←/→) or click to chop the tree.",
+    "avoid": "Avoid the branches!"
+  },
+  "shopPanel": {
+    "title": "Shop"
+  },
+  "accountHub": {
+    "title": "Player Account",
+    "tabs": {
+      "stats": "Statistics",
+      "achievements": "Achievements",
+      "profile": "Profile"
+    },
+    "stats_tab": {
+      "high_score": "High Score",
+      "total_chops": "Total Chops",
+      "leaderboard": "Leaderboard 📈"
+    },
+    "profile_tab": {
+      "equipment": "Equipment 🎒",
+      "edit_profile": "Edit Profile ✏️"
+    }
+  }
+}

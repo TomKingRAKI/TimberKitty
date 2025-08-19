@@ -1,11 +1,30 @@
 // --- Ustawienia gry ---
 const BACKEND_URL = 'https://timberman-backend.onrender.com';
 
+// --- Konfiguracja Tłumaczeń (i18next) ---
+i18next
+    .use(i18nextHttpBackend) // Użyj wtyczki do wczytywania plików
+    .use(i18nextBrowserLanguageDetector) // Użyj wtyczki do wykrywania języka
+    .init({
+        fallbackLng: 'pl', // Język awaryjny
+        debug: true, // Włącz tryb debugowania
+        detection: {
+            // Kolejność wykrywania: najpierw localStorage, potem język przeglądarki
+            order: ['localStorage', 'navigator'],
+            caches: ['localStorage']
+        },
+        backend: {
+            loadPath: 'locales/{{lng}}/translation.json'
+        }
+    });
+
 // Elementy UI
 const authButton = document.getElementById('auth-button');
 const mainAvatarContainer = document.getElementById('main-avatar-container');
 const mainUsername = document.getElementById('main-username');
 const coinsStatEl = document.getElementById('coinsStat');
+const plButton = document.getElementById('pl-button');
+const enButton = document.getElementById('en-button');
 
 // Elementy gry
 const canvas = document.getElementById('gameCanvas');
@@ -1135,6 +1154,23 @@ function openAccountHub() {
     openModal(accountHubModal);
 }
 
+function updateContent() {
+    const elements = document.querySelectorAll('[data-i18n]');
+    elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = i18next.t(key);
+    });
+
+    // Aktualizuj, który przycisk języka jest aktywny
+    if (i18next.language === 'pl') {
+        plButton.classList.add('active-lang');
+        enButton.classList.remove('active-lang');
+    } else {
+        enButton.classList.add('active-lang');
+        plButton.classList.remove('active-lang');
+    }
+}
+
 // Logika przełączania zakładek w modalu Konta
 const tabs = document.querySelectorAll('.tab-button');
 const tabContents = document.querySelectorAll('.tab-content');
@@ -1182,6 +1218,20 @@ function showLoginButton() {
 
 // Event Listeners
 // Event Listeners
+
+plButton.addEventListener('click', () => {
+    i18next.changeLanguage('pl');
+});
+
+enButton.addEventListener('click', () => {
+    i18next.changeLanguage('en');
+});
+
+// i18next automatycznie wykryje zmianę i uruchomi tę funkcję
+i18next.on('languageChanged', () => {
+    updateContent();
+});
+
 navShopButton.addEventListener('click', () => {
     // Na telefonie, po prostu otwórz modal z pierwszą skrzynką
     const firstBoxId = Object.keys(lootBoxData)[0];
@@ -1241,16 +1291,24 @@ window.onresize = () => {
 
 window.onload = async () => {
     try {
+        // Czekaj na załadowanie tłumaczeń
+        await i18next.init(i18next.options);
+        updateContent();
+        console.log('Tłumaczenia załadowane!');
+
         startLoadingAnimation(); // Rozpocznij animację
-        // Uruchom ładowanie obu zasobów równocześnie
+
+        // Uruchom ładowanie zasobów równocześnie
         await Promise.all([
             loadSprites(),
             loadSounds()
         ]);
+
         showStartScreen();
         checkLoginStatus();
+
     } catch (error) {
-        console.error("Nie udało się załadować zasobów gry:", error);
+        console.error("Błąd inicjalizacji gry:", error);
     }
 };
 

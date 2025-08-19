@@ -601,3 +601,17 @@ canvas {
 #reveal-item-rarity.rarity-common { color: #6b7280; }
 #reveal-item-rarity.rarity-rare { color: #3b82f6; }
 #reveal-item-rarity.rarity-legendary { color: #f59e0b; }
+
+/* Style dla przełącznika języka */
+.lang-button {
+    padding: 0.25rem 0.5rem;
+    font-weight: bold;
+    color: #9ca3af; /* gray-400 */
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out;
+}
+
+.lang-button.active-lang, .lang-button:hover {
+    color: #f59e0b; /* amber-500 */
+    background-color: rgba(255, 255, 255, 0.1);
+}
