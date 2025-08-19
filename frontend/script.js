@@ -497,7 +497,7 @@ async function playLootboxAnimation(wonItem, boxData) {
     animationCloseButton.classList.add('hidden');
     const reelItems = [];
     const reelLength = 50;
-    const winnerIndex = reelLength - 8;
+    const winnerIndex = reelLength - 1;
 
     for (let i = 0; i < reelLength; i++) {
         const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
