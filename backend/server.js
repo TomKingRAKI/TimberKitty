@@ -17,6 +17,86 @@ const pool = new Pool({
     }
 });
 
+const shopData = {     char_santa: { id: 'char_santa', name: 'Święty', category: 'characters', icon: '🧑‍🎄', price: 500, description: 'Dłuższy czas za cięcie (+0.5s)', bonus: { type: 'timeGainBonus', value: 0.5 } },
+    char_vampire: { id: 'char_vampire', name: 'Wampir', category: 'characters', icon: '🧛', price: 750, description: 'Dłuższy czas za cięcie (+0.75s)', bonus: { type: 'timeGainBonus', value: 0.75 } },
+    char_robot: { id: 'char_robot', name: 'Robot', category: 'characters', icon: '🤖', price: 1200, description: 'Dłuższy czas za cięcie (+1s)', bonus: { type: 'timeGainBonus', value: 1.0 } },
+    hat_tophat: { id: 'hat_tophat', name: 'Cylinder', category: 'hats', icon: '🎩', price: 150, description: 'Spowalnia czas o 5%', bonus: { type: 'timerSlowdown', value: 0.05 } },
+    hat_grad: { id: 'hat_grad', name: 'Czapka Absolwenta', category: 'hats', icon: '🎓', price: 300, description: 'Spowalnia czas o 10%', bonus: { type: 'timerSlowdown', value: 0.10 } },
+    hat_crown: { id: 'hat_crown', name: 'Korona', category: 'hats', icon: '👑', price: 1000, description: 'Spowalnia czas o 15%', bonus: { type: 'timerSlowdown', value: 0.15 } },
+    axe_sword: { id: 'axe_sword', name: 'Miecz', category: 'axes', icon: '⚔️', price: 200, description: '+1 pkt za cięcie', bonus: { type: 'pointsPerChop', value: 1 } },
+    axe_pickaxe: { id: 'axe_pickaxe', name: 'Kilof', category: 'axes', icon: '⛏️', price: 400, description: '+2 pkt za cięcie', bonus: { type: 'pointsPerChop', value: 2 } },
+    axe_golden: { id: 'axe_golden', name: 'Złota Siekiera', category: 'axes', icon: '🪓', price: 800, description: '+3 pkt za cięcie', bonus: { type: 'pointsPerChop', value: 3 } },
+    acc_glasses: { id: 'acc_glasses', name: 'Okulary 3D', category: 'accessories', icon: '🕶️', price: 300, description: 'Monety +10%', bonus: { type: 'coinMultiplier', value: 0.1 } },
+    acc_scarf: { id: 'acc_scarf', name: 'Szalik', category: 'accessories', icon: '🧣', price: 500, description: 'Monety +20%', bonus: { type: 'coinMultiplier', value: 0.2 } },
+    pet_dog: { id: 'pet_dog', name: 'Piesek', category: 'pets', icon: '🐶', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } },
+    pet_cat: { id: 'pet_cat', name: 'Kotek', category: 'pets', icon: '🐱', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } }, };
+const lootBoxData = {
+    'box_hats': {
+        id: 'box_hats',
+        name: 'Skrzynia Kapelusznika',
+        price: 200,
+        description: 'Zawiera losową czapkę.',
+        category: 'hats',
+        icon: '📦',
+        lootPool: [
+            // Im wyższa "waga" (weight), tym większa szansa na wylosowanie
+            { itemId: 'hat_tophat', rarity: 'common', weight: 10 },
+            { itemId: 'hat_grad', rarity: 'rare', weight: 4 },
+            { itemId: 'hat_crown', rarity: 'legendary', weight: 1 }
+        ]
+    },
+    'box_axes': {
+        id: 'box_axes',
+        name: 'Skrzynia Drwala',
+        price: 400,
+        description: 'Zawiera losową siekierę.',
+        category: 'axes',
+        icon: '📦',
+        lootPool: [
+            { itemId: 'axe_sword', rarity: 'common', weight: 10 },
+            { itemId: 'axe_pickaxe', rarity: 'rare', weight: 4 },
+            { itemId: 'axe_golden', rarity: 'legendary', weight: 1 }
+        ]
+    },
+    'box_characters': {
+        id: 'box_characters',
+        name: 'Skrzynia Bohaterów',
+        price: 800,
+        description: 'Odblokowuje losową postać.',
+        category: 'characters',
+        icon: '🎁',
+        lootPool: [
+            { itemId: 'char_santa', rarity: 'common', weight: 10 },
+            { itemId: 'char_vampire', rarity: 'rare', weight: 4 },
+            { itemId: 'char_robot', rarity: 'legendary', weight: 1 }
+        ]
+    },
+    'box_accessories': {
+        id: 'box_accessories',
+        name: 'Paczka z Akcesoriami',
+        price: 500,
+        description: 'Zawiera losowe akcesorium.',
+        category: 'accessories',
+        icon: '🎁',
+        lootPool: [
+            { itemId: 'acc_glasses', rarity: 'common', weight: 6 },
+            { itemId: 'acc_scarf', rarity: 'rare', weight: 3 }
+        ]
+    },
+    'box_pets': {
+        id: 'box_pets',
+        name: 'Kosz ze Zwierzakiem',
+        price: 3000,
+        description: 'Może zawierać uroczego towarzysza.',
+        category: 'pets',
+        icon: '🎀',
+        lootPool: [
+            { itemId: 'pet_dog', rarity: 'legendary', weight: 1 },
+            { itemId: 'pet_cat', rarity: 'legendary', weight: 1 }
+        ]
+    }
+};
+
 // --- Inicjalizacja Aplikacji Express ---
 const app = express();
 app.set('trust proxy', 1);
@@ -169,6 +249,79 @@ app.post('/api/stats', async (req, res) => {
     } catch (err) {
         console.error('Błąd zapisu statystyk:', err);
         res.status(500).json({ message: 'Błąd serwera podczas zapisywania postępu.' });
+    }
+});
+
+app.post('/api/open-box', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Musisz być zalogowany, aby otworzyć skrzynkę.' });
+    }
+
+    const { boxId } = req.body;
+    const userId = req.user.id;
+    const boxData = lootBoxData[boxId];
+
+    if (!boxData) {
+        return res.status(404).json({ message: 'Nie znaleziono takiej skrzynki.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Pobierz aktualny stan monet gracza (z blokadą wiersza na czas transakcji)
+        const userResult = await client.query('SELECT coins, unlocked_items FROM users WHERE id = $1 FOR UPDATE', [userId]);
+        const user = userResult.rows[0];
+
+        if (user.coins < boxData.price) {
+            await client.query('ROLLBACK'); // Wycofaj transakcję
+            return res.status(400).json({ message: 'Za mało monet!' });
+        }
+
+        // Odejmij koszt skrzynki
+        const newCoins = user.coins - boxData.price;
+
+        // --- Logika losowania nagrody ---
+        const totalWeight = boxData.lootPool.reduce((sum, item) => sum + item.weight, 0);
+        let randomRoll = Math.random() * totalWeight;
+        let wonItem = null;
+
+        for (const item of boxData.lootPool) {
+            randomRoll -= item.weight;
+            if (randomRoll <= 0) {
+                wonItem = item;
+                break;
+            }
+        }
+        // --- Koniec logiki losowania ---
+
+        // Zaktualizuj ekwipunek gracza
+        const newUnlockedItems = { ...user.unlocked_items };
+        const currentQuantity = newUnlockedItems[wonItem.itemId] || 0;
+        newUnlockedItems[wonItem.itemId] = currentQuantity + 1;
+
+        const unlockedItemsJSON = JSON.stringify(newUnlockedItems);
+
+        // Zapisz zmiany w bazie danych
+        const updateResult = await client.query(
+            'UPDATE users SET coins = $1, unlocked_items = $2 WHERE id = $3 RETURNING *',
+            [newCoins, unlockedItemsJSON, userId]
+        );
+
+        await client.query('COMMIT');
+
+        // Wyślij odpowiedź do gracza z informacją o wygranej i zaktualizowanymi danymi
+        res.status(200).json({
+            wonItem: shopData[wonItem.itemId], // Wyślij pełne dane przedmiotu
+            updatedUser: updateResult.rows[0]
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Błąd podczas otwierania skrzynki:', err);
+        res.status(500).json({ message: 'Błąd serwera podczas otwierania skrzynki.' });
+    } finally {
+        client.release();
     }
 });
 

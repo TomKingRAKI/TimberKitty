@@ -151,6 +151,75 @@ const shopData = {
     pet_dog: { id: 'pet_dog', name: 'Piesek', category: 'pets', icon: '🐶', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } },
     pet_cat: { id: 'pet_cat', name: 'Kotek', category: 'pets', icon: '🐱', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } },
 };
+
+// --- Baza Danych Skrzynek (Lootboxów) ---
+const lootBoxData = {
+    'box_hats': {
+        id: 'box_hats',
+        name: 'Skrzynia Kapelusznika',
+        price: 200,
+        description: 'Zawiera losową czapkę.',
+        category: 'hats',
+        icon: '📦',
+        lootPool: [
+            // Im wyższa "waga" (weight), tym większa szansa na wylosowanie
+            { itemId: 'hat_tophat', rarity: 'common', weight: 10 },
+            { itemId: 'hat_grad', rarity: 'rare', weight: 4 },
+            { itemId: 'hat_crown', rarity: 'legendary', weight: 1 }
+        ]
+    },
+    'box_axes': {
+        id: 'box_axes',
+        name: 'Skrzynia Drwala',
+        price: 400,
+        description: 'Zawiera losową siekierę.',
+        category: 'axes',
+        icon: '📦',
+        lootPool: [
+            { itemId: 'axe_sword', rarity: 'common', weight: 10 },
+            { itemId: 'axe_pickaxe', rarity: 'rare', weight: 4 },
+            { itemId: 'axe_golden', rarity: 'legendary', weight: 1 }
+        ]
+    },
+    'box_characters': {
+        id: 'box_characters',
+        name: 'Skrzynia Bohaterów',
+        price: 800,
+        description: 'Odblokowuje losową postać.',
+        category: 'characters',
+        icon: '🎁',
+        lootPool: [
+            { itemId: 'char_santa', rarity: 'common', weight: 10 },
+            { itemId: 'char_vampire', rarity: 'rare', weight: 4 },
+            { itemId: 'char_robot', rarity: 'legendary', weight: 1 }
+        ]
+    },
+    'box_accessories': {
+        id: 'box_accessories',
+        name: 'Paczka z Akcesoriami',
+        price: 500,
+        description: 'Zawiera losowe akcesorium.',
+        category: 'accessories',
+        icon: '🎁',
+        lootPool: [
+            { itemId: 'acc_glasses', rarity: 'common', weight: 6 },
+            { itemId: 'acc_scarf', rarity: 'rare', weight: 3 }
+        ]
+    },
+    'box_pets': {
+        id: 'box_pets',
+        name: 'Kosz ze Zwierzakiem',
+        price: 3000,
+        description: 'Może zawierać uroczego towarzysza.',
+        category: 'pets',
+        icon: '🎀',
+        lootPool: [
+            { itemId: 'pet_dog', rarity: 'legendary', weight: 1 },
+            { itemId: 'pet_cat', rarity: 'legendary', weight: 1 }
+        ]
+    }
+};
+
 const categoryToSlotMap = {
     characters: 'character', hats: 'hat', axes: 'axe', accessories: 'accessory', pets: 'pet'
 };
