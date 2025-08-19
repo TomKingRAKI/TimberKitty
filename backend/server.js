@@ -89,9 +89,16 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
     try {
-        const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-        done(null, user.rows[0]); // Odczytujemy pełne dane z bazy na podstawie ID
+        const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+        if (result.rows.length > 0) {
+            // Użytkownik znaleziony, wszystko w porządku
+            done(null, result.rows[0]);
+        } else {
+            // Użytkownik nie istnieje, grzecznie zakończ sesję
+            done(null, false); 
+        }
     } catch (err) {
+        // Wystąpił błąd bazy danych
         done(err, null);
     }
 });
