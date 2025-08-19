@@ -50,6 +50,10 @@ const shopPreviewContainer = document.getElementById('shop-preview-container');
 const loadingOverlay = document.getElementById('loading-overlay');
 const progressBarFill = document.getElementById('progress-bar-fill');
 const loadingStatusText = document.getElementById('loading-status-text');
+const lootboxAnimationModal = document.getElementById('lootbox-animation-modal');
+const animationReel = document.getElementById('animation-reel');
+const animationTicker = document.getElementById('animation-ticker');
+const animationCloseButton = document.getElementById('animation-close-button');
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
@@ -457,6 +461,7 @@ async function openLootbox(boxId, cardElement) {
         });
 
         const data = await response.json();
+        
 
         if (!response.ok) {
             throw new Error(data.message);
@@ -467,7 +472,16 @@ async function openLootbox(boxId, cardElement) {
         updateStatsUI(loadStats()); // Odśwież UI z nową liczbą monet
 
         // TODO: W przyszłości tutaj uruchomimy animację otwierania skrzynki
-        showNotification(`Zdobyto: ${data.wonItem.name}!`, 'success');
+                closeModal(shopModal); // Zamknij modal sklepu, aby zrobić miejsce
+        playLootboxAnimation(
+            lootBoxData[boxId].lootPool.find(i => i.itemId === data.wonItem.id), // Znajdź info o rzadkości
+            boxData[boxId]
+        );
+
+        // Zaktualizuj dane w tle, gdy animacja trwa
+        currentUser = data.updatedUser;
+        updateStatsUI(loadStats());
+        populateShopPreview();
 
     } catch (error) {
         console.error("Błąd otwierania skrzynki:", error);
@@ -476,6 +490,59 @@ async function openLootbox(boxId, cardElement) {
         buyButton.textContent = 'KUP';
         buyButton.disabled = false;
     }
+}
+
+async function playLootboxAnimation(wonItem, boxData) {
+    // 1. Przygotuj rolkę z przedmiotami
+    animationReel.innerHTML = '';
+    animationCloseButton.classList.add('hidden');
+    const reelItems = [];
+    const reelLength = 50; // Długość rolki
+
+    for (let i = 0; i < reelLength; i++) {
+        // Wybierz losowy przedmiot z puli
+        const randomLoot = boxData.lootPool[Math.floor(Math.random() * boxData.lootPool.length)];
+        reelItems.push(randomLoot);
+    }
+
+    // 2. Wstaw wygrany przedmiot w konkretne miejsce (np. 3 od końca)
+    const winnerIndex = reelLength - 4;
+    reelItems[winnerIndex] = wonItem;
+
+    // 3. Stwórz elementy HTML dla każdego przedmiotu na rolce
+    reelItems.forEach(loot => {
+        const itemData = shopData[loot.itemId];
+        const itemDiv = document.createElement('div');
+        itemDiv.className = `reel-item rarity-${loot.rarity}`;
+        itemDiv.innerHTML = `<span>${itemData.icon}</span>`;
+        animationReel.appendChild(itemDiv);
+    });
+
+    // 4. Uruchom animację
+    openModal(lootboxAnimationModal);
+
+    // Ustaw rolkę w pozycji startowej (bez animacji)
+    animationReel.style.transition = 'none';
+    animationReel.style.transform = 'translateX(0px)';
+
+    // Po krótkiej chwili, uruchom właściwą animację przewijania
+    setTimeout(() => {
+        const itemWidth = 120 + 20; // szerokość itemu + marginesy
+        const centerOffset = (canvas.width / 2) - (itemWidth / 2);
+        const randomJitter = (Math.random() - 0.5) * (itemWidth * 0.6);
+        const finalPosition = - (winnerIndex * itemWidth - centerOffset + randomJitter);
+
+        animationReel.style.transition = 'transform 7s cubic-bezier(0.1, 0.7, 0.3, 1)';
+        animationReel.style.transform = `translateX(${finalPosition}px)`;
+    }, 100); // krótka pauza
+
+    // 5. Po zakończeniu animacji
+    setTimeout(() => {
+        const winnerDiv = animationReel.children[winnerIndex];
+        winnerDiv.classList.add('winner');
+        winnerDiv.style.setProperty('--winner-color', getComputedStyle(winnerDiv).borderColor);
+        animationCloseButton.classList.remove('hidden');
+    }, 7100); // Czas trwania animacji + mały bufor
 }
 
 function populateShopModalWithBox(boxId) {
@@ -1100,3 +1167,7 @@ authButton.addEventListener('click', () => {
 
 navEquipmentButton.addEventListener('click', openInventoryHub);
 desktopEquipmentButton.addEventListener('click', openInventoryHub);
+
+animationCloseButton.addEventListener('click', () => {
+    closeModal(lootboxAnimationModal);
+});
