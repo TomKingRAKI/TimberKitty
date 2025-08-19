@@ -544,16 +544,7 @@ canvas {
 
 /* --- Style dla Animacji Otwierania Skrzynki --- */
 #animation-reel {
-    /* Płynne przejście będzie teraz kontrolowane w całości przez JavaScript */
-}
-
-.reel-item-content {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: transform 0.3s ease;
+    /* Puste, bo animacja jest w JS */
 }
 
 .reel-item {
@@ -568,15 +559,28 @@ canvas {
     border: 4px solid;
     border-radius: 8px;
     font-size: 4rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative; /* Ważne dla pozycjonowania nakładki */
 }
 
-.reel-item.winner .reel-item-content { /* Celujemy teraz w wewnętrzny element */
+/* NOWA, PANCERNA LOGIKA DLA ZWYCIĘZCY */
+.reel-item.winner::after {
+    content: ''; /* Niezbędne dla pseudo-elementu */
+    position: absolute;
+    /* Rozciągnij nakładkę na cały element, wliczając ramkę */
+    top: -4px; 
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+
+    border: 4px solid var(--winner-color);
+    border-radius: 8px; /* Dopasuj do zaokrąglenia rodzica */
+
+    /* Efekty powiększenia i cienia są teraz na tej "niewidzialnej" warstwie */
     transform: scale(1.2);
-}
-
-.reel-item.winner { /* Zewnętrzny element dostaje tylko cień */
     box-shadow: 0 0 30px var(--winner-color);
+
+    /* Animacja dla efektów */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .rarity-common { border-color: #6b7280; }
