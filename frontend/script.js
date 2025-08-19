@@ -408,86 +408,109 @@ function populateShopModal(categoryKey) {
 
 function populateShopPreview() {
     shopPreviewContainer.innerHTML = '';
-    const stats = loadStats();
-    const categories = {};
-    Object.values(shopData).forEach(item => {
-        if (!categories[item.category]) {
-            categories[item.category] = { name: item.category.charAt(0).toUpperCase() + item.category.slice(1), items: [] };
-        }
-        categories[item.category].items.push(item);
-    });
-    for (const categoryKey in categories) {
-        const category = categories[categoryKey];
+
+    // Iterujemy teraz po skrzynkach, a nie po przedmiotach
+    Object.values(lootBoxData).forEach(box => {
         const categoryContainer = document.createElement('div');
         categoryContainer.className = 'w-full shop-category-preview rounded-lg p-2';
-        categoryContainer.dataset.category = categoryKey;
-        const title = document.createElement('h3');
-        title.className = 'text-xl font-bold text-shadow mb-2 flex justify-between items-center';
-        title.innerHTML = `<span>${categoryNames[categoryKey]}</span><span class="font-bold text-xl text-gray-500">+</span>`;
-        const previewGrid = document.createElement('div');
-        previewGrid.className = 'grid grid-cols-4 gap-3 w-full';
-        category.items.slice(0, 4).forEach(item => {
-            const quantityOwned = stats.unlockedItems[item.id] || 0;
-            const slot = document.createElement('div');
-            slot.className = 'item-slot rounded-md relative'; // Dodano relative dla wskaźnika
-            if (quantityOwned === 0) slot.classList.add('opacity-50');
-            
-            let quantityBadge = quantityOwned > 0 ? `<div class="item-quantity-badge" style="top:0; right:0;">x${quantityOwned}</div>` : '';
-            slot.innerHTML = `${item.icon}${quantityBadge}`;
-            previewGrid.appendChild(slot);
-        });
-        categoryContainer.appendChild(title);
-        categoryContainer.appendChild(previewGrid);
-        shopPreviewContainer.appendChild(categoryContainer);
+
         categoryContainer.addEventListener('click', () => {
-            populateShopModal(categoryKey);
+            populateShopModalWithBox(box.id); // Używamy nowej funkcji
             openModal(shopModal);
         });
-    }
+
+        const title = document.createElement('h3');
+        title.className = 'text-xl font-bold text-shadow mb-2 flex justify-between items-center';
+        title.innerHTML = `<span>${box.name}</span><span class="font-bold text-xl text-gray-500">${box.icon}</span>`;
+
+        const description = document.createElement('p');
+        description.className = 'text-sm text-gray-400';
+        description.textContent = box.description;
+
+        categoryContainer.appendChild(title);
+        categoryContainer.appendChild(description);
+        shopPreviewContainer.appendChild(categoryContainer);
+    });
 }
 
 
 // --- Logika gry ---
 
-async function buyItem(itemId, cardElement) {
-    let stats = loadStats();
-    const item = shopData[itemId];
-
-    if (stats.coins < item.price) {
-        // ... logika braku monet (bez zmian)
-        if (!cardElement.classList.contains('shake-error')) {
-            cardElement.classList.add('shake-error');
-            const button = cardElement.querySelector('.buy-button');
-            if (button) {
-                const originalText = button.textContent;
-                button.textContent = 'Za mało monet!';
-                button.style.backgroundColor = '#ef4444';
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.backgroundColor = '';
-                }, 1500);
-            }
-            setTimeout(() => cardElement.classList.remove('shake-error'), 500);
-        }
+async function openLootbox(boxId, cardElement) {
+    if (!currentUser) {
+        showNotification('Musisz być zalogowany, aby kupować skrzynki!', 'error');
         return;
     }
 
-    stats.coins -= item.price;
-    
-    // NOWA LOGIKA: Zwiększ ilość przedmiotu
-    const currentQuantity = stats.unlockedItems[itemId] || 0;
-    stats.unlockedItems[itemId] = currentQuantity + 1;
+    const buyButton = cardElement.querySelector('.buy-button');
+    if (buyButton.disabled) return; // Zapobiegaj wielokrotnym kliknięciom
 
-    console.log('1. Przed wysłaniem na serwer, ekwipunek wygląda tak:', stats.unlockedItems);
+    buyButton.textContent = 'Otwieram...';
+    buyButton.disabled = true;
 
-    const updatedStats = await updateAndSaveStats(0, stats);
-    
-    showNotification(`Kupiono: ${item.name}!`, 'success');
-    updateStatsUI(updatedStats);
-    // Odśwież widok sklepu, aby pokazać nową ilość
-    populateShopModal(item.category);
-    // Odśwież też podgląd sklepu
-    populateShopPreview();
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/open-box`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ boxId: boxId })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message);
+        }
+
+        // Sukces! Serwer odesłał nagrodę i zaktualizowane dane gracza
+        currentUser = data.updatedUser; // Zaktualizuj dane lokalne
+        updateStatsUI(loadStats()); // Odśwież UI z nową liczbą monet
+
+        // TODO: W przyszłości tutaj uruchomimy animację otwierania skrzynki
+        showNotification(`Zdobyto: ${data.wonItem.name}!`, 'success');
+
+    } catch (error) {
+        console.error("Błąd otwierania skrzynki:", error);
+        showNotification(error.message || 'Wystąpił błąd', 'error');
+    } finally {
+        buyButton.textContent = 'KUP';
+        buyButton.disabled = false;
+    }
+}
+
+function populateShopModalWithBox(boxId) {
+    const box = lootBoxData[boxId];
+    if (!box) return;
+
+    shopGrid.innerHTML = ''; // Wyczyść starą siatkę
+    shopModalTitle.textContent = box.name;
+
+    // Stwórz jedną, dużą kartę dla skrzynki
+    const card = document.createElement('div');
+    card.className = 'shop-item-slot col-span-2 md:col-span-4'; // Rozciągnij na całą szerokość
+
+    // Lista możliwych nagród do wyświetlenia
+    const possibleLoot = box.lootPool.map(loot => {
+        const item = shopData[loot.itemId];
+        return `<span class="text-2xl" title="${item.name}">${item.icon}</span>`;
+    }).join(' ');
+
+    let bottomContent = `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${box.price} monet</div><button class="buy-button">KUP i OTWÓRZ</button></div>`;
+
+    card.innerHTML = `
+        <div class="text-6xl">${box.icon}</div>
+        <div class="font-bold text-base">${box.description}</div>
+        <div class="text-sm text-gray-400 px-1 leading-tight mt-4">Możliwa zawartość:</div>
+        <div class="flex gap-2 justify-center">${possibleLoot}</div>
+        ${bottomContent}
+    `;
+
+    card.querySelector('.buy-button').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openLootbox(boxId, card);
+    });
+
+    shopGrid.appendChild(card);
 }
 
 function showNotification(message, type = 'success') {
@@ -999,19 +1022,16 @@ function showLoginButton() {
 
 // Event Listeners
 // Event Listeners
-navShopButton.addEventListener('click', openShopHub);
+navShopButton.addEventListener('click', () => {
+    // Na telefonie, po prostu otwórz modal z pierwszą skrzynką
+    const firstBoxId = Object.keys(lootBoxData)[0];
+    populateShopModalWithBox(firstBoxId);
+    openModal(shopModal);
+});
 navAccountButton.addEventListener('click', openAccountHub);
 desktopAccountButton.addEventListener('click', openAccountHub);
 
-closeShopButton.addEventListener('click', () => {
-    const isMobileView = getComputedStyle(bottomNav).display !== 'none';
-    if (isMobileView) {
-        closeModal(shopModal);
-        openShopHub();
-    } else {
-        closeModal(shopModal);
-    }
-});
+closeShopButton.addEventListener('click', () => closeModal(shopModal));
 shopModal.addEventListener('click', (e) => { if (e.target === shopModal) closeModal(shopModal); });
 
 closeShopHubButton.addEventListener('click', () => closeModal(shopHubModal));
