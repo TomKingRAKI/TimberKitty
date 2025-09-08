@@ -42,6 +42,7 @@ const mainUsername = document.getElementById('main-username');
 const coinsStatEl = document.getElementById('coinsStat');
 const plButton = document.getElementById('pl-button');
 const enButton = document.getElementById('en-button');
+const changelogButton = document.getElementById('changelog-button');
 
 // Elementy gry
 const canvas = document.getElementById('gameCanvas');
@@ -78,6 +79,8 @@ const equipmentModalTitle = document.getElementById('equipment-modal-title');
 const unequipButton = document.getElementById('unequip-button');
 const accountHubModal = document.getElementById('account-hub-modal');
 const closeAccountHubButton = document.getElementById('close-account-hub-button');
+const changelogModal = document.getElementById('changelog-modal');
+const closeChangelogButton = document.getElementById('close-changelog-button');
 
 // Inne
 const notificationContainer = document.getElementById('notification-container');
@@ -1347,6 +1350,17 @@ equipmentModal.addEventListener('click', (e) => { if (e.target === equipmentModa
 
 closeAccountHubButton.addEventListener('click', () => closeModal(accountHubModal));
 accountHubModal.addEventListener('click', (e) => { if (e.target === accountHubModal) closeModal(accountHubModal); });
+
+// Changelog modal events (desktop-only trigger lives fixed top-right)
+if (changelogButton) {
+    changelogButton.addEventListener('click', () => openModal(changelogModal));
+}
+if (closeChangelogButton) {
+    closeChangelogButton.addEventListener('click', () => closeModal(changelogModal));
+}
+if (changelogModal) {
+    changelogModal.addEventListener('click', (e) => { if (e.target === changelogModal) closeModal(changelogModal); });
+}
 
 document.querySelectorAll('#inventory-hub-modal .equipment-slot').forEach(slot => {
     slot.addEventListener('click', () => {
