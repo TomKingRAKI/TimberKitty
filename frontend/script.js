@@ -849,10 +849,22 @@ function showItemRevealModal(wonItemData, rarity) {
     revealModalContent.classList.add(`reveal-${rarity}`);
     revealItemRarity.classList.add(`rarity-${rarity}`);
 
-    // Wypełnij modal danymi przedmiotu
+    // Znajdź ID przedmiotu, aby użyć tłumaczeń
+    let itemIdForI18n = null;
+    for (const k in shopData) {
+        if (shopData[k] === wonItemData) { itemIdForI18n = k; break; }
+    }
+
+    // Wypełnij modal danymi przedmiotu (z tłumaczeniami, jeśli dostępne)
     revealItemIcon.innerHTML = `<span>${wonItemData.icon}</span>`;
-    revealItemName.textContent = wonItemData.name;
-    revealItemDescription.textContent = wonItemData.description;
+    const translatedName = (itemIdForI18n && window.i18next && i18next.isInitialized)
+        ? (i18next.t(`items.${itemIdForI18n}.name`) || wonItemData.name)
+        : wonItemData.name;
+    const translatedDesc = (itemIdForI18n && window.i18next && i18next.isInitialized)
+        ? (i18next.t(`items.${itemIdForI18n}.description`) || wonItemData.description)
+        : wonItemData.description;
+    revealItemName.textContent = translatedName;
+    revealItemDescription.textContent = translatedDesc;
     revealItemRarity.textContent = rarity.charAt(0).toUpperCase() + rarity.slice(1); // np. "Rare"
 
     openModal(itemRevealModal);
