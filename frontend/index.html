@@ -111,15 +111,15 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
                 </path>
-            </svg><span>Sklep</span></button><button id="nav-equipment-button" class="nav-button"><svg class="w-7 h-7"
+            </svg><span data-i18n="bottomNav.shop">Sklep</span></button><button id="nav-equipment-button" class="nav-button"><svg class="w-7 h-7"
                 fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-            </svg><span>Ekwipunek</span></button><button id="nav-account-button" class="nav-button"><svg class="w-7 h-7"
+            </svg><span data-i18n="bottomNav.equipment">Ekwipunek</span></button><button id="nav-account-button" class="nav-button"><svg class="w-7 h-7"
                 fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg><span>Konto</span></button></footer>
+            </svg><span data-i18n="bottomNav.account">Konto</span></button></footer>
     <div id="shop-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
             <div class="flex justify-between items-center mb-4">
@@ -244,7 +244,7 @@
         class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="modal-content panel w-11/12 md:w-auto p-6 rounded-lg">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-3xl font-bold text-shadow">Ekwipunek</h2><button id="close-inventory-hub-button"
+                <h2 data-i18n="inventoryHub.title" class="text-3xl font-bold text-shadow">Ekwipunek</h2><button id="close-inventory-hub-button"
                     class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
             </div>
             <div class="grid grid-cols-3 gap-2 sm:gap-4 items-center">
@@ -288,10 +288,10 @@
         class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="modal-content panel w-11/12 md:w-1/2 max-w-2xl p-6 rounded-lg">
             <div class="flex justify-between items-center mb-4">
-                <h2 id="equipment-modal-title" class="text-3xl font-bold text-shadow">Wybierz przedmiot</h2><button
+                <h2 id="equipment-modal-title" data-i18n="equipmentModal.title" class="text-3xl font-bold text-shadow">Wybierz przedmiot</h2><button
                     id="close-equipment-button"
                     class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
-            </div><button id="unequip-button" class="w-full p-2 mb-4 bg-red-700 hover:bg-red-600 rounded-md">Zdejmij
+            </div><button id="unequip-button" data-i18n="equipmentModal.unequip" class="w-full p-2 mb-4 bg-red-700 hover:bg-red-600 rounded-md">Zdejmij
                 przedmiot</button>
             <div id="equipment-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
         </div>
@@ -304,19 +304,19 @@
             </div>
     </div>
 
-    <button id="animation-close-button" class="hidden mt-16 px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-xl transition-opacity duration-300">
+    <button id="animation-close-button" data-i18n="lootbox.continue" class="hidden mt-16 px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-xl transition-opacity duration-300">
         Kontynuuj
     </button>
 </div>
 <div id="item-reveal-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[70] p-4">
     <div id="reveal-modal-content" class="modal-content panel flex flex-col items-center gap-4 p-8 rounded-lg text-center">
-        <h2 class="text-2xl font-bold text-gray-400 -mb-2">Zdobyto Nowy Przedmiot!</h2>
+        <h2 data-i18n="revealModal.title" class="text-2xl font-bold text-gray-400 -mb-2">Zdobyto Nowy Przedmiot!</h2>
         <div id="reveal-item-rarity" class="text-xl font-bold">Rzadkość</div>
         <div id="reveal-item-icon" class="w-48 h-48 item-slot flex justify-center items-center text-8xl rounded-lg">
             </div>
         <h3 id="reveal-item-name" class="text-4xl font-bold text-shadow">Nazwa Przedmiotu</h3>
         <p id="reveal-item-description" class="text-lg text-gray-300 max-w-sm"></p>
-        <button id="reveal-close-button" class="mt-4 px-8 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-2xl">
+        <button id="reveal-close-button" data-i18n="revealModal.button" class="mt-4 px-8 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-2xl">
             Super!
         </button>
     </div>

@@ -4,32 +4,148 @@ const BACKEND_URL = 'https://timberman-backend.onrender.com';
 // --- Konfiguracja Tłumaczeń (i18next) ---
 function initI18n() {
   const i18n = window.i18next;
-  const Backend = window.i18nextHttpBackend;
-  const Detector = window.i18nextBrowserLanguageDetector;
 
   if (!i18n) {
     console.error('i18next core nie jest załadowany.');
     return;
   }
-  if (!Backend || !Detector) {
-    // Pluginy jeszcze nie są dostępne — spróbujemy za chwilę.
-    setTimeout(initI18n, 30);
-    return;
-  }
 
-  i18n
-    .use(Backend)
-    .use(Detector)
-    .init({
-      fallbackLng: 'pl',
-      debug: true,
-      detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'] },
-      backend: { loadPath: 'locales/{{lng}}/translation.json' }
-    }, (err) => {
-      if (err) console.error('i18next init error:', err);
-      // Po inicjalizacji przetłumacz widoczne teksty
-      if (typeof updateContent === 'function') updateContent();
-    });
+  // Wbudowane zasoby tłumaczeń (fallback bez HTTP)
+  const inlineResources = {
+    pl: {
+      translation: {
+        title: 'TimberKitty',
+        buttons: { loading: 'Ładowanie...', logout: 'Wyloguj się', login: 'Zaloguj się z Google' },
+        bottomNav: { shop: 'Sklep', equipment: 'Ekwipunek', account: 'Konto' },
+        statsPanel: {
+          title: 'Profil Gracza', guest: 'Gość', coins: 'Monety', menu: 'Menu', equipment: 'Ekwipunek 🎒', account: 'Konto 👤'
+        },
+        startScreen: { ready: 'Gotowy?', prompt: 'Kliknij przycisk, aby rozpocząć!', play: 'Graj!', reset: 'Zresetuj postęp' },
+        gameOver: { title: 'Koniec Gry!', result: 'Twój wynik', playAgain: 'Zagraj Ponownie' },
+        instructions: { controls: 'Użyj klawiszy (A/D, J/L, ←/→) lub kliknij, aby ścinać drzewo.', avoid: 'Omijaj gałęzie!' },
+        shopPanel: { title: 'Sklep' },
+        accountHub: {
+          title: 'Konto Gracza',
+          tabs: { stats: 'Statystyki', achievements: 'Osiągnięcia', profile: 'Profil' },
+          stats_tab: { high_score: 'Najlepszy Wynik', total_chops: 'Suma Ściętych', leaderboard: 'Ranking 📈' },
+          profile_tab: { equipment: 'Ekwipunek 🎒', edit_profile: 'Edytuj Profil ✏️' }
+        },
+        inventoryHub: { title: 'Ekwipunek' },
+        equipmentModal: { title: 'Wybierz przedmiot', unequip: 'Zdejmij przedmiot' },
+        lootbox: { continue: 'Kontynuuj' },
+        revealModal: { title: 'Zdobyto Nowy Przedmiot!', button: 'Super!' },
+        categories: { hats: 'Czapki', characters: 'Postacie', axes: 'Siekiery', accessories: 'Akcesoria', pets: 'Zwierzaki' },
+        shop: { coins_label: 'monet', buy: 'KUP', buy_open: 'KUP i OTWÓRZ', coming_soon: 'WKRÓTCE DOSTĘPNE', possible_contents: 'Możliwa zawartość:' },
+        achievements: {
+          chop10: { name: 'Początkujący', description: 'Zetnij 10 drzew.' },
+          chop100: { name: 'Drwal', description: 'Zetnij 100 drzew.' },
+          chop500: { name: 'Mistrz Drwali', description: 'Zetnij 500 drzew.' },
+          score50: { name: 'Szybkie Ręce', description: 'Zdobądź 50 pkt.' },
+          score100: { name: 'Demon Prędkości', description: 'Zdobądź 100 pkt.' },
+          coins100: { name: 'Kieszonkowe', description: 'Zdobądź 100 monet.' },
+          coins1000: { name: 'Skarbnik', description: 'Zdobądź 1000 monet.' },
+          noBranch10: { name: 'Szczęściarz', description: 'Zetnij 10 drzew bez gałęzi.' },
+          locked: 'Zablokowane', none: 'Brak osiągnięć'
+        },
+        items: {
+          char_santa: { name: 'Święty', description: 'Dłuższy czas za cięcie (+0.5s)' },
+          char_vampire: { name: 'Wampir', description: 'Dłuższy czas za cięcie (+0.75s)' },
+          char_robot: { name: 'Robot', description: 'Dłuższy czas za cięcie (+1s)' },
+          hat_tophat: { name: 'Cylinder', description: 'Spowalnia czas o 5%' },
+          hat_grad: { name: 'Czapka Absolwenta', description: 'Spowalnia czas o 10%' },
+          hat_crown: { name: 'Korona', description: 'Spowalnia czas o 15%' },
+          axe_sword: { name: 'Miecz', description: '+1 pkt za cięcie' },
+          axe_pickaxe: { name: 'Kilof', description: '+2 pkt za cięcie' },
+          axe_golden: { name: 'Złota Siekiera', description: '+3 pkt za cięcie' },
+          acc_glasses: { name: 'Okulary 3D', description: 'Monety +10%' },
+          acc_scarf: { name: 'Szalik', description: 'Monety +20%' },
+          pet_dog: { name: 'Piesek', description: 'Jednorazowa ochrona' },
+          pet_cat: { name: 'Kotek', description: 'Jednorazowa ochrona' }
+        },
+        lootboxes: {
+          box_hats_1: { name: 'Zwykła Skrzynia Kapelusznika', description: 'Zawiera pospolite i rzadkie czapki.' },
+          box_hats_2: { name: 'Legendarna Skrzynia Koronna', description: 'Gwarantowana legendarna czapka!' },
+          box_axes_1: { name: 'Skrzynia Drwala', description: 'Zawiera losową siekierę.' },
+          box_characters_1: { name: 'Skrzynia Bohaterów', description: 'Odblokowuje losową postać.' },
+          box_accessories_1: { name: 'Paczka z Akcesoriami', description: 'Zawiera losowe akcesorium.' },
+          box_pets_1: { name: 'Kosz ze Zwierzakiem', description: 'Może zawierać uroczego towarzysza.' }
+        }
+      }
+    },
+    en: {
+      translation: {
+        title: 'TimberKitty',
+        buttons: { loading: 'Loading...', logout: 'Log Out', login: 'Log in with Google' },
+        bottomNav: { shop: 'Shop', equipment: 'Equipment', account: 'Account' },
+        statsPanel: {
+          title: 'Player Profile', guest: 'Guest', coins: 'Coins', menu: 'Menu', equipment: 'Equipment 🎒', account: 'Account 👤'
+        },
+        startScreen: { ready: 'Ready?', prompt: 'Click the button to start!', play: 'Play!', reset: 'Reset progress' },
+        gameOver: { title: 'Game Over!', result: 'Your score', playAgain: 'Play Again' },
+        instructions: { controls: 'Use keys (A/D, J/L, ←/→) or click to chop the tree.', avoid: 'Avoid the branches!' },
+        shopPanel: { title: 'Shop' },
+        accountHub: {
+          title: 'Player Account',
+          tabs: { stats: 'Statistics', achievements: 'Achievements', profile: 'Profile' },
+          stats_tab: { high_score: 'High Score', total_chops: 'Total Chops', leaderboard: 'Leaderboard 📈' },
+          profile_tab: { equipment: 'Equipment 🎒', edit_profile: 'Edit Profile ✏️' }
+        },
+        inventoryHub: { title: 'Inventory' },
+        equipmentModal: { title: 'Choose item', unequip: 'Unequip' },
+        lootbox: { continue: 'Continue' },
+        revealModal: { title: 'New Item Obtained!', button: 'Great!' },
+        categories: { hats: 'Hats', characters: 'Characters', axes: 'Axes', accessories: 'Accessories', pets: 'Pets' },
+        shop: { coins_label: 'coins', buy: 'BUY', buy_open: 'BUY & OPEN', coming_soon: 'COMING SOON', possible_contents: 'Possible contents:' },
+        achievements: {
+          chop10: { name: 'Beginner', description: 'Chop 10 trees.' },
+          chop100: { name: 'Lumberjack', description: 'Chop 100 trees.' },
+          chop500: { name: 'Master Lumberjack', description: 'Chop 500 trees.' },
+          score50: { name: 'Fast Hands', description: 'Score 50 pts.' },
+          score100: { name: 'Speed Demon', description: 'Score 100 pts.' },
+          coins100: { name: 'Pocket Money', description: 'Earn 100 coins.' },
+          coins1000: { name: 'Treasurer', description: 'Earn 1000 coins.' },
+          noBranch10: { name: 'Lucky', description: 'Chop 10 trees without branches.' },
+          locked: 'Locked', none: 'No achievements'
+        },
+        items: {
+          char_santa: { name: 'Santa', description: 'More time per chop (+0.5s)' },
+          char_vampire: { name: 'Vampire', description: 'More time per chop (+0.75s)' },
+          char_robot: { name: 'Robot', description: 'More time per chop (+1s)' },
+          hat_tophat: { name: 'Top Hat', description: 'Slows timer by 5%' },
+          hat_grad: { name: 'Graduate Cap', description: 'Slows timer by 10%' },
+          hat_crown: { name: 'Crown', description: 'Slows timer by 15%' },
+          axe_sword: { name: 'Sword', description: '+1 pt per chop' },
+          axe_pickaxe: { name: 'Pickaxe', description: '+2 pts per chop' },
+          axe_golden: { name: 'Golden Axe', description: '+3 pts per chop' },
+          acc_glasses: { name: '3D Glasses', description: 'Coins +10%' },
+          acc_scarf: { name: 'Scarf', description: 'Coins +20%' },
+          pet_dog: { name: 'Puppy', description: 'One-time save' },
+          pet_cat: { name: 'Kitty', description: 'One-time save' }
+        },
+        lootboxes: {
+          box_hats_1: { name: 'Common Hatter Crate', description: 'Contains common and rare hats.' },
+          box_hats_2: { name: 'Legendary Crown Crate', description: 'Guaranteed legendary hat!' },
+          box_axes_1: { name: 'Lumberjack Crate', description: 'Contains a random axe.' },
+          box_characters_1: { name: 'Heroes Crate', description: 'Unlocks a random character.' },
+          box_accessories_1: { name: 'Accessories Pack', description: 'Contains a random accessory.' },
+          box_pets_1: { name: 'Pet Basket', description: 'May contain a cute companion.' }
+        }
+      }
+    }
+  };
+
+  const initialLng = localStorage.getItem('i18nextLng') || 'pl';
+
+  i18n.init({
+    fallbackLng: 'pl',
+    debug: true,
+    lng: initialLng,
+    resources: inlineResources
+  }, (err) => {
+    if (err) console.error('i18next init error:', err);
+    console.log('[i18n] initialized with', i18n.language);
+    if (typeof updateContent === 'function') updateContent();
+  });
 }
 
 // Odpal próbę inicjalizacji (jeśli pluginów jeszcze nie ma, funkcja sama ponowi próbę)
@@ -339,7 +455,11 @@ const categoryToSlotMap = {
     characters: 'character', hats: 'hat', axes: 'axe', accessories: 'accessory', pets: 'pet'
 };
 const categoryNames = {
-    hats: 'Czapki', characters: 'Postacie', axes: 'Siekiery', accessories: 'Akcesoria', pets: 'Zwierzaki'
+    get hats() { return (window.i18next && i18next.isInitialized) ? i18next.t('categories.hats') : 'Czapki'; },
+    get characters() { return (window.i18next && i18next.isInitialized) ? i18next.t('categories.characters') : 'Postacie'; },
+    get axes() { return (window.i18next && i18next.isInitialized) ? i18next.t('categories.axes') : 'Siekiery'; },
+    get accessories() { return (window.i18next && i18next.isInitialized) ? i18next.t('categories.accessories') : 'Akcesoria'; },
+    get pets() { return (window.i18next && i18next.isInitialized) ? i18next.t('categories.pets') : 'Zwierzaki'; }
 };
 
 
@@ -453,10 +573,12 @@ function updateStatsUI(stats) {
     const totalChopsBox = document.getElementById('totalchops-stat-box-modal');
 
     if (highScoreBox) {
-        highScoreBox.innerHTML = `<p class="text-gray-400 text-sm">Najlepszy Wynik</p><p class="text-2xl font-bold">${stats.highScore}</p>`;
+        const label = (window.i18next && i18next.isInitialized) ? i18next.t('accountHub.stats_tab.high_score') : 'Najlepszy Wynik';
+        highScoreBox.innerHTML = `<p class="text-gray-400 text-sm">${label}</p><p class="text-2xl font-bold">${stats.highScore}</p>`;
     }
     if (totalChopsBox) {
-        totalChopsBox.innerHTML = `<p class="text-gray-400 text-sm">Suma Ściętych</p><p class="text-2xl font-bold">${stats.totalChops}</p>`;
+        const label = (window.i18next && i18next.isInitialized) ? i18next.t('accountHub.stats_tab.total_chops') : 'Suma Ściętych';
+        totalChopsBox.innerHTML = `<p class="text-gray-400 text-sm">${label}</p><p class="text-2xl font-bold">${stats.totalChops}</p>`;
     }
 }
 
@@ -464,7 +586,8 @@ function populateAchievementsPreview(stats) {
     achievementsPreview.innerHTML = '';
     const recentAchievements = stats.unlockedAchievements.slice(-4).reverse();
     if (recentAchievements.length === 0) {
-        achievementsPreview.innerHTML = `<span class="col-span-4 text-center text-gray-500 text-sm">Brak osiągnięć</span>`;
+        const none = (window.i18next && i18next.isInitialized) ? i18next.t('achievements.none') : 'Brak osiągnięć';
+        achievementsPreview.innerHTML = `<span class="col-span-4 text-center text-gray-500 text-sm">${none}</span>`;
         return;
     }
     recentAchievements.forEach(id => {
@@ -487,7 +610,11 @@ function populateAchievementsGrid() {
         const isUnlocked = stats.unlockedAchievements.includes(id);
         const card = document.createElement('div');
         card.className = 'achievement-card ' + (isUnlocked ? 'unlocked' : '');
-        card.innerHTML = `<div class="icon">${isUnlocked ? achievement.icon : '?'}</div><div class="title">${achievement.name}</div><div class="description">${isUnlocked ? achievement.description : 'Zablokowane'}</div>`;
+        const aName = (window.i18next && i18next.isInitialized) ? (i18next.t(`achievements.${id}.name`) || achievement.name) : achievement.name;
+        const aDesc = isUnlocked
+            ? ((window.i18next && i18next.isInitialized) ? (i18next.t(`achievements.${id}.description`) || achievement.description) : achievement.description)
+            : ((window.i18next && i18next.isInitialized) ? i18next.t('achievements.locked') : 'Zablokowane');
+        card.innerHTML = `<div class="icon">${isUnlocked ? achievement.icon : '?'}</div><div class="title">${aName}</div><div class="description">${aDesc}</div>`;
         achievementsGridModal.appendChild(card);
     }
 }
@@ -500,17 +627,21 @@ function populateShopModal(categoryKey) {
     const itemsInCategory = Object.values(shopData).filter(item => item.category === categoryKey);
 
     itemsInCategory.forEach(item => {
+        const name = (window.i18next && i18next.isInitialized) ? (i18next.t(`items.${item.id}.name`) || item.name) : item.name;
+        const desc = (window.i18next && i18next.isInitialized) ? (i18next.t(`items.${item.id}.description`) || item.description) : item.description;
         const quantityOwned = stats.unlockedItems[item.id] || 0; // Sprawdź ilość, a nie czy istnieje
         const card = document.createElement('div');
         card.className = 'shop-item-slot'; // Usunięto .owned, bo przycisk jest zawsze aktywny
 
         // Przycisk KUP jest teraz zawsze widoczny
-        let bottomContent = `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${item.price} monet</div><button class="buy-button">KUP</button></div>`;
+        const coinsLabel = (window.i18next && i18next.isInitialized) ? i18next.t('shop.coins_label') : 'monet';
+        const buyLabel = (window.i18next && i18next.isInitialized) ? i18next.t('shop.buy') : 'KUP';
+        let bottomContent = `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${item.price} ${coinsLabel}</div><button class="buy-button">${buyLabel}</button></div>`;
         
         // Dodaj wskaźnik ilości, jeśli posiadamy przedmiot
         let quantityBadge = quantityOwned > 0 ? `<div class="item-quantity-badge">x${quantityOwned}</div>` : '';
 
-        card.innerHTML = `${quantityBadge}<div class="text-4xl">${item.icon}</div><div class="font-bold text-base">${item.name}</div><div class="text-sm text-gray-300 px-1 leading-tight">${item.description}</div>${bottomContent}`;
+        card.innerHTML = `${quantityBadge}<div class="text-4xl">${item.icon}</div><div class="font-bold text-base">${name}</div><div class="text-sm text-gray-300 px-1 leading-tight">${desc}</div>${bottomContent}`;
         
         card.querySelector('.buy-button').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -735,6 +866,8 @@ function populateShopModalWithBoxes(categoryKey) {
     shopModalTitle.textContent = categoryNames[categoryKey];
 
     boxes.forEach(box => {
+        const boxName = (window.i18next && i18next.isInitialized) ? (i18next.t(`lootboxes.${box.id}.name`) || box.name) : box.name;
+        const boxDesc = (window.i18next && i18next.isInitialized) ? (i18next.t(`lootboxes.${box.id}.description`) || box.description) : box.description;
         const card = document.createElement('div');
         card.className = 'shop-item-slot col-span-2 md:col-span-4';
         if (!box.enabled) {
@@ -746,15 +879,18 @@ function populateShopModalWithBoxes(categoryKey) {
             return `<span class="text-2xl" title="${item.name}">${item.icon}</span>`;
         }).join(' ');
 
+        const coinsLabel = (window.i18next && i18next.isInitialized) ? i18next.t('shop.coins_label') : 'monet';
+        const buyOpenLabel = (window.i18next && i18next.isInitialized) ? i18next.t('shop.buy_open') : 'KUP i OTWÓRZ';
+        const comingSoon = (window.i18next && i18next.isInitialized) ? i18next.t('shop.coming_soon') : 'WKRÓTCE DOSTĘPNE';
         let bottomContent = box.enabled
-            ? `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${box.price} monet</div><button class="buy-button">KUP i OTWÓRZ</button></div>`
-            : `<div class="owned-text">WKRÓTCE DOSTĘPNE</div>`;
+            ? `<div class="w-full mt-auto"><div class="text-amber-400 font-bold mb-2">${box.price} ${coinsLabel}</div><button class="buy-button">${buyOpenLabel}</button></div>`
+            : `<div class="owned-text">${comingSoon}</div>`;
 
         card.innerHTML = `
             <div class="text-6xl">${box.icon}</div>
-            <div class="font-bold text-base">${box.name}</div>
-            <div class="text-sm text-gray-400 px-1 leading-tight">${box.description}</div>
-            <div class="text-sm text-gray-400 px-1 leading-tight mt-4">Możliwa zawartość:</div>
+            <div class="font-bold text-base">${boxName}</div>
+            <div class="text-sm text-gray-400 px-1 leading-tight">${boxDesc}</div>
+            <div class="text-sm text-gray-400 px-1 leading-tight mt-4">${(window.i18next && i18next.isInitialized) ? i18next.t('shop.possible_contents') : 'Możliwa zawartość:'}</div>
             <div class="flex gap-2 justify-center">${possibleLoot}</div>
             ${bottomContent}
         `;
@@ -825,7 +961,12 @@ function updateEquipmentPanel(stats) {
 async function populateEquipmentSelectionModal(category) {
     console.log('3. Ekwipunek w momencie otwarcia modala:', loadStats().unlockedItems);
     equipmentGrid.innerHTML = '';
-    equipmentModalTitle.textContent = `Wybierz: ${categoryNames[category] || category}`;
+    if (window.i18next && i18next.isInitialized) {
+        equipmentModalTitle.textContent = `${i18next.t('equipmentModal.title')}: ${categoryNames[category] || category}`;
+        unequipButton.textContent = i18next.t('equipmentModal.unequip');
+    } else {
+        equipmentModalTitle.textContent = `Wybierz: ${categoryNames[category] || category}`;
+    }
     const stats = loadStats();
 
     // NOWA LOGIKA: Filtruj przedmioty, które gracz posiada (ilość > 0)
@@ -834,7 +975,10 @@ async function populateEquipmentSelectionModal(category) {
         .filter(item => item && item.category === category);
 
     if (ownedItemsInCategory.length === 0) {
-        equipmentGrid.innerHTML = `<p class="col-span-4 text-center text-gray-500">Nie posiadasz żadnych przedmiotów z tej kategorii.</p>`;
+        const noItemsText = (window.i18next && i18next.isInitialized)
+            ? (baseLang => baseLang === 'en' ? 'You do not own any items in this category.' : 'Nie posiadasz żadnych przedmiotów z tej kategorii.')( (i18next.language||'pl').split('-')[0] )
+            : 'Nie posiadasz żadnych przedmiotów z tej kategorii.';
+        equipmentGrid.innerHTML = `<p class="col-span-4 text-center text-gray-500">${noItemsText}</p>`;
     } else {
         ownedItemsInCategory.forEach(item => {
             const quantity = stats.unlockedItems[item.id];
@@ -1026,9 +1170,15 @@ async function gameOver() {
     clearInterval(gameLoopInterval);
     const oldStats = loadStats();
     await animateStatUpdate(oldStats, score);
-    messageTitle.textContent = 'Koniec Gry!';
-    messageText.textContent = `Twój wynik: ${score}.`;
-    startButton.textContent = 'Zagraj Ponownie';
+    if (window.i18next && i18next.isInitialized) {
+        messageTitle.textContent = i18next.t('gameOver.title');
+        messageText.textContent = `${i18next.t('gameOver.result')}: ${score}.`;
+        startButton.textContent = i18next.t('gameOver.playAgain');
+    } else {
+        messageTitle.textContent = 'Koniec Gry!';
+        messageText.textContent = `Twój wynik: ${score}.`;
+        startButton.textContent = 'Zagraj Ponownie';
+    }
     messageOverlay.style.display = 'flex';
 }
 
@@ -1237,33 +1387,37 @@ function openAccountHub() {
 }
 
 function updateContent() {
-    const storedLang = localStorage.getItem('i18nextLng') || 'pl';
-    let baseLang = storedLang.split('-')[0];
+    try {
+        const storedLang = localStorage.getItem('i18nextLng') || 'pl';
+        let baseLang = storedLang.split('-')[0];
 
-    if (window.i18next && i18next.isInitialized) {
-        const resolved = i18next.resolvedLanguage || i18next.language || storedLang;
-        baseLang = (resolved || 'pl').split('-')[0];
-        document.documentElement.setAttribute('lang', baseLang);
+        if (window.i18next && i18next.isInitialized) {
+            const resolved = i18next.resolvedLanguage || i18next.language || storedLang;
+            baseLang = (resolved || 'pl').split('-')[0];
+            document.documentElement.setAttribute('lang', baseLang);
 
-        // Przetłumacz elementy oznaczone data-i18n (z wyjątkami)
-        const elements = document.querySelectorAll('[data-i18n]');
-        elements.forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            if (!key) return;
-            if (currentUser && el.id === 'main-username') return;
-            if (el.id === 'auth-button') return;
-            const txt = i18next.t(key);
-            if (typeof txt === 'string' && txt.length) el.textContent = txt;
-        });
+            // Przetłumacz elementy oznaczone data-i18n (z wyjątkami)
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (!key) return;
+                if (currentUser && el.id === 'main-username') return;
+                if (el.id === 'auth-button') return;
+                const txt = i18next.t(key);
+                if (typeof txt === 'string' && txt.length) el.textContent = txt;
+            });
 
-        // Zaktualizuj przycisk logowania/wylogowania zgodnie ze stanem
-        if (authButton) {
-            authButton.textContent = currentUser ? i18next.t('buttons.logout') : i18next.t('buttons.login');
+            // Zaktualizuj przycisk logowania/wylogowania zgodnie ze stanem
+            if (authButton) {
+                authButton.textContent = currentUser ? i18next.t('buttons.logout') : i18next.t('buttons.login');
+            }
         }
-    }
 
-    // Aktywny stan przycisków języka (działa także zanim i18next się zainicjuje)
-    setActiveLanguageButtons(baseLang);
+        // Aktywny stan przycisków języka (działa także zanim i18next się zainicjuje)
+        setActiveLanguageButtons(baseLang);
+    } catch (e) {
+        console.error('[i18n] updateContent error:', e);
+    }
 }
 
 // Logika przełączania zakładek w modalu Konta
@@ -1288,7 +1442,11 @@ tabs.forEach(tab => {
 
 function updateUIAfterLogin(user) {
     // Zmień przycisk w przycisk "Wyloguj"
-    authButton.textContent = 'Wyloguj się';
+    if (window.i18next && i18next.isInitialized) {
+        authButton.textContent = i18next.t('buttons.logout');
+    } else {
+        authButton.textContent = 'Wyloguj się';
+    }
     authButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
     authButton.classList.add('bg-red-600', 'hover:bg-red-700'); // Czerwony kolor dla wylogowania
 
@@ -1300,7 +1458,11 @@ function updateUIAfterLogin(user) {
 
 function showLoginButton() {
     // Zmień przycisk w przycisk "Zaloguj"
-    authButton.textContent = 'Zaloguj się z Google';
+    if (window.i18next && i18next.isInitialized) {
+        authButton.textContent = i18next.t('buttons.login');
+    } else {
+        authButton.textContent = 'Zaloguj się z Google';
+    }
     authButton.classList.remove('bg-red-600', 'hover:bg-red-700');
     authButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
 
@@ -1308,7 +1470,11 @@ function showLoginButton() {
     mainAvatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
     </svg>`;
-    mainUsername.textContent = 'Gość';
+    if (window.i18next && i18next.isInitialized) {
+        mainUsername.textContent = i18next.t('statsPanel.guest');
+    } else {
+        mainUsername.textContent = 'Gość';
+    }
 }
 
 // Event Listeners
@@ -1319,9 +1485,8 @@ function safeChangeLanguage(lng) {
   try {
     // Zapisz wybór od razu (używane przez detektor języka)
     localStorage.setItem('i18nextLng', lng);
-    if (i18n && i18n.isInitialized) {
-      i18n.changeLanguage(lng);
-    }
+    console.log('[i18n] safeChangeLanguage ->', lng);
+    if (i18n && i18n.isInitialized) i18n.changeLanguage(lng);
   } finally {
     // Natychmiastowe odświeżenie UI i podświetlenia przycisków
     updateContent();
@@ -1333,6 +1498,7 @@ enButton.addEventListener('click', () => safeChangeLanguage('en'));
 
 // Jedno spójne nasłuchiwanie zmiany języka
 i18next.on('languageChanged', () => {
+  console.log('[i18n] languageChanged =>', i18next.language);
   updateContent();
 });
 
@@ -1398,9 +1564,15 @@ startButton.addEventListener('click', init);
 
 function showStartScreen() {
     gameState = 'start';
-    messageTitle.textContent = 'TimberKitty';
-    messageText.textContent = 'Kliknij przycisk, aby rozpocząć!';
-    startButton.textContent = 'Graj!';
+    if (window.i18next && i18next.isInitialized) {
+        messageTitle.textContent = i18next.t('title');
+        messageText.textContent = i18next.t('startScreen.prompt');
+        startButton.textContent = i18next.t('startScreen.play');
+    } else {
+        messageTitle.textContent = 'TimberKitty';
+        messageText.textContent = 'Kliknij przycisk, aby rozpocząć!';
+        startButton.textContent = 'Graj!';
+    }
     messageOverlay.style.display = 'flex';
     timerBar.style.width = '100%';
 }
@@ -1432,7 +1604,12 @@ window.onload = async () => {
         ]);
 
         showStartScreen();
-        checkLoginStatus();
+        // Uruchom sprawdzenie logowania z bezpiecznym timeoutem fallback
+        const loginPromise = checkLoginStatus();
+        const timeout = new Promise(resolve => setTimeout(resolve, 4000));
+        await Promise.race([loginPromise, timeout]);
+        // Jeśli timeout wygrał, dokończ loading tak czy siak
+        finishLoadingAnimation();
 
     } catch (error) {
         console.error("Błąd inicjalizacji gry:", error);
