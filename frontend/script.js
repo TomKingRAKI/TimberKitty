@@ -997,10 +997,13 @@ async function populateEquipmentSelectionModal(category) {
             const card = document.createElement('div');
             card.className = 'equipment-selection-item relative'; // Dodano relative
             // Dodaj wskaźnik ilości
+            const translatedName = (window.i18next && i18next.isInitialized)
+                ? (i18next.t(`items.${item.id}.name`) || item.name)
+                : item.name;
             card.innerHTML = `
                 <div class="item-quantity-badge">x${quantity}</div>
                 <span>${item.icon}</span>
-                <span class="item-name">${item.name}</span>
+                <span class="item-name">${translatedName}</span>
             `;
             card.addEventListener('click', () => equipItem(item.id));
             equipmentGrid.appendChild(card);
