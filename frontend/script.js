@@ -101,6 +101,19 @@ const revealItemName = document.getElementById('reveal-item-name');
 const revealItemDescription = document.getElementById('reveal-item-description');
 const revealCloseButton = document.getElementById('reveal-close-button');
 
+// Pomocnicza: ustaw podświetlenie przycisków języka
+function setActiveLanguageButtons(langCode) {
+    if (!plButton || !enButton) return;
+    const base = (langCode || '').split('-')[0];
+    if (base === 'en') {
+        enButton.classList.add('active-lang');
+        plButton.classList.remove('active-lang');
+    } else {
+        plButton.classList.add('active-lang');
+        enButton.classList.remove('active-lang');
+    }
+}
+
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
 canvas.width = gameContainer.clientWidth;
@@ -1224,21 +1237,33 @@ function openAccountHub() {
 }
 
 function updateContent() {
-     if (!window.i18next || !i18next.isInitialized) return;
-    const elements = document.querySelectorAll('[data-i18n]');
-    elements.forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        el.textContent = i18next.t(key);
-    });
+    const storedLang = localStorage.getItem('i18nextLng') || 'pl';
+    let baseLang = storedLang.split('-')[0];
 
-    // Aktualizuj, który przycisk języka jest aktywny
-    if (i18next.language === 'pl') {
-        plButton.classList.add('active-lang');
-        enButton.classList.remove('active-lang');
-    } else {
-        enButton.classList.add('active-lang');
-        plButton.classList.remove('active-lang');
+    if (window.i18next && i18next.isInitialized) {
+        const resolved = i18next.resolvedLanguage || i18next.language || storedLang;
+        baseLang = (resolved || 'pl').split('-')[0];
+        document.documentElement.setAttribute('lang', baseLang);
+
+        // Przetłumacz elementy oznaczone data-i18n (z wyjątkami)
+        const elements = document.querySelectorAll('[data-i18n]');
+        elements.forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (!key) return;
+            if (currentUser && el.id === 'main-username') return;
+            if (el.id === 'auth-button') return;
+            const txt = i18next.t(key);
+            if (typeof txt === 'string' && txt.length) el.textContent = txt;
+        });
+
+        // Zaktualizuj przycisk logowania/wylogowania zgodnie ze stanem
+        if (authButton) {
+            authButton.textContent = currentUser ? i18next.t('buttons.logout') : i18next.t('buttons.login');
+        }
     }
+
+    // Aktywny stan przycisków języka (działa także zanim i18next się zainicjuje)
+    setActiveLanguageButtons(baseLang);
 }
 
 // Logika przełączania zakładek w modalu Konta
@@ -1291,30 +1316,24 @@ function showLoginButton() {
 
 function safeChangeLanguage(lng) {
   const i18n = window.i18next;
-  if (i18n && i18n.isInitialized) {
-    i18n.changeLanguage(lng);
-  } else {
-    // zapamiętaj wybór i poczekaj aż i18next będzie gotowy
+  try {
+    // Zapisz wybór od razu (używane przez detektor języka)
     localStorage.setItem('i18nextLng', lng);
-    const iv = setInterval(() => {
-      if (window.i18next && i18next.isInitialized) {
-        clearInterval(iv);
-        i18next.changeLanguage(lng);
-      }
-    }, 50);
+    if (i18n && i18n.isInitialized) {
+      i18n.changeLanguage(lng);
+    }
+  } finally {
+    // Natychmiastowe odświeżenie UI i podświetlenia przycisków
+    updateContent();
   }
 }
 
 plButton.addEventListener('click', () => safeChangeLanguage('pl'));
 enButton.addEventListener('click', () => safeChangeLanguage('en'));
 
+// Jedno spójne nasłuchiwanie zmiany języka
 i18next.on('languageChanged', () => {
   updateContent();
-});
-
-// i18next automatycznie wykryje zmianę i uruchomi tę funkcję
-i18next.on('languageChanged', () => {
-    updateContent();
 });
 
 navShopButton.addEventListener('click', openShopHub);
@@ -1394,6 +1413,12 @@ window.onresize = () => {
 
 window.onload = async () => {
     try {
+        // Ustaw domyślny język jeśli brak w localStorage, oraz natychmiast podświetl
+        if (!localStorage.getItem('i18nextLng')) {
+            localStorage.setItem('i18nextLng', 'pl');
+        }
+        setActiveLanguageButtons((localStorage.getItem('i18nextLng') || 'pl'));
+
         // Czekaj na załadowanie tłumaczeń
         updateContent();
         console.log('Tłumaczenia załadowane!');
