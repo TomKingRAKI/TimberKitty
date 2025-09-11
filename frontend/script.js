@@ -2057,9 +2057,29 @@ async function saveUsernameChanges() {
 let currentLeaderboardType = 'highscore';
 let leaderboardData = [];
 
+// Funkcje pomocnicze do zarządzania scrollbarem
+function lockBodyScroll() {
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
+}
+
+function unlockBodyScroll() {
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+}
+
 async function openLeaderboardModal() {
     // Zablokuj scroll na body
-    document.body.classList.add('modal-open');
+    lockBodyScroll();
+    
     openModal(leaderboardModal);
     await loadLeaderboardData(currentLeaderboardType);
 }
@@ -2277,7 +2297,7 @@ async function showPostGameRanking(score) {
         });
         
         // Zablokuj scroll na body i pokaż modal
-        document.body.classList.add('modal-open');
+        lockBodyScroll();
         postGameRanking.classList.remove('hidden');
         
     } catch (error) {
@@ -2515,7 +2535,7 @@ if (leaderboardButton) {
 if (closeLeaderboardModal) {
     closeLeaderboardModal.addEventListener('click', () => {
         // Odblokuj scroll na body
-        document.body.classList.remove('modal-open');
+        unlockBodyScroll();
         closeModal(leaderboardModal);
     });
 }
@@ -2523,7 +2543,7 @@ if (leaderboardModal) {
     leaderboardModal.addEventListener('click', (e) => { 
         if (e.target === leaderboardModal) {
             // Odblokuj scroll na body
-            document.body.classList.remove('modal-open');
+            unlockBodyScroll();
             closeModal(leaderboardModal);
         }
     });
@@ -2532,7 +2552,7 @@ if (leaderboardModal) {
 if (closePostGameRanking) {
     closePostGameRanking.addEventListener('click', () => {
         // Odblokuj scroll na body
-        document.body.classList.remove('modal-open');
+        unlockBodyScroll();
         postGameRanking.classList.add('hidden');
     });
 }
@@ -2549,12 +2569,12 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         if (!leaderboardModal.classList.contains('hidden')) {
             // Odblokuj scroll na body
-            document.body.classList.remove('modal-open');
+            unlockBodyScroll();
             closeModal(leaderboardModal);
         }
         if (!postGameRanking.classList.contains('hidden')) {
             // Odblokuj scroll na body
-            document.body.classList.remove('modal-open');
+            unlockBodyScroll();
             postGameRanking.classList.add('hidden');
         }
     }
