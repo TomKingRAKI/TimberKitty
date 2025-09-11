@@ -167,8 +167,8 @@ passport.use(new GoogleStrategy({
         // --- POPRAWKA TUTAJ ---
         // Dodajemy unlocked_items i przekazujemy pusty obiekt {} jako domyślną wartość
         const newUser = await pool.query(
-            'INSERT INTO users (google_id, display_name, avatar_url, unlocked_items) VALUES ($1, $2, $3, $4) RETURNING *',
-            [id, displayName, photos[0].value, {}]
+            'INSERT INTO users (google_id, display_name, avatar_url, unlocked_items, exp) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [id, displayName, photos[0].value, {}, 0]
         );
         // --- KONIEC POPRAWKI ---
 
@@ -244,7 +244,7 @@ app.post('/api/stats', async (req, res) => {
     }
 
     try {
-        const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems } = req.body;
+        const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems, exp } = req.body;
         const userId = req.user.id;
 
         // --- KLUCZOWA POPRAWKA ---
@@ -257,10 +257,10 @@ app.post('/api/stats', async (req, res) => {
 
         const result = await pool.query(
             `UPDATE users 
-             SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6 
-             WHERE id = $7 RETURNING *`,
+             SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6, exp = $7 
+             WHERE id = $8 RETURNING *`,
             // Przekazujemy do zapytania naszą nową, sformatowaną tablicę
-            [highScore, totalChops, coins, achievementsArrayLiteral, unlockedItemsJSON, equippedItemsJSON, userId]
+            [highScore, totalChops, coins, achievementsArrayLiteral, unlockedItemsJSON, equippedItemsJSON, exp || 0, userId]
         );
 
         res.status(200).json(result.rows[0]);
@@ -349,6 +349,79 @@ app.post('/api/open-box', async (req, res) => {
         res.status(500).json({ message: 'Błąd serwera podczas otwierania skrzynki.' });
     } finally {
         client.release();
+    }
+});
+
+// Endpoint do resetowania postępu użytkownika
+app.post('/api/reset-progress', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Musisz być zalogowany, aby zresetować postęp.' });
+    }
+
+    try {
+        const userId = req.user.id;
+
+        // Resetuj wszystkie statystyki użytkownika do wartości domyślnych
+        const result = await pool.query(
+            `UPDATE users 
+             SET high_score = 0, total_chops = 0, coins = 0, exp = 0, 
+                 unlocked_achievements = '{}', unlocked_items = '{}', 
+                 equipped_items = '{"character": null, "hat": null, "axe": null, "accessory": null, "pet": null}'
+             WHERE id = $1 RETURNING *`,
+            [userId]
+        );
+
+        res.status(200).json(result.rows[0]);
+
+    } catch (err) {
+        console.error('Błąd resetowania postępu:', err);
+        res.status(500).json({ message: 'Błąd serwera podczas resetowania postępu.' });
+    }
+});
+
+// Endpoint do aktualizacji profilu użytkownika
+app.post('/api/update-profile', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Musisz być zalogowany, aby edytować profil.' });
+    }
+
+    try {
+        const userId = req.user.id;
+        const { display_name, avatar_type } = req.body;
+
+        // Przygotuj zapytanie SQL dynamicznie
+        let updateFields = [];
+        let values = [];
+        let paramCount = 1;
+
+        if (display_name !== undefined) {
+            updateFields.push(`display_name = $${paramCount}`);
+            values.push(display_name);
+            paramCount++;
+        }
+
+        if (avatar_type !== undefined) {
+            updateFields.push(`avatar_type = $${paramCount}`);
+            values.push(avatar_type);
+            paramCount++;
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({ message: 'Brak danych do aktualizacji.' });
+        }
+
+        // Dodaj WHERE clause
+        values.push(userId);
+
+        const query = `UPDATE users SET ${updateFields.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+        
+        const result = await pool.query(query, values);
+
+        res.status(200).json(result.rows[0]);
+
+    } catch (err) {
+        console.error('Błąd aktualizacji profilu:', err);
+        res.status(500).json({ message: 'Błąd serwera podczas aktualizacji profilu.' });
     }
 });
 

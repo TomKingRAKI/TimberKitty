@@ -18,7 +18,7 @@ function initI18n() {
         buttons: { loading: 'Ładowanie...', logout: 'Wyloguj się', login: 'Zaloguj się z Google' },
         bottomNav: { shop: 'Sklep', equipment: 'Ekwipunek', account: 'Konto' },
         statsPanel: {
-          title: 'Profil Gracza', guest: 'Gość', coins: 'Monety', menu: 'Menu', equipment: 'Ekwipunek 🎒', account: 'Konto 👤'
+          title: 'Profil Gracza', guest: 'Gość', coins: 'Monety', level: 'Poziom', menu: 'Menu', equipment: 'Ekwipunek 🎒', account: 'Konto 👤'
         },
         startScreen: { ready: 'Gotowy?', prompt: 'Kliknij przycisk, aby rozpocząć!', play: 'Graj!', reset: 'Zresetuj postęp' },
         gameOver: { title: 'Koniec Gry!', result: 'Twój wynik', playAgain: 'Zagraj Ponownie' },
@@ -28,7 +28,21 @@ function initI18n() {
           title: 'Konto Gracza',
           tabs: { stats: 'Statystyki', achievements: 'Osiągnięcia', profile: 'Profil' },
           stats_tab: { high_score: 'Najlepszy Wynik', total_chops: 'Suma Ściętych', leaderboard: 'Ranking 📈' },
-          profile_tab: { equipment: 'Ekwipunek 🎒', edit_profile: 'Edytuj Profil ✏️' }
+          profile_tab: { 
+            equipment: 'Ekwipunek 🎒', 
+            edit_profile: 'Edytuj Profil ✏️',
+            guest_message: 'Zaloguj się, aby zobaczyć swój profil i zapisywać postęp',
+            login_button: 'Zaloguj się przez Google',
+            logout_button: 'Wyloguj się',
+            change_avatar: 'Zmień Avatar',
+            change_username: 'Zmień Nazwę',
+            new_username_label: 'Nowa nazwa użytkownika',
+            new_username_placeholder: 'Wprowadź nową nazwę',
+            max_chars: 'Maksymalnie 50 znaków',
+            avatar_preview_text: 'Wybierz nowy avatar z dostępnych opcji',
+            cancel: 'Anuluj',
+            save: 'Zapisz'
+          }
         },
         inventoryHub: { title: 'Ekwipunek' },
         equipmentModal: { title: 'Wybierz przedmiot', unequip: 'Zdejmij przedmiot' },
@@ -78,7 +92,7 @@ function initI18n() {
         buttons: { loading: 'Loading...', logout: 'Log Out', login: 'Log in with Google' },
         bottomNav: { shop: 'Shop', equipment: 'Equipment', account: 'Account' },
         statsPanel: {
-          title: 'Player Profile', guest: 'Guest', coins: 'Coins', menu: 'Menu', equipment: 'Equipment 🎒', account: 'Account 👤'
+          title: 'Player Profile', guest: 'Guest', coins: 'Coins', level: 'Level', menu: 'Menu', equipment: 'Equipment 🎒', account: 'Account 👤'
         },
         startScreen: { ready: 'Ready?', prompt: 'Click the button to start!', play: 'Play!', reset: 'Reset progress' },
         gameOver: { title: 'Game Over!', result: 'Your score', playAgain: 'Play Again' },
@@ -88,7 +102,21 @@ function initI18n() {
           title: 'Player Account',
           tabs: { stats: 'Statistics', achievements: 'Achievements', profile: 'Profile' },
           stats_tab: { high_score: 'High Score', total_chops: 'Total Chops', leaderboard: 'Leaderboard 📈' },
-          profile_tab: { equipment: 'Equipment 🎒', edit_profile: 'Edit Profile ✏️' }
+          profile_tab: { 
+            equipment: 'Equipment 🎒', 
+            edit_profile: 'Edit Profile ✏️',
+            guest_message: 'Log in to see your profile and save progress',
+            login_button: 'Log in with Google',
+            logout_button: 'Log Out',
+            change_avatar: 'Change Avatar',
+            change_username: 'Change Username',
+            new_username_label: 'New username',
+            new_username_placeholder: 'Enter new username',
+            max_chars: 'Maximum 50 characters',
+            avatar_preview_text: 'Choose a new avatar from available options',
+            cancel: 'Cancel',
+            save: 'Save'
+          }
         },
         inventoryHub: { title: 'Inventory' },
         equipmentModal: { title: 'Choose item', unequip: 'Unequip' },
@@ -156,6 +184,9 @@ const authButton = document.getElementById('auth-button');
 const mainAvatarContainer = document.getElementById('main-avatar-container');
 const mainUsername = document.getElementById('main-username');
 const coinsStatEl = document.getElementById('coinsStat');
+const levelStatEl = document.getElementById('levelStat');
+const expProgressBar = document.getElementById('exp-progress-bar');
+const expProgressText = document.getElementById('exp-progress-text');
 const plButton = document.getElementById('pl-button');
 const enButton = document.getElementById('en-button');
 const changelogButton = document.getElementById('changelog-button');
@@ -216,6 +247,33 @@ const revealItemIcon = document.getElementById('reveal-item-icon');
 const revealItemName = document.getElementById('reveal-item-name');
 const revealItemDescription = document.getElementById('reveal-item-description');
 const revealCloseButton = document.getElementById('reveal-close-button');
+const resetWarningModal = document.getElementById('reset-warning-modal');
+const resetConfirmButton = document.getElementById('reset-confirm-button');
+const resetCancelButton = document.getElementById('reset-cancel-button');
+
+// Elementy profilu
+const userProfileSection = document.getElementById('user-profile-section');
+const guestProfileSection = document.getElementById('guest-profile-section');
+const profileAvatarContainer = document.getElementById('profile-avatar-container');
+const profileUsername = document.getElementById('profile-username');
+const profileEmail = document.getElementById('profile-email');
+const editUsernameBtn = document.getElementById('edit-username-btn');
+const profileLogoutBtn = document.getElementById('profile-logout-btn');
+const guestLoginBtn = document.getElementById('guest-login-btn');
+
+// Modale edycji profilu
+const avatarEditModal = document.getElementById('avatar-edit-modal');
+const closeAvatarModal = document.getElementById('close-avatar-modal');
+const avatarPreview = document.getElementById('avatar-preview');
+const avatarOptions = document.getElementById('avatar-options');
+const cancelAvatarEdit = document.getElementById('cancel-avatar-edit');
+const saveAvatar = document.getElementById('save-avatar');
+
+const usernameEditModal = document.getElementById('username-edit-modal');
+const closeUsernameModal = document.getElementById('close-username-modal');
+const newUsernameInput = document.getElementById('new-username');
+const cancelUsernameEdit = document.getElementById('cancel-username-edit');
+const saveUsername = document.getElementById('save-username');
 
 // Pomocnicza: ustaw podświetlenie przycisków języka
 function setActiveLanguageButtons(langCode) {
@@ -503,12 +561,57 @@ const categoryNames = {
 
 // --- NOWA LOGIKA STATYSTYK I OSIĄGNIĘĆ ---
 
+// --- SYSTEM EXP I POZIOMÓW ---
+function calculateLevel(exp) {
+    if (exp < 50) return 1;
+    let level = 1;
+    let requiredExp = 50;
+    let currentExp = exp;
+    
+    while (currentExp >= requiredExp) {
+        currentExp -= requiredExp;
+        level++;
+        requiredExp = Math.floor(requiredExp * 1.5); // x1.5 dla każdego poziomu
+    }
+    
+    return level;
+}
+
+function getExpForLevel(level) {
+    if (level <= 1) return 0;
+    let totalExp = 0;
+    let requiredExp = 50;
+    
+    for (let i = 2; i <= level; i++) {
+        totalExp += requiredExp;
+        requiredExp = Math.floor(requiredExp * 1.5);
+    }
+    
+    return totalExp;
+}
+
+function getExpProgress(exp) {
+    const currentLevel = calculateLevel(exp);
+    const expForCurrentLevel = getExpForLevel(currentLevel);
+    const expForNextLevel = getExpForLevel(currentLevel + 1);
+    const expNeededForNextLevel = expForNextLevel - expForCurrentLevel;
+    const currentLevelExp = exp - expForCurrentLevel;
+    
+    return {
+        currentLevel,
+        currentLevelExp,
+        expNeededForNextLevel,
+        progress: (currentLevelExp / expNeededForNextLevel) * 100
+    };
+}
+
 // NOWA FUNKCJA: Tłumaczy nazwy z bazy danych (snake_case) na nazwy używane w JS (camelCase)
 function parseStatsFromDB(dbUser) {
     return {
         highScore: Number(dbUser.high_score || 0),
         totalChops: Number(dbUser.total_chops || 0),
         coins: Number(dbUser.coins || 0),
+        exp: Number(dbUser.exp || 0),
         unlockedAchievements: dbUser.unlocked_achievements || [],
         unlockedItems: dbUser.unlocked_items || {}, // ZMIANA: z [] na {}
         equippedItems: dbUser.equipped_items || { character: null, hat: null, axe: null, accessory: null, pet: null }
@@ -520,7 +623,7 @@ function loadStats() {
     if (currentUser) {
         return parseStatsFromDB(currentUser);
     } else {
-        const defaultStats = { highScore: 0, totalChops: 0, coins: 0, unlockedAchievements: [], unlockedItems: {}, equippedItems: { character: null, hat: null, axe: null, accessory: null, pet: null } }; // ZMIANA: z [] na {}
+        const defaultStats = { highScore: 0, totalChops: 0, coins: 0, exp: 0, unlockedAchievements: [], unlockedItems: {}, equippedItems: { character: null, hat: null, axe: null, accessory: null, pet: null } }; // ZMIANA: z [] na {}
         const statsFromStorage = JSON.parse(localStorage.getItem('timbermanStats'));
         return { ...defaultStats, ...statsFromStorage };
     }
@@ -532,7 +635,8 @@ async function updateAndSaveStats(currentScore, oldStats) {
         ...oldStats,
         highScore: Math.max(oldStats.highScore, currentScore),
         totalChops: oldStats.totalChops + currentScore,
-        coins: oldStats.coins + (currentScore * 0.1 * (1 + (activeBonuses.coinMultiplier || 0)))
+        coins: oldStats.coins + (currentScore * 0.1 * (1 + (activeBonuses.coinMultiplier || 0))),
+        exp: oldStats.exp + currentScore // EXP zdobywane tak samo jak monety
     };
 
     for (const id in achievementsData) {
@@ -572,20 +676,37 @@ async function animateStatUpdate(oldStats, score) {
     const duration = 1500;
     const startTime = performance.now();
 
+    // Sprawdź czy gracz zlevelował
+    const oldLevel = calculateLevel(oldStats.exp);
+    const newLevel = calculateLevel(newStats.exp);
+    const leveledUp = newLevel > oldLevel;
+
     // POPRAWKA 1: Animujemy tylko istniejący element
     const coinsStatBox = document.getElementById('coins-stat-box');
+    const levelStatBox = document.getElementById('level-stat-box');
     if (coinsStatBox) {
         coinsStatBox.classList.add('stat-update-animation');
+    }
+    if (levelStatBox) {
+        levelStatBox.classList.add('stat-update-animation');
     }
 
     function animationStep(currentTime) {
         const elapsedTime = currentTime - startTime;
         const progress = Math.min(elapsedTime / duration, 1);
 
-        // Animujemy tylko przyrost monet
+        // Animujemy przyrost monet
         const coinGain = (newStats.coins - oldStats.coins) * progress;
         const currentCoins = oldStats.coins + coinGain;
         coinsStatEl.textContent = currentCoins.toFixed(2);
+
+        // Animujemy przyrost EXP
+        const expGain = (newStats.exp - oldStats.exp) * progress;
+        const currentExp = Math.floor(oldStats.exp + expGain); // Zaokrąglamy w dół do liczby całkowitej
+        const expProgress = getExpProgress(currentExp);
+        levelStatEl.textContent = expProgress.currentLevel;
+        expProgressBar.style.width = `${expProgress.progress}%`;
+        expProgressText.textContent = `${expProgress.currentLevelExp} / ${expProgress.expNeededForNextLevel} EXP`;
 
         if (progress < 1) {
             requestAnimationFrame(animationStep);
@@ -597,14 +718,82 @@ async function animateStatUpdate(oldStats, score) {
                     coinsStatBox.classList.remove('stat-update-animation');
                 }, 500);
             }
+            if (levelStatBox) {
+                setTimeout(() => {
+                    levelStatBox.classList.remove('stat-update-animation');
+                }, 500);
+            }
+            
+            // Jeśli zlevelował, uruchom specjalną animację
+            if (leveledUp) {
+                animateLevelUp(newLevel);
+            }
         }
     }
     requestAnimationFrame(animationStep);
 }
 
+function animateLevelUp(newLevel) {
+    // Dodaj efekt fajerwerków
+    const levelStatBox = document.getElementById('level-stat-box');
+    if (!levelStatBox) return;
+
+    // Dodaj klasę animacji levelowania
+    levelStatBox.classList.add('level-up-animation');
+    
+    // Pokaż powiadomienie o levelowaniu
+    showNotification(`🎉 Poziom ${newLevel}! 🎉`, 'success');
+    
+    // Zakończ animację levelowania po krótkim czasie
+    setTimeout(() => {
+        levelStatBox.classList.remove('level-up-animation');
+    }, 2000);
+}
+
+// Funkcja do resetowania postępu
+async function resetProgress() {
+    openModal(resetWarningModal);
+}
+
+async function confirmReset() {
+    try {
+        if (currentUser) {
+            // Resetuj postęp na serwerze
+            const response = await fetch(`${BACKEND_URL}/api/reset-progress`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+            
+            if (!response.ok) throw new Error('Błąd resetowania na serwerze');
+            
+            const resetUser = await response.json();
+            currentUser = resetUser;
+        } else {
+            // Resetuj postęp w localStorage (tryb gościa)
+            localStorage.removeItem('timbermanStats');
+        }
+        
+        // Zaktualizuj UI
+        updateStatsUI(loadStats());
+        closeModal(resetWarningModal);
+        showNotification('Postęp został zresetowany!', 'success');
+        
+    } catch (error) {
+        console.error('Błąd resetowania postępu:', error);
+        showNotification('Wystąpił błąd podczas resetowania', 'error');
+    }
+}
+
 function updateStatsUI(stats) {
     // Aktualizuj widoczne na stałe monety
     coinsStatEl.textContent = stats.coins.toFixed(2);
+
+    // Aktualizuj poziom i EXP
+    const expProgress = getExpProgress(stats.exp);
+    levelStatEl.textContent = expProgress.currentLevel;
+    expProgressBar.style.width = `${expProgress.progress}%`;
+    expProgressText.textContent = `${expProgress.currentLevelExp} / ${expProgress.expNeededForNextLevel} EXP`;
 
     // Znajdź elementy w modalu i zaktualizuj je
     const highScoreBox = document.getElementById('highscore-stat-box-modal');
@@ -1479,6 +1668,50 @@ function updateContent() {
                 authButton.textContent = currentUser ? i18next.t('buttons.logout') : i18next.t('buttons.login');
             }
             
+            // Zaktualizuj elementy profilu
+            if (profileLogoutBtn) {
+                profileLogoutBtn.textContent = i18next.t('accountHub.profile_tab.logout_button');
+            }
+            if (guestLoginBtn) {
+                guestLoginBtn.textContent = i18next.t('accountHub.profile_tab.login_button');
+            }
+            if (document.querySelector('#guest-profile-section p')) {
+                document.querySelector('#guest-profile-section p').textContent = i18next.t('accountHub.profile_tab.guest_message');
+            }
+            
+            // Zaktualizuj modale edycji profilu
+            if (document.querySelector('#avatar-edit-modal h2')) {
+                document.querySelector('#avatar-edit-modal h2').textContent = i18next.t('accountHub.profile_tab.change_avatar');
+            }
+            if (document.querySelector('#avatar-edit-modal p')) {
+                document.querySelector('#avatar-edit-modal p').textContent = i18next.t('accountHub.profile_tab.avatar_preview_text');
+            }
+            if (document.querySelector('#cancel-avatar-edit')) {
+                document.querySelector('#cancel-avatar-edit').textContent = i18next.t('accountHub.profile_tab.cancel');
+            }
+            if (document.querySelector('#save-avatar')) {
+                document.querySelector('#save-avatar').textContent = i18next.t('accountHub.profile_tab.save');
+            }
+            
+            if (document.querySelector('#username-edit-modal h2')) {
+                document.querySelector('#username-edit-modal h2').textContent = i18next.t('accountHub.profile_tab.change_username');
+            }
+            if (document.querySelector('#username-edit-modal label')) {
+                document.querySelector('#username-edit-modal label').textContent = i18next.t('accountHub.profile_tab.new_username_label');
+            }
+            if (document.querySelector('#new-username')) {
+                document.querySelector('#new-username').placeholder = i18next.t('accountHub.profile_tab.new_username_placeholder');
+            }
+            if (document.querySelector('#username-edit-modal .text-xs')) {
+                document.querySelector('#username-edit-modal .text-xs').textContent = i18next.t('accountHub.profile_tab.max_chars');
+            }
+            if (document.querySelector('#cancel-username-edit')) {
+                document.querySelector('#cancel-username-edit').textContent = i18next.t('accountHub.profile_tab.cancel');
+            }
+            if (document.querySelector('#save-username')) {
+                document.querySelector('#save-username').textContent = i18next.t('accountHub.profile_tab.save');
+            }
+            
             // Tłumaczenia są już oznaczone jako gotowe w window.onload
         }
 
@@ -1520,9 +1753,54 @@ function updateUIAfterLogin(user) {
     authButton.classList.add('bg-red-600', 'hover:bg-red-700'); // Czerwony kolor dla wylogowania
 
     // Aktualizuj główny panel statystyk
-    const userAvatarUrl = user.avatar_url;
-    mainAvatarContainer.innerHTML = `<img src="${userAvatarUrl}" alt="Avatar" class="w-full h-full rounded-full">`;
+    if (user.avatar_type && user.avatar_type !== 'default') {
+        // Użyj emoji awatara
+        const avatar = availableAvatars.find(a => a.id === user.avatar_type);
+        if (avatar) {
+            mainAvatarContainer.innerHTML = `<div class="w-full h-full rounded-full flex items-center justify-center text-3xl">${avatar.icon}</div>`;
+        } else {
+            // Fallback na domyślny awatar
+            mainAvatarContainer.innerHTML = `<div class="w-full h-full rounded-full flex items-center justify-center text-3xl">👤</div>`;
+        }
+    } else {
+        // Użyj URL awatara z Google
+        const userAvatarUrl = user.avatar_url;
+        mainAvatarContainer.innerHTML = `<img src="${userAvatarUrl}" alt="Avatar" class="w-full h-full rounded-full">`;
+    }
     mainUsername.textContent = user.display_name;
+    
+    // Aktualizuj sekcję profilu
+    updateProfileSection(user);
+}
+
+function updateProfileSection(user) {
+    if (user) {
+        // Pokaż sekcję użytkownika, ukryj sekcję gościa
+        userProfileSection.classList.remove('hidden');
+        guestProfileSection.classList.add('hidden');
+        
+        // Aktualizuj dane profilu
+        if (user.avatar_type && user.avatar_type !== 'default') {
+            // Użyj emoji awatara
+            const avatar = availableAvatars.find(a => a.id === user.avatar_type);
+            if (avatar) {
+                profileAvatarContainer.innerHTML = `<div class="w-full h-full rounded-full flex items-center justify-center text-4xl">${avatar.icon}</div>`;
+            } else {
+                // Fallback na domyślny awatar
+                profileAvatarContainer.innerHTML = `<div class="w-full h-full rounded-full flex items-center justify-center text-4xl">👤</div>`;
+            }
+        } else {
+            // Użyj URL awatara z Google
+            const userAvatarUrl = user.avatar_url;
+            profileAvatarContainer.innerHTML = `<img src="${userAvatarUrl}" alt="Avatar" class="w-full h-full rounded-full object-cover">`;
+        }
+        profileUsername.textContent = user.display_name;
+        profileEmail.textContent = user.email || 'Brak email';
+    } else {
+        // Pokaż sekcję gościa, ukryj sekcję użytkownika
+        userProfileSection.classList.add('hidden');
+        guestProfileSection.classList.remove('hidden');
+    }
 }
 
 function showLoginButton() {
@@ -1543,6 +1821,149 @@ function showLoginButton() {
         mainUsername.textContent = i18next.t('statsPanel.guest');
     } else {
         mainUsername.textContent = 'Gość';
+    }
+    
+    // Aktualizuj sekcję profilu dla gościa
+    updateProfileSection(null);
+}
+
+// --- FUNKCJE EDYCJI PROFILU ---
+
+// Dostępne awatary (można rozszerzyć)
+const availableAvatars = [
+    { id: 'default', name: 'Domyślny', icon: '👤' },
+    { id: 'cat', name: 'Kotek', icon: '🐱' },
+    { id: 'dog', name: 'Piesek', icon: '🐶' },
+    { id: 'robot', name: 'Robot', icon: '🤖' },
+    { id: 'alien', name: 'Kosmita', icon: '👽' },
+    { id: 'ninja', name: 'Ninja', icon: '🥷' },
+    { id: 'wizard', name: 'Czarodziej', icon: '🧙' },
+    { id: 'superhero', name: 'Superbohater', icon: '🦸' }
+];
+
+let selectedAvatar = null;
+
+function openAvatarEditModal() {
+    if (!currentUser) {
+        showNotification('Musisz być zalogowany, aby edytować profil!', 'error');
+        return;
+    }
+    
+    // Wypełnij opcje awatarów
+    avatarOptions.innerHTML = '';
+    availableAvatars.forEach(avatar => {
+        const option = document.createElement('div');
+        option.className = 'w-16 h-16 bg-gray-700 rounded-full border-2 border-gray-500 flex items-center justify-center cursor-pointer hover:border-amber-500 transition-colors text-2xl';
+        option.innerHTML = avatar.icon;
+        option.dataset.avatarId = avatar.id;
+        option.addEventListener('click', () => selectAvatar(avatar));
+        avatarOptions.appendChild(option);
+    });
+    
+    // Ustaw aktualny awatar jako wybrany
+    const currentAvatar = currentUser.avatar_type || 'default';
+    selectedAvatar = currentAvatar;
+    updateAvatarPreview();
+    
+    openModal(avatarEditModal);
+}
+
+function selectAvatar(avatar) {
+    selectedAvatar = avatar.id;
+    updateAvatarPreview();
+    
+    // Podświetl wybrany awatar
+    avatarOptions.querySelectorAll('div').forEach(option => {
+        option.classList.remove('border-amber-500', 'bg-amber-500/20');
+        if (option.dataset.avatarId === avatar.id) {
+            option.classList.add('border-amber-500', 'bg-amber-500/20');
+        }
+    });
+}
+
+function updateAvatarPreview() {
+    const avatar = availableAvatars.find(a => a.id === selectedAvatar);
+    if (avatar) {
+        avatarPreview.innerHTML = `<span class="text-4xl">${avatar.icon}</span>`;
+    }
+}
+
+async function saveAvatarChanges() {
+    if (!currentUser || !selectedAvatar) return;
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/update-profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ avatar_type: selectedAvatar })
+        });
+        
+        if (!response.ok) throw new Error('Błąd zapisywania awatara');
+        
+        const updatedUser = await response.json();
+        currentUser = updatedUser;
+        
+        // Aktualizuj UI
+        updateProfileSection(updatedUser);
+        updateUIAfterLogin(updatedUser);
+        
+        closeModal(avatarEditModal);
+        showNotification('Avatar został zaktualizowany!', 'success');
+        
+    } catch (error) {
+        console.error('Błąd zapisywania awatara:', error);
+        showNotification('Wystąpił błąd podczas zapisywania awatara', 'error');
+    }
+}
+
+function openUsernameEditModal() {
+    if (!currentUser) {
+        showNotification('Musisz być zalogowany, aby edytować profil!', 'error');
+        return;
+    }
+    
+    newUsernameInput.value = currentUser.display_name || '';
+    openModal(usernameEditModal);
+}
+
+async function saveUsernameChanges() {
+    if (!currentUser) return;
+    
+    const newUsername = newUsernameInput.value.trim();
+    if (!newUsername) {
+        showNotification('Nazwa użytkownika nie może być pusta!', 'error');
+        return;
+    }
+    
+    if (newUsername.length > 50) {
+        showNotification('Nazwa użytkownika jest za długa!', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/update-profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ display_name: newUsername })
+        });
+        
+        if (!response.ok) throw new Error('Błąd zapisywania nazwy');
+        
+        const updatedUser = await response.json();
+        currentUser = updatedUser;
+        
+        // Aktualizuj UI
+        updateProfileSection(updatedUser);
+        updateUIAfterLogin(updatedUser);
+        
+        closeModal(usernameEditModal);
+        showNotification('Nazwa użytkownika została zaktualizowana!', 'success');
+        
+    } catch (error) {
+        console.error('Błąd zapisywania nazwy:', error);
+        showNotification('Wystąpił błąd podczas zapisywania nazwy', 'error');
     }
 }
 
@@ -1630,6 +2051,7 @@ canvas.addEventListener('mousedown', handleMouseInput);
 canvas.addEventListener('touchstart', handleTouchInput);
 window.addEventListener('keydown', handleKeyboardInput);
 startButton.addEventListener('click', init);
+resetButton.addEventListener('click', resetProgress);
 
 function showStartScreen() {
     gameState = 'start';
@@ -1728,4 +2150,38 @@ animationCloseButton.addEventListener('click', () => {
 
 revealCloseButton.addEventListener('click', () => {
     closeModal(itemRevealModal);
+});
+
+// Event listenery dla resetowania postępu
+resetConfirmButton.addEventListener('click', confirmReset);
+resetCancelButton.addEventListener('click', () => closeModal(resetWarningModal));
+resetWarningModal.addEventListener('click', (e) => { if (e.target === resetWarningModal) closeModal(resetWarningModal); });
+
+// Event listenery dla edycji profilu
+profileAvatarContainer.addEventListener('click', openAvatarEditModal);
+editUsernameBtn.addEventListener('click', openUsernameEditModal);
+profileLogoutBtn.addEventListener('click', () => {
+    window.location.href = `${BACKEND_URL}/auth/logout`;
+});
+guestLoginBtn.addEventListener('click', () => {
+    window.location.href = `${BACKEND_URL}/auth/google`;
+});
+
+// Event listenery dla modali edycji awatara
+closeAvatarModal.addEventListener('click', () => closeModal(avatarEditModal));
+cancelAvatarEdit.addEventListener('click', () => closeModal(avatarEditModal));
+saveAvatar.addEventListener('click', saveAvatarChanges);
+avatarEditModal.addEventListener('click', (e) => { if (e.target === avatarEditModal) closeModal(avatarEditModal); });
+
+// Event listenery dla modali edycji nazwy użytkownika
+closeUsernameModal.addEventListener('click', () => closeModal(usernameEditModal));
+cancelUsernameEdit.addEventListener('click', () => closeModal(usernameEditModal));
+saveUsername.addEventListener('click', saveUsernameChanges);
+usernameEditModal.addEventListener('click', (e) => { if (e.target === usernameEditModal) closeModal(usernameEditModal); });
+
+// Enter key dla edycji nazwy użytkownika
+newUsernameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        saveUsernameChanges();
+    }
 });

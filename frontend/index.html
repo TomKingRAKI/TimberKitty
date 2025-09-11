@@ -64,6 +64,15 @@
                 <p data-i18n="statsPanel.coins" class="text-gray-400 text-sm">Monety</p>
                 <p id="coinsStat" class="text-2xl font-bold text-yellow-400">0.00</p>
             </div>
+            <div id="level-stat-box"
+                class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center transition-shadow duration-300">
+                <p data-i18n="statsPanel.level" class="text-gray-400 text-sm">Poziom</p>
+                <p id="levelStat" class="text-2xl font-bold text-blue-400">1</p>
+                <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                    <div id="exp-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="exp-progress-text" class="text-xs text-gray-400 mt-1">0 / 50 EXP</p>
+            </div>
             <div class="w-full mt-6 pt-4 border-t border-gray-700/50 hidden md:flex flex-col gap-3">
                 <h3 data-i18n="statsPanel.menu" class="text-lg font-bold text-shadow text-center text-gray-400">Menu</h3>
                 <button id="desktop-equipment-button" data-i18n="statsPanel.equipment"
@@ -241,9 +250,58 @@
                     <div id="achievements-tab-content" class="tab-content hidden">
                         <div id="achievements-grid-modal" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
                     </div>
-                    <div id="profile-tab-content" class="tab-content hidden flex flex-col gap-4"><button data-i18n="profile_tab.edit_profile"
-                            class="panel-button w-full p-3 rounded-lg font-bold opacity-50 cursor-not-allowed"
-                            disabled>Edytuj Profil ✏️</button></div>
+                    <div id="profile-tab-content" class="tab-content hidden flex flex-col gap-4">
+                        <!-- Profil dla zalogowanych użytkowników -->
+                        <div id="user-profile-section" class="hidden">
+                            <div class="flex flex-col items-center gap-4 p-4 bg-gray-900/50 rounded-lg">
+                                <!-- Avatar z możliwością edycji -->
+                                <div class="relative group">
+                                    <div id="profile-avatar-container" class="w-24 h-24 bg-gray-700 rounded-full border-4 border-gray-500 flex items-center justify-center cursor-pointer hover:border-amber-500 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="absolute -bottom-2 -right-2 bg-amber-500 text-gray-900 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                
+                                <!-- Nazwa użytkownika z możliwością edycji -->
+                                <div class="flex items-center gap-2 group">
+                                    <h3 id="profile-username" class="text-xl font-bold text-shadow">Nazwa użytkownika</h3>
+                                    <button id="edit-username-btn" class="opacity-0 group-hover:opacity-100 transition-opacity text-amber-500 hover:text-amber-400">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <!-- Email użytkownika (tylko do odczytu) -->
+                                <p id="profile-email" class="text-gray-400 text-sm">email@example.com</p>
+                                
+                                <!-- Przycisk wylogowania -->
+                                <button id="profile-logout-btn" class="panel-button bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-bold">
+                                    Wyloguj się
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Profil dla gości -->
+                        <div id="guest-profile-section" class="flex flex-col items-center gap-4 p-4 bg-gray-900/50 rounded-lg">
+                            <div class="w-24 h-24 bg-gray-700 rounded-full border-4 border-gray-500 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-shadow text-gray-400">Gość</h3>
+                            <p class="text-gray-500 text-sm text-center">Zaloguj się, aby zobaczyć swój profil i zapisywać postęp</p>
+                            <button id="guest-login-btn" class="panel-button bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold">
+                                Zaloguj się przez Google
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -329,6 +387,80 @@
         </button>
     </div>
 </div>
+
+<!-- Modal ostrzegawczy do resetowania postępu -->
+<div id="reset-warning-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[70] p-4">
+    <div class="modal-content panel flex flex-col items-center gap-4 p-8 rounded-lg text-center">
+        <h2 class="text-2xl font-bold text-red-500 mb-4">⚠️ Ostrzeżenie!</h2>
+        <p class="text-lg mb-6">Czy na pewno chcesz usunąć cały swój postęp? Ta akcja jest nieodwracalna!</p>
+        <p class="text-sm text-gray-400 mb-6">Zostaną usunięte: wszystkie monety, poziom, przedmioty, osiągnięcia i statystyki.</p>
+        <div class="flex gap-4 justify-center">
+            <button id="reset-confirm-button" class="panel-button bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-bold">
+                Tak, usuń wszystko
+            </button>
+            <button id="reset-cancel-button" class="panel-button bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-bold">
+                Anuluj
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal edycji awatara -->
+<div id="avatar-edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="modal-content panel w-11/12 md:w-1/2 max-w-md p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-shadow">Zmień Avatar</h2>
+            <button id="close-avatar-modal" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+        </div>
+        <div class="space-y-4">
+            <div class="text-center">
+                <div id="avatar-preview" class="w-32 h-32 bg-gray-700 rounded-full border-4 border-gray-500 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <p class="text-gray-400 text-sm mb-4">Wybierz nowy avatar z dostępnych opcji</p>
+            </div>
+            <div id="avatar-options" class="grid grid-cols-4 gap-3">
+                <!-- Opcje awatarów będą dodane dynamicznie -->
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button id="cancel-avatar-edit" class="panel-button bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold">
+                    Anuluj
+                </button>
+                <button id="save-avatar" class="panel-button bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold">
+                    Zapisz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal edycji nazwy użytkownika -->
+<div id="username-edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="modal-content panel w-11/12 md:w-1/2 max-w-md p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-shadow">Zmień Nazwę</h2>
+            <button id="close-username-modal" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label for="new-username" class="block text-sm font-medium text-gray-300 mb-2">Nowa nazwa użytkownika</label>
+                <input type="text" id="new-username" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500" placeholder="Wprowadź nową nazwę" maxlength="50">
+                <p class="text-xs text-gray-400 mt-1">Maksymalnie 50 znaków</p>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button id="cancel-username-edit" class="panel-button bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold">
+                    Anuluj
+                </button>
+                <button id="save-username" class="panel-button bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold">
+                    Zapisz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="notification-container" class="fixed top-5 right-5 z-[100] flex flex-col items-end gap-3"></div>
 <script src="https://unpkg.com/i18next/dist/umd/i18next.min.js" defer></script>
 <script src="https://unpkg.com/i18next-http-backend/dist/umd/i18nextHttpBackend.min.js" defer></script>
