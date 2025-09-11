@@ -843,6 +843,22 @@ canvas {
     animation: fadeIn 0.3s ease-out;
 }
 
+/* Zablokowanie scrollbara dla modali */
+body.modal-open {
+    overflow: hidden !important;
+    position: fixed;
+    width: 100%;
+}
+
+/* Dodatkowe style dla modali rankingu */
+#leaderboard-modal {
+    backdrop-filter: blur(5px);
+}
+
+#post-game-ranking {
+    backdrop-filter: blur(5px);
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

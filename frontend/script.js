@@ -2058,6 +2058,8 @@ let currentLeaderboardType = 'highscore';
 let leaderboardData = [];
 
 async function openLeaderboardModal() {
+    // Zablokuj scroll na body
+    document.body.classList.add('modal-open');
     openModal(leaderboardModal);
     await loadLeaderboardData(currentLeaderboardType);
 }
@@ -2274,7 +2276,8 @@ async function showPostGameRanking(score) {
             postGameRankingContent.appendChild(entry);
         });
         
-        // Pokaż modal
+        // Zablokuj scroll na body i pokaż modal
+        document.body.classList.add('modal-open');
         postGameRanking.classList.remove('hidden');
         
     } catch (error) {
@@ -2510,14 +2513,26 @@ if (leaderboardButton) {
 
 // Event listenery dla modali rankingu
 if (closeLeaderboardModal) {
-    closeLeaderboardModal.addEventListener('click', () => closeModal(leaderboardModal));
+    closeLeaderboardModal.addEventListener('click', () => {
+        // Odblokuj scroll na body
+        document.body.classList.remove('modal-open');
+        closeModal(leaderboardModal);
+    });
 }
 if (leaderboardModal) {
-    leaderboardModal.addEventListener('click', (e) => { if (e.target === leaderboardModal) closeModal(leaderboardModal); });
+    leaderboardModal.addEventListener('click', (e) => { 
+        if (e.target === leaderboardModal) {
+            // Odblokuj scroll na body
+            document.body.classList.remove('modal-open');
+            closeModal(leaderboardModal);
+        }
+    });
 }
 
 if (closePostGameRanking) {
     closePostGameRanking.addEventListener('click', () => {
+        // Odblokuj scroll na body
+        document.body.classList.remove('modal-open');
         postGameRanking.classList.add('hidden');
     });
 }
@@ -2527,4 +2542,20 @@ leaderboardFilters.forEach(filter => {
     filter.addEventListener('click', () => {
         switchLeaderboardType(filter.dataset.type);
     });
+});
+
+// Obsługa klawisza Escape dla zamykania modali rankingu
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (!leaderboardModal.classList.contains('hidden')) {
+            // Odblokuj scroll na body
+            document.body.classList.remove('modal-open');
+            closeModal(leaderboardModal);
+        }
+        if (!postGameRanking.classList.contains('hidden')) {
+            // Odblokuj scroll na body
+            document.body.classList.remove('modal-open');
+            postGameRanking.classList.add('hidden');
+        }
+    }
 });
