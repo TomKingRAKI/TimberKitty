@@ -275,6 +275,38 @@ let gameLoopInterval = null;
 let activeBonuses = {};
 let petSaveUsed = false;
 
+// System sprawdzania gotowości wszystkich komponentów
+const loadingStates = {
+    sprites: false,
+    sounds: false,
+    login: false,
+    shop: false,
+    translations: false,
+    gameRender: false
+};
+
+function checkAllComponentsReady() {
+    const allReady = Object.values(loadingStates).every(state => state === true);
+    console.log('Stan komponentów:', loadingStates);
+    if (allReady) {
+        console.log('Wszystkie komponenty załadowane!');
+        finishLoadingAnimation();
+    } else {
+        const notReady = Object.entries(loadingStates)
+            .filter(([key, ready]) => !ready)
+            .map(([key]) => key);
+        console.log('Oczekiwanie na komponenty:', notReady);
+    }
+}
+
+function markComponentReady(component) {
+    if (loadingStates.hasOwnProperty(component)) {
+        loadingStates[component] = true;
+        console.log(`Komponent ${component} gotowy`);
+        checkAllComponentsReady();
+    }
+}
+
 // NOWY KOD: Wczytywanie grafik (spritów) postaci
 const playerSprites = {};
 const spritePaths = {
@@ -296,6 +328,7 @@ function loadSprites() {
                 loadedCount++;
                 if (loadedCount === totalSprites) {
                     console.log('Wszystkie grafiki postaci załadowane!');
+                    markComponentReady('sprites');
                     resolve();
                 }
             };
@@ -316,7 +349,11 @@ function loadSounds() {
     return new Promise((resolve, reject) => {
         let loadedCount = 0;
         const totalSounds = Object.keys(soundPaths).length;
-        if (totalSounds === 0) resolve();
+        if (totalSounds === 0) {
+            markComponentReady('sounds');
+            resolve();
+            return;
+        }
 
         for (const key in soundPaths) {
             const audio = new Audio();
@@ -328,6 +365,7 @@ function loadSounds() {
                 loadedCount++;
                 if (loadedCount === totalSounds) {
                     console.log('Wszystkie dźwięki załadowane!');
+                    markComponentReady('sounds');
                     resolve();
                 }
             }, { once: true });
@@ -1348,20 +1386,34 @@ function closeModal(modal) {
 // --- Logika Autoryzacji Frontendu ---
 async function checkLoginStatus() {
     try {
+        console.log('Sprawdzanie statusu logowania...');
         const response = await fetch(`${BACKEND_URL}/api/me`, { credentials: 'include' });
         if (!response.ok) throw new Error('Użytkownik niezalogowany');
         const user = await response.json();
         currentUser = user;
         updateUIAfterLogin(user);
+        console.log('Logowanie zakończone pomyślnie');
     } catch (error) {
         console.log('Błąd sprawdzania statusu logowania:', error.message);
         currentUser = null;
         showLoginButton();
-    } finally {
-        finishLoadingAnimation(); // Zakończ animację
+    }
+    
+    // Oznacz logowanie jako gotowe po próbie (niezależnie od wyniku)
+    markComponentReady('login');
+    
+    // Teraz załaduj sklep - to też może wymagać połączenia z serwerem
+    try {
+        console.log('Ładowanie sklepu...');
         const stats = loadStats();
         updateStatsUI(stats);
         populateShopPreview();
+        console.log('Sklep załadowany');
+        markComponentReady('shop');
+    } catch (error) {
+        console.error('Błąd ładowania sklepu:', error);
+        // Nawet jeśli sklep się nie załaduje, oznacz jako gotowy żeby nie blokować
+        markComponentReady('shop');
     }
 }
 
@@ -1426,6 +1478,8 @@ function updateContent() {
             if (authButton) {
                 authButton.textContent = currentUser ? i18next.t('buttons.logout') : i18next.t('buttons.login');
             }
+            
+            // Tłumaczenia są już oznaczone jako gotowe w window.onload
         }
 
         // Aktywny stan przycisków języka (działa także zanim i18next się zainicjuje)
@@ -1590,6 +1644,9 @@ function showStartScreen() {
     }
     messageOverlay.style.display = 'flex';
     timerBar.style.width = '100%';
+    
+    // Oznacz render gry jako gotowy
+    markComponentReady('gameRender');
 }
 
 window.onresize = () => {
@@ -1608,7 +1665,19 @@ window.onload = async () => {
 
         // Czekaj na załadowanie tłumaczeń
         updateContent();
-        console.log('Tłumaczenia załadowane!');
+        
+        // Sprawdź czy i18next jest gotowy
+        if (window.i18next && i18next.isInitialized) {
+            console.log('Tłumaczenia załadowane!');
+            markComponentReady('translations');
+        } else {
+            console.log('Oczekiwanie na i18next...');
+            // Jeśli i18next nie jest gotowy, oznacz jako gotowy po krótkim czasie
+            setTimeout(() => {
+                console.log('i18next timeout - oznaczanie jako gotowy');
+                markComponentReady('translations');
+            }, 2000);
+        }
 
         startLoadingAnimation(); // Rozpocznij animację
 
@@ -1619,15 +1688,26 @@ window.onload = async () => {
         ]);
 
         showStartScreen();
-        // Uruchom sprawdzenie logowania z bezpiecznym timeoutem fallback
+        
+        // Uruchom sprawdzenie logowania - daj więcej czasu na "obudzenie" serwera
+        console.log('Rozpoczynanie sprawdzania logowania...');
         const loginPromise = checkLoginStatus();
-        const timeout = new Promise(resolve => setTimeout(resolve, 4000));
+        const timeout = new Promise(resolve => setTimeout(resolve, 8000)); // Zwiększono do 8 sekund
         await Promise.race([loginPromise, timeout]);
-        // Jeśli timeout wygrał, dokończ loading tak czy siak
-        finishLoadingAnimation();
+        console.log('Sprawdzanie logowania zakończone');
+        
+        // Dodatkowy timeout na wszelki wypadek - jeśli coś się zawiesi
+        setTimeout(() => {
+            if (!Object.values(loadingStates).every(state => state === true)) {
+                console.log('Timeout - wymuszanie zakończenia ładowania');
+                finishLoadingAnimation();
+            }
+        }, 10000); // 10 sekund całkowitego timeoutu
 
     } catch (error) {
         console.error("Błąd inicjalizacji gry:", error);
+        // W przypadku błędu, zakończ ładowanie
+        finishLoadingAnimation();
     }
 };
 
