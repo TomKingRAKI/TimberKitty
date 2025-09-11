@@ -27,7 +27,25 @@ function initI18n() {
         accountHub: {
           title: 'Konto Gracza',
           tabs: { stats: 'Statystyki', achievements: 'Osiągnięcia', profile: 'Profil' },
-          stats_tab: { high_score: 'Najlepszy Wynik', total_chops: 'Suma Ściętych', leaderboard: 'Ranking 📈' },
+          stats_tab: { 
+            high_score: 'Najlepszy Wynik', 
+            total_chops: 'Suma Ściętych', 
+            leaderboard: 'Ranking 📈',
+            leaderboard_title: '🏆 Ranking Graczy',
+            leaderboard_highscore: '🎯 Najlepszy Wynik',
+            leaderboard_totalchops: '🪓 Suma Ściętych',
+            leaderboard_level: '⭐ Poziom',
+            leaderboard_coins: '💰 Monety',
+            leaderboard_loading: 'Ładowanie rankingu...',
+            leaderboard_your_position: 'Twoja pozycja',
+            leaderboard_rank: 'Miejsce',
+            leaderboard_score: 'Wynik',
+            leaderboard_chops: 'Ścięte',
+            leaderboard_level_label: 'Poziom',
+            leaderboard_coins_label: 'Monety',
+            post_game_ranking_title: '🏆 Nowy Rekord!',
+            post_game_ranking_continue: 'Kontynuuj'
+          },
           profile_tab: { 
             equipment: 'Ekwipunek 🎒', 
             edit_profile: 'Edytuj Profil ✏️',
@@ -101,7 +119,25 @@ function initI18n() {
         accountHub: {
           title: 'Player Account',
           tabs: { stats: 'Statistics', achievements: 'Achievements', profile: 'Profile' },
-          stats_tab: { high_score: 'High Score', total_chops: 'Total Chops', leaderboard: 'Leaderboard 📈' },
+          stats_tab: { 
+            high_score: 'High Score', 
+            total_chops: 'Total Chops', 
+            leaderboard: 'Leaderboard 📈',
+            leaderboard_title: '🏆 Player Ranking',
+            leaderboard_highscore: '🎯 High Score',
+            leaderboard_totalchops: '🪓 Total Chops',
+            leaderboard_level: '⭐ Level',
+            leaderboard_coins: '💰 Coins',
+            leaderboard_loading: 'Loading leaderboard...',
+            leaderboard_your_position: 'Your position',
+            leaderboard_rank: 'Rank',
+            leaderboard_score: 'Score',
+            leaderboard_chops: 'Chops',
+            leaderboard_level_label: 'Level',
+            leaderboard_coins_label: 'Coins',
+            post_game_ranking_title: '🏆 New Record!',
+            post_game_ranking_continue: 'Continue'
+          },
           profile_tab: { 
             equipment: 'Equipment 🎒', 
             edit_profile: 'Edit Profile ✏️',
@@ -274,6 +310,17 @@ const closeUsernameModal = document.getElementById('close-username-modal');
 const newUsernameInput = document.getElementById('new-username');
 const cancelUsernameEdit = document.getElementById('cancel-username-edit');
 const saveUsername = document.getElementById('save-username');
+
+// Elementy rankingu
+const leaderboardModal = document.getElementById('leaderboard-modal');
+const closeLeaderboardModal = document.getElementById('close-leaderboard-modal');
+const leaderboardContent = document.getElementById('leaderboard-content');
+const userRankingStats = document.getElementById('user-ranking-stats');
+const userRankingInfo = document.getElementById('user-ranking-info');
+const leaderboardFilters = document.querySelectorAll('.leaderboard-filter');
+const postGameRanking = document.getElementById('post-game-ranking');
+const postGameRankingContent = document.getElementById('post-game-ranking-content');
+const closePostGameRanking = document.getElementById('close-post-game-ranking');
 
 // Pomocnicza: ustaw podświetlenie przycisków języka
 function setActiveLanguageButtons(langCode) {
@@ -1412,6 +1459,18 @@ async function gameOver() {
     clearInterval(gameLoopInterval);
     const oldStats = loadStats();
     await animateStatUpdate(oldStats, score);
+    
+    // Sprawdź czy to nowy rekord i pokaż ranking
+    if (currentUser && score > 0) {
+        const newStats = loadStats();
+        if (score === newStats.highScore) {
+            // To jest nowy rekord - pokaż ranking po grze
+            setTimeout(() => {
+                showPostGameRanking(score);
+            }, 2000); // Poczekaj 2 sekundy po animacji statystyk
+        }
+    }
+    
     if (window.i18next && i18next.isInitialized) {
         messageTitle.textContent = i18next.t('gameOver.title');
         messageText.textContent = `${i18next.t('gameOver.result')}: ${score}.`;
@@ -1712,6 +1771,32 @@ function updateContent() {
                 document.querySelector('#save-username').textContent = i18next.t('accountHub.profile_tab.save');
             }
             
+            // Zaktualizuj elementy rankingu
+            if (document.querySelector('#leaderboard-modal h2')) {
+                document.querySelector('#leaderboard-modal h2').textContent = i18next.t('accountHub.stats_tab.leaderboard_title');
+            }
+            if (document.querySelector('#leaderboard-highscore')) {
+                document.querySelector('#leaderboard-highscore').textContent = i18next.t('accountHub.stats_tab.leaderboard_highscore');
+            }
+            if (document.querySelector('#leaderboard-totalchops')) {
+                document.querySelector('#leaderboard-totalchops').textContent = i18next.t('accountHub.stats_tab.leaderboard_totalchops');
+            }
+            if (document.querySelector('#leaderboard-level')) {
+                document.querySelector('#leaderboard-level').textContent = i18next.t('accountHub.stats_tab.leaderboard_level');
+            }
+            if (document.querySelector('#leaderboard-coins')) {
+                document.querySelector('#leaderboard-coins').textContent = i18next.t('accountHub.stats_tab.leaderboard_coins');
+            }
+            if (document.querySelector('#user-ranking-stats h3')) {
+                document.querySelector('#user-ranking-stats h3').textContent = i18next.t('accountHub.stats_tab.leaderboard_your_position');
+            }
+            if (document.querySelector('#post-game-ranking h3')) {
+                document.querySelector('#post-game-ranking h3').textContent = i18next.t('accountHub.stats_tab.post_game_ranking_title');
+            }
+            if (document.querySelector('#close-post-game-ranking')) {
+                document.querySelector('#close-post-game-ranking').textContent = i18next.t('accountHub.stats_tab.post_game_ranking_continue');
+            }
+            
             // Tłumaczenia są już oznaczone jako gotowe w window.onload
         }
 
@@ -1967,6 +2052,237 @@ async function saveUsernameChanges() {
     }
 }
 
+// --- FUNKCJE RANKINGU ---
+
+let currentLeaderboardType = 'highscore';
+let leaderboardData = [];
+
+async function openLeaderboardModal() {
+    openModal(leaderboardModal);
+    await loadLeaderboardData(currentLeaderboardType);
+}
+
+async function loadLeaderboardData(type = 'highscore') {
+    currentLeaderboardType = type;
+    
+    // Pokaż loading
+    leaderboardContent.innerHTML = `
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+            <span class="ml-3 text-gray-400">${window.i18next && i18next.isInitialized ? i18next.t('accountHub.stats_tab.leaderboard_loading') : 'Ładowanie rankingu...'}</span>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/leaderboard?type=${type}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) throw new Error('Błąd ładowania rankingu');
+        
+        const data = await response.json();
+        leaderboardData = data.leaderboard || [];
+        
+        renderLeaderboard(leaderboardData);
+        updateUserRankingInfo(data.userRank || null);
+        
+    } catch (error) {
+        console.error('Błąd ładowania rankingu:', error);
+        leaderboardContent.innerHTML = `
+            <div class="text-center py-8 text-red-400">
+                <p>Błąd ładowania rankingu</p>
+                <button onclick="loadLeaderboardData('${type}')" class="mt-2 panel-button bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded-lg">
+                    Spróbuj ponownie
+                </button>
+            </div>
+        `;
+    }
+}
+
+function renderLeaderboard(data) {
+    if (!data || data.length === 0) {
+        leaderboardContent.innerHTML = `
+            <div class="text-center py-8 text-gray-400">
+                <p>Brak danych w rankingu</p>
+            </div>
+        `;
+        return;
+    }
+    
+    leaderboardContent.innerHTML = '';
+    
+    data.forEach((player, index) => {
+        const entry = document.createElement('div');
+        entry.className = `leaderboard-entry ${player.isCurrentUser ? 'current-user' : ''}`;
+        
+        const position = index + 1;
+        const positionClass = position <= 3 ? `rank-${position}` : '';
+        
+        // Określ wartość do wyświetlenia
+        let displayValue = '';
+        let displayLabel = '';
+        
+        switch (currentLeaderboardType) {
+            case 'highscore':
+                displayValue = player.high_score || 0;
+                displayLabel = window.i18next && i18next.isInitialized ? i18next.t('accountHub.stats_tab.leaderboard_score') : 'Wynik';
+                break;
+            case 'totalchops':
+                displayValue = player.total_chops || 0;
+                displayLabel = window.i18next && i18next.isInitialized ? i18next.t('accountHub.stats_tab.leaderboard_chops') : 'Ścięte';
+                break;
+            case 'level':
+                displayValue = calculateLevel(player.exp || 0);
+                displayLabel = window.i18next && i18next.isInitialized ? i18next.t('accountHub.stats_tab.leaderboard_level_label') : 'Poziom';
+                break;
+            case 'coins':
+                displayValue = (player.coins || 0).toFixed(2);
+                displayLabel = window.i18next && i18next.isInitialized ? i18next.t('accountHub.stats_tab.leaderboard_coins_label') : 'Monety';
+                break;
+        }
+        
+        // Avatar
+        let avatarHtml = '';
+        if (player.avatar_type && player.avatar_type !== 'default') {
+            const avatar = availableAvatars.find(a => a.id === player.avatar_type);
+            if (avatar) {
+                avatarHtml = `<div class="leaderboard-avatar">${avatar.icon}</div>`;
+            } else {
+                avatarHtml = `<div class="leaderboard-avatar">👤</div>`;
+            }
+        } else {
+            avatarHtml = `<div class="leaderboard-avatar"><img src="${player.avatar_url}" alt="Avatar"></div>`;
+        }
+        
+        entry.innerHTML = `
+            <div class="leaderboard-position ${positionClass}">${position}</div>
+            ${avatarHtml}
+            <div class="leaderboard-info">
+                <div class="leaderboard-name">${player.display_name || 'Gracz'}</div>
+                <div class="leaderboard-stats">
+                    <div class="leaderboard-stat">
+                        <span>${displayLabel}:</span>
+                        <span class="leaderboard-value">${displayValue}</span>
+                    </div>
+                    <div class="leaderboard-stat">
+                        <span>🪓 ${player.total_chops || 0}</span>
+                    </div>
+                    <div class="leaderboard-stat">
+                        <span>⭐ ${calculateLevel(player.exp || 0)}</span>
+                    </div>
+                </div>
+            </div>
+            ${player.isCurrentUser ? '<div class="leaderboard-badge">TY</div>' : ''}
+        `;
+        
+        leaderboardContent.appendChild(entry);
+    });
+}
+
+function updateUserRankingInfo(userRank) {
+    if (!userRank) {
+        userRankingStats.style.display = 'none';
+        return;
+    }
+    
+    userRankingStats.style.display = 'block';
+    
+    let displayValue = '';
+    switch (currentLeaderboardType) {
+        case 'highscore':
+            displayValue = userRank.high_score || 0;
+            break;
+        case 'totalchops':
+            displayValue = userRank.total_chops || 0;
+            break;
+        case 'level':
+            displayValue = calculateLevel(userRank.exp || 0);
+            break;
+        case 'coins':
+            displayValue = (userRank.coins || 0).toFixed(2);
+            break;
+    }
+    
+    userRankingInfo.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div>
+                <span class="text-amber-400 font-bold">#${userRank.rank || '?'}</span>
+                <span class="text-gray-300 ml-2">${userRank.display_name || 'Gracz'}</span>
+            </div>
+            <div class="text-right">
+                <div class="text-amber-400 font-bold">${displayValue}</div>
+                <div class="text-sm text-gray-400">${currentLeaderboardType === 'highscore' ? 'Wynik' : currentLeaderboardType === 'totalchops' ? 'Ścięte' : currentLeaderboardType === 'level' ? 'Poziom' : 'Monety'}</div>
+            </div>
+        </div>
+    `;
+}
+
+function switchLeaderboardType(type) {
+    // Zaktualizuj filtry
+    leaderboardFilters.forEach(filter => {
+        filter.classList.remove('active');
+        if (filter.dataset.type === type) {
+            filter.classList.add('active');
+        }
+    });
+    
+    // Załaduj nowe dane
+    loadLeaderboardData(type);
+}
+
+async function showPostGameRanking(score) {
+    try {
+        // Pobierz dane rankingu dla tego wyniku
+        const response = await fetch(`${BACKEND_URL}/api/leaderboard?type=highscore&score=${score}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) throw new Error('Błąd ładowania rankingu');
+        
+        const data = await response.json();
+        const topPlayers = data.leaderboard.slice(0, 5);
+        const userRank = data.userRank;
+        
+        postGameRankingContent.innerHTML = '';
+        
+        // Dodaj top 5 graczy
+        topPlayers.forEach((player, index) => {
+            const entry = document.createElement('div');
+            entry.className = 'post-game-ranking-entry';
+            
+            let avatarHtml = '';
+            if (player.avatar_type && player.avatar_type !== 'default') {
+                const avatar = availableAvatars.find(a => a.id === player.avatar_type);
+                if (avatar) {
+                    avatarHtml = `<div class="post-game-ranking-avatar">${avatar.icon}</div>`;
+                } else {
+                    avatarHtml = `<div class="post-game-ranking-avatar">👤</div>`;
+                }
+            } else {
+                avatarHtml = `<div class="post-game-ranking-avatar"><img src="${player.avatar_url}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"></div>`;
+            }
+            
+            entry.innerHTML = `
+                <div class="post-game-ranking-position">${index + 1}</div>
+                ${avatarHtml}
+                <div class="post-game-ranking-info">
+                    <div class="post-game-ranking-name">${player.display_name || 'Gracz'}</div>
+                    <div class="post-game-ranking-value">${player.high_score || 0} pkt</div>
+                </div>
+            `;
+            
+            postGameRankingContent.appendChild(entry);
+        });
+        
+        // Pokaż modal
+        postGameRanking.classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Błąd ładowania rankingu po grze:', error);
+        // W przypadku błędu, po prostu nie pokazuj rankingu
+    }
+}
+
 // Event Listeners
 // Event Listeners
 
@@ -2184,4 +2500,31 @@ newUsernameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         saveUsernameChanges();
     }
+});
+
+// Event listenery dla rankingu
+const leaderboardButton = document.getElementById('leaderboard-button');
+if (leaderboardButton) {
+    leaderboardButton.addEventListener('click', openLeaderboardModal);
+}
+
+// Event listenery dla modali rankingu
+if (closeLeaderboardModal) {
+    closeLeaderboardModal.addEventListener('click', () => closeModal(leaderboardModal));
+}
+if (leaderboardModal) {
+    leaderboardModal.addEventListener('click', (e) => { if (e.target === leaderboardModal) closeModal(leaderboardModal); });
+}
+
+if (closePostGameRanking) {
+    closePostGameRanking.addEventListener('click', () => {
+        postGameRanking.classList.add('hidden');
+    });
+}
+
+// Event listenery dla filtrów rankingu
+leaderboardFilters.forEach(filter => {
+    filter.addEventListener('click', () => {
+        switchLeaderboardType(filter.dataset.type);
+    });
 });

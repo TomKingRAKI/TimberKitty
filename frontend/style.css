@@ -680,3 +680,211 @@ canvas {
         background-position: 0% 50%;
     }
 }
+
+/* --- Style dla Rankingu --- */
+.leaderboard-filter {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    color: #9ca3af;
+}
+
+.leaderboard-filter:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.leaderboard-filter.active {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: #111827;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.leaderboard-entry {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.leaderboard-entry:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(245, 158, 11, 0.3);
+    transform: translateX(5px);
+}
+
+.leaderboard-entry.current-user {
+    border-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.leaderboard-position {
+    font-size: 1.5rem;
+    font-weight: bold;
+    min-width: 3rem;
+    text-align: center;
+}
+
+.leaderboard-position.rank-1 {
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.leaderboard-position.rank-2 {
+    color: #c0c0c0;
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+}
+
+.leaderboard-position.rank-3 {
+    color: #cd7f32;
+    text-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
+}
+
+.leaderboard-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.leaderboard-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.leaderboard-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.leaderboard-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.leaderboard-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+.leaderboard-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.leaderboard-value {
+    font-weight: bold;
+    color: #f59e0b;
+}
+
+.leaderboard-badge {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    background-color: #f59e0b;
+    color: #111827;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    border: 2px solid #111827;
+}
+
+/* Animacje dla rankingu */
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.leaderboard-entry {
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+.leaderboard-entry:nth-child(1) { animation-delay: 0.1s; }
+.leaderboard-entry:nth-child(2) { animation-delay: 0.2s; }
+.leaderboard-entry:nth-child(3) { animation-delay: 0.3s; }
+.leaderboard-entry:nth-child(4) { animation-delay: 0.4s; }
+.leaderboard-entry:nth-child(5) { animation-delay: 0.5s; }
+
+/* Style dla rankingu po grze */
+#post-game-ranking {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.post-game-ranking-entry {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.post-game-ranking-position {
+    font-size: 1.25rem;
+    font-weight: bold;
+    min-width: 2rem;
+    text-align: center;
+}
+
+.post-game-ranking-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.post-game-ranking-info {
+    flex: 1;
+}
+
+.post-game-ranking-name {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.post-game-ranking-value {
+    color: #f59e0b;
+    font-weight: bold;
+}

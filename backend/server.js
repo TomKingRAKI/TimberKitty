@@ -425,6 +425,85 @@ app.post('/api/update-profile', async (req, res) => {
     }
 });
 
+// Endpoint do pobierania rankingu
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const { type = 'highscore', score } = req.query;
+        const userId = req.user ? req.user.id : null;
+        
+        let orderBy = '';
+        let limit = 50; // Limit do 50 graczy
+        
+        switch (type) {
+            case 'highscore':
+                orderBy = 'high_score DESC, total_chops DESC, created_at ASC';
+                break;
+            case 'totalchops':
+                orderBy = 'total_chops DESC, high_score DESC, created_at ASC';
+                break;
+            case 'level':
+                orderBy = 'exp DESC, high_score DESC, created_at ASC';
+                break;
+            case 'coins':
+                orderBy = 'coins DESC, high_score DESC, created_at ASC';
+                break;
+            default:
+                orderBy = 'high_score DESC, total_chops DESC, created_at ASC';
+        }
+        
+        // Pobierz ranking graczy
+        const leaderboardQuery = `
+            SELECT 
+                id, display_name, avatar_url, avatar_type, 
+                high_score, total_chops, coins, exp,
+                created_at
+            FROM users 
+            WHERE high_score > 0
+            ORDER BY ${orderBy}
+            LIMIT $1
+        `;
+        
+        const leaderboardResult = await pool.query(leaderboardQuery, [limit]);
+        let leaderboard = leaderboardResult.rows;
+        
+        // Dodaj informację o aktualnym użytkowniku
+        if (userId) {
+            leaderboard = leaderboard.map(player => ({
+                ...player,
+                isCurrentUser: player.id === userId
+            }));
+        }
+        
+        // Znajdź pozycję użytkownika w rankingu
+        let userRank = null;
+        if (userId) {
+            const userQuery = `
+                SELECT 
+                    id, display_name, avatar_url, avatar_type,
+                    high_score, total_chops, coins, exp,
+                    ROW_NUMBER() OVER (ORDER BY ${orderBy}) as rank
+                FROM users 
+                WHERE id = $1 AND high_score > 0
+            `;
+            
+            const userResult = await pool.query(userQuery, [userId]);
+            if (userResult.rows.length > 0) {
+                userRank = userResult.rows[0];
+            }
+        }
+        
+        res.status(200).json({
+            leaderboard,
+            userRank,
+            type
+        });
+        
+    } catch (err) {
+        console.error('Błąd pobierania rankingu:', err);
+        res.status(500).json({ message: 'Błąd serwera podczas pobierania rankingu.' });
+    }
+});
+
 // --- URUCHOMIENIE SERWERA ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

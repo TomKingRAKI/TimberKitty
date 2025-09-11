@@ -244,8 +244,7 @@
                             class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center mb-2"></div>
                         <div id="totalchops-stat-box-modal"
                             class="stat-box w-full bg-gray-900/50 p-3 rounded-md text-center"></div><button
-                            data-i18n="accountHub.stats_tab.leaderboard" class="panel-button w-full mt-6 p-3 rounded-lg font-bold opacity-50 cursor-not-allowed"
-                            disabled>Ranking 📈</button>
+                            data-i18n="accountHub.stats_tab.leaderboard" class="panel-button w-full mt-6 p-3 rounded-lg font-bold" id="leaderboard-button">Ranking 📈</button>
                     </div>
                     <div id="achievements-tab-content" class="tab-content hidden">
                         <div id="achievements-grid-modal" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
@@ -458,6 +457,62 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal rankingu -->
+<div id="leaderboard-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="modal-content panel w-11/12 md:w-2/3 max-w-4xl p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-shadow">🏆 Ranking Graczy</h2>
+            <button id="close-leaderboard-modal" class="text-4xl font-bold hover:text-red-500 transition-colors">&times;</button>
+        </div>
+        
+        <!-- Filtry rankingu -->
+        <div class="flex flex-wrap gap-3 mb-6">
+            <button id="leaderboard-highscore" class="leaderboard-filter active" data-type="highscore">
+                🎯 Najlepszy Wynik
+            </button>
+            <button id="leaderboard-totalchops" class="leaderboard-filter" data-type="totalchops">
+                🪓 Suma Ściętych
+            </button>
+            <button id="leaderboard-level" class="leaderboard-filter" data-type="level">
+                ⭐ Poziom
+            </button>
+            <button id="leaderboard-coins" class="leaderboard-filter" data-type="coins">
+                💰 Monety
+            </button>
+        </div>
+        
+        <!-- Lista rankingu -->
+        <div id="leaderboard-content" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+            <!-- Elementy rankingu będą dodane dynamicznie -->
+            <div class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                <span class="ml-3 text-gray-400">Ładowanie rankingu...</span>
+            </div>
+        </div>
+        
+        <!-- Statystyki użytkownika na dole -->
+        <div id="user-ranking-stats" class="mt-6 p-4 bg-gray-900/50 rounded-lg border border-amber-500/30">
+            <h3 class="text-lg font-bold text-amber-400 mb-2">Twoja pozycja</h3>
+            <div id="user-ranking-info" class="text-gray-300">
+                <!-- Informacje o pozycji użytkownika -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- UI rankingu po grze -->
+<div id="post-game-ranking" class="hidden absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 rounded-lg">
+    <div class="bg-gray-800 border-2 border-amber-500 rounded-lg p-6 max-w-md w-11/12 text-center">
+        <h3 class="text-2xl font-bold text-amber-400 mb-4">🏆 Nowy Rekord!</h3>
+        <div id="post-game-ranking-content" class="space-y-3">
+            <!-- Zawartość rankingu po grze -->
+        </div>
+        <button id="close-post-game-ranking" class="mt-4 panel-button bg-amber-600 hover:bg-amber-700 px-6 py-2 rounded-lg font-bold">
+            Kontynuuj
+        </button>
     </div>
 </div>
 
