@@ -2183,14 +2183,7 @@ function renderLeaderboard(data) {
                 <div class="leaderboard-name">${player.display_name || 'Gracz'}</div>
                 <div class="leaderboard-stats">
                     <div class="leaderboard-stat">
-                        <span>${displayLabel}:</span>
                         <span class="leaderboard-value">${displayValue}</span>
-                    </div>
-                    <div class="leaderboard-stat">
-                        <span>🪓 ${player.total_chops || 0}</span>
-                    </div>
-                    <div class="leaderboard-stat">
-                        <span>⭐ ${calculateLevel(player.exp || 0)}</span>
                     </div>
                 </div>
             </div>
