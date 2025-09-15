@@ -1327,6 +1327,9 @@ function startMissionTimer(nextRefresh) {
         if (diff <= 0) {
             timerElement.textContent = 'Dostępne!';
             clearInterval(missionRefreshTimer);
+            console.log('Timer zakończony, odświeżam misje...');
+            fetchAndDisplayMissions(true); 
+            
             return;
         }
         
