@@ -10,12 +10,12 @@ const cors = require('cors');
 const { Pool } = require('pg'); // Do obsługi bazy danych
 
 // --- Konfiguracja Połączenia z Bazą Danych ---
-//const pool = new Pool({
-//    connectionString: process.env.DATABASE_URL,
-//    ssl: {
-//        rejectUnauthorized: false
-//    }
-//});
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
 
 const shopData = {     char_santa: { id: 'char_santa', name: 'Święty', category: 'characters', icon: '🧑‍🎄', price: 500, description: 'Dłuższy czas za cięcie (+0.5s)', bonus: { type: 'timeGainBonus', value: 0.5 } },
     char_vampire: { id: 'char_vampire', name: 'Wampir', category: 'characters', icon: '🧛', price: 750, description: 'Dłuższy czas za cięcie (+0.75s)', bonus: { type: 'timeGainBonus', value: 0.75 } },
