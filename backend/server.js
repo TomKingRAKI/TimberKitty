@@ -290,9 +290,9 @@ app.post('/api/stats', async (req, res) => {
                 case 'SCORE_SINGLE_GAME':
                     if (scoreFromGame > mission.progress) newProgress = scoreFromGame;
                     break;
-                case 'EARN_COINS_TOTAL':
-                    if (coinsFromGame > 0) newProgress += coinsFromGame;
-                    break;
+                    case 'EARN_COINS_TOTAL':
+                        if (coinsFromGame > 0) newProgress += Math.floor(coinsFromGame);
+                        break;
             }
 
             // Sprawdź, czy misja została ukończona
