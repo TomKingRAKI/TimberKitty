@@ -575,48 +575,51 @@ app.get('/api/missions', async (req, res) => {
         const now = new Date();
 
         for (const category of timeCategories) {
-            // 1. Sprawdź, czy gracz ma aktywne misje w tej kategorii
             const { rows: activeMissions } = await client.query(
-                'SELECT * FROM player_active_missions WHERE user_id = $1 AND mission_id IN (SELECT id FROM missions_pool WHERE time_category = $2)',
+                'SELECT generated_at FROM player_active_missions WHERE user_id = $1 AND mission_id IN (SELECT id FROM missions_pool WHERE time_category = $2) LIMIT 1',
                 [userId, category.name]
             );
-
+        
             let needsNewMissions = true;
             if (activeMissions.length > 0) {
                 const generatedAt = new Date(activeMissions[0].generated_at);
-                // Proste sprawdzenie, czy misje są przestarzałe
-                if (category.name === 'daily' && now.toDateString() === generatedAt.toDateString()) {
+                generatedAt.setHours(0, 0, 0, 0); // Normalizuj datę do północy
+        
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Normalizuj dzisiejszą datę do północy
+        
+                if (category.name === 'daily' && today.getTime() === generatedAt.getTime()) {
                     needsNewMissions = false;
                 }
-                // Proste sprawdzenie tygodnia (można użyć biblioteki jak date-fns dla precyzji)
-                const startOfWeek = new Date(now);
-                startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)); // Poniedziałek
-                if (category.name === 'weekly' && generatedAt >= startOfWeek) {
-                    needsNewMissions = false;
+                
+                if (category.name === 'weekly') {
+                    const startOfWeek = new Date(today);
+                    // Ustaw na ostatni poniedziałek (dzień tygodnia: 0=Nd, 1=Pon, ..., 6=Sob)
+                    startOfWeek.setDate(today.getDate() - (today.getDay() + 6) % 7); 
+                    if (generatedAt >= startOfWeek) {
+                        needsNewMissions = false;
+                    }
                 }
-                if (category.name === 'monthly' && now.getFullYear() === generatedAt.getFullYear() && now.getMonth() === generatedAt.getMonth()) {
+        
+                if (category.name === 'monthly' && today.getFullYear() === generatedAt.getFullYear() && today.getMonth() === generatedAt.getMonth()) {
                     needsNewMissions = false;
                 }
             }
-
+        
             if (needsNewMissions) {
+                // Ta część kodu (usuwanie, losowanie, wstawianie) pozostaje bez zmian...
                 console.log(`Generowanie nowych misji [${category.name}] dla użytkownika ${userId}`);
-                // 2. Usuń stare misje z tej kategorii
                 await client.query(
                     'DELETE FROM player_active_missions WHERE user_id = $1 AND mission_id IN (SELECT id FROM missions_pool WHERE time_category = $2)',
                     [userId, category.name]
                 );
-
-                // 3. Wylosuj nowe misje
                 const { rows: missionPool } = await client.query(
                     'SELECT id FROM missions_pool WHERE time_category = $1 ORDER BY RANDOM() LIMIT $2',
                     [category.name, category.count]
                 );
-                
-                // 4. Wstaw nowe misje dla gracza
                 for (const mission of missionPool) {
                     await client.query(
-                        'INSERT INTO player_active_missions (user_id, mission_id, progress, is_completed, is_claimed, generated_at) VALUES ($1, $2, 0, false, false, NOW())',
+                        'INSERT INTO player_active_missions (user_id, mission_id, generated_at) VALUES ($1, $2, NOW())',
                         [userId, mission.id]
                     );
                 }

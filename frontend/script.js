@@ -782,6 +782,11 @@ async function updateAndSaveStats(scoreFromGame, oldStats) {
 
 async function animateStatUpdate(oldStats, score) {
     const newStats = await updateAndSaveStats(score, oldStats);
+        // Sprawdź, czy modal z misjami jest otwarty. Jeśli tak, odśwież go.
+        if (!accountHubModal.classList.contains('hidden') && document.querySelector('.tab-button[data-tab="missions"]').classList.contains('active')) {
+            console.log('Odświeżanie widoku misji po grze...');
+            fetchAndDisplayMissions();
+        }
     const duration = 1500;
     const startTime = performance.now();
 
@@ -2547,6 +2552,9 @@ enButton.addEventListener('click', () => safeChangeLanguage('en'));
 i18next.on('languageChanged', () => {
   console.log('[i18n] languageChanged =>', i18next.language);
   updateContent();
+  if (!accountHubModal.classList.contains('hidden') && document.querySelector('.tab-button[data-tab="missions"]').classList.contains('active')) {
+    fetchAndDisplayMissions();
+}
 });
 
 navShopButton.addEventListener('click', openShopHub);
