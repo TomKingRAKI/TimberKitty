@@ -498,13 +498,13 @@ const shopData = {
     hat_tophat: { id: 'hat_tophat', name: 'Cylinder', category: 'hats', icon: '🎩', price: 150, description: 'Spowalnia czas o 5%', bonus: { type: 'timerSlowdown', value: 0.05 } },
     hat_grad: { id: 'hat_grad', name: 'Czapka Absolwenta', category: 'hats', icon: '🎓', price: 300, description: 'Spowalnia czas o 10%', bonus: { type: 'timerSlowdown', value: 0.10 } },
     hat_crown: { id: 'hat_crown', name: 'Korona', category: 'hats', icon: '👑', price: 1000, description: 'Spowalnia czas o 15%', bonus: { type: 'timerSlowdown', value: 0.15 } },
-    axe_sword: { id: 'axe_sword', name: 'Miecz', category: 'axes', icon: '⚔️', price: 200, description: '+1 pkt za cięcie', bonus: { type: 'pointsPerChop', value: 1 } },
-    axe_pickaxe: { id: 'axe_pickaxe', name: 'Kilof', category: 'axes', icon: '⛏️', price: 400, description: '+2 pkt za cięcie', bonus: { type: 'pointsPerChop', value: 2 } },
-    axe_golden: { id: 'axe_golden', name: 'Złota Siekiera', category: 'axes', icon: '🪓', price: 800, description: '+3 pkt za cięcie', bonus: { type: 'pointsPerChop', value: 3 } },
+    axe_sword: { id: 'axe_sword', name: 'Miecz', category: 'axes', icon: '⚔️', price: 200, description: '+10% monet za wynik', bonus: { type: 'coinMultiplierBonus', value: 0.1 } },
+    axe_pickaxe: { id: 'axe_pickaxe', name: 'Kilof', category: 'axes', icon: '⛏️', price: 400, description: '+20% monet za wynik', bonus: { type: 'coinMultiplierBonus', value: 0.2 } },
+    axe_golden: { id: 'axe_golden', name: 'Złota Siekiera', category: 'axes', icon: '🪓', price: 800, description: '+30% monet za wynik', bonus: { type: 'coinMultiplierBonus', value: 0.3 } },
     acc_glasses: { id: 'acc_glasses', name: 'Okulary 3D', category: 'accessories', icon: '🕶️', price: 300, description: 'Monety +10%', bonus: { type: 'coinMultiplier', value: 0.1 } },
     acc_scarf: { id: 'acc_scarf', name: 'Szalik', category: 'accessories', icon: '🧣', price: 500, description: 'Monety +20%', bonus: { type: 'coinMultiplier', value: 0.2 } },
-    pet_dog: { id: 'pet_dog', name: 'Piesek', category: 'pets', icon: '🐶', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } },
-    pet_cat: { id: 'pet_cat', name: 'Kotek', category: 'pets', icon: '🐱', price: 2500, description: 'Jednorazowa ochrona', bonus: { type: 'oneTimeSave', value: 1 } },
+    pet_dog: { id: 'pet_dog', name: 'Piesek', category: 'pets', icon: '🐶', price: 2500, description: '+15% EXP za wynik', bonus: { type: 'expMultiplierBonus', value: 0.15 } },
+    pet_cat: { id: 'pet_cat', name: 'Kotek', category: 'pets', icon: '🐱', price: 2500, description: '+15% EXP za wynik', bonus: { type: 'expMultiplierBonus', value: 0.15 } },
 };
 
 // --- Baza Danych Skrzynek (Lootboxów) ---
@@ -682,8 +682,8 @@ async function updateAndSaveStats(currentScore, oldStats) {
         ...oldStats,
         highScore: Math.max(oldStats.highScore, currentScore),
         totalChops: oldStats.totalChops + currentScore,
-        coins: oldStats.coins + (currentScore * 0.1 * (1 + (activeBonuses.coinMultiplier || 0))),
-        exp: oldStats.exp + currentScore // EXP zdobywane tak samo jak monety
+        coins: oldStats.coins + (currentScore * (0.1 + (activeBonuses.coinMultiplierBonus || 0))) * (1 + (activeBonuses.coinMultiplier || 0)),
+        exp: oldStats.exp + Math.round(currentScore * (1 + (activeBonuses.expMultiplierBonus || 0)))
     };
 
     for (const id in achievementsData) {
@@ -1296,7 +1296,13 @@ async function init() {
     timer = MAX_TIME;
     const stats = loadStats();
     petSaveUsed = false;
-    activeBonuses = { pointsPerChop: 0, timerSlowdown: 0, timeGainBonus: 0, coinMultiplier: 0, oneTimeSave: 0 };
+    activeBonuses = { 
+        timeGainBonus: 0, 
+        timerSlowdown: 0, 
+        coinMultiplier: 0, 
+        coinMultiplierBonus: 0, // Nowy bonus z siekier
+        expMultiplierBonus: 0   // Nowy bonus ze zwierzaków
+    };
     if (stats.equippedItems) {
         for (const slot in stats.equippedItems) {
             const itemId = stats.equippedItems[slot];
@@ -1488,20 +1494,10 @@ function performChop(sideToChop) {
 
     const segmentToCut = tree[0];
     if (segmentToCut && segmentToCut.branch === sideToChop) {
-        if (activeBonuses.oneTimeSave > 0 && !petSaveUsed) {
-            petSaveUsed = true;
-            document.body.style.animation = 'flash 0.5s';
-            setTimeout(() => document.body.style.animation = '', 500);
-            tree.shift();
-            tree.push({ branch: null });
-            draw();
-            return;
-        } else {
-            player.side = sideToChop;
-            draw();
-            setTimeout(gameOver, 50);
-            return;
-        }
+        player.side = sideToChop;
+        draw();
+        setTimeout(gameOver, 50);
+        return;
     }
 
     // --- NOWA, BŁYSKAWICZNA LOGIKA ---
@@ -1513,7 +1509,7 @@ function performChop(sideToChop) {
         chopSound.volume = 0.7; // Możesz dostosować głośność
         chopSound.play();
     }
-    score += (1 + activeBonuses.pointsPerChop);
+    score += 1; 
     scoreElement.textContent = score;
     let timeGain = 5 - (score / 50);
     if (timeGain < 1) timeGain = 1;
