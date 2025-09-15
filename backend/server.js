@@ -724,6 +724,104 @@ app.post('/api/missions/claim', async (req, res) => {
         client.release();
     }
 });
+
+// Endpoint do odświeżania misji za opłatą
+app.post('/api/missions/refresh', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Musisz być zalogowany, aby odświeżyć misje.' });
+    }
+
+    const { missionType } = req.body;
+    if (!missionType || !['daily', 'weekly', 'monthly'].includes(missionType)) {
+        return res.status(400).json({ message: 'Nieprawidłowy typ misji.' });
+    }
+
+    const userId = req.user.id;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // Koszty odświeżenia
+        const costs = { daily: 100, weekly: 200, monthly: 300 };
+        const cost = costs[missionType];
+
+        // Pobierz aktualne monety gracza
+        const userResult = await client.query('SELECT coins FROM users WHERE id = $1 FOR UPDATE', [userId]);
+        const user = userResult.rows[0];
+
+        if (user.coins < cost) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Za mało monet!' });
+        }
+
+        // Sprawdź czy gracz ma ukończone misje tego typu
+        const { rows: completedMissions } = await client.query(`
+            SELECT pam.id, pam.is_completed, pam.is_claimed
+            FROM player_active_missions pam 
+            JOIN missions_pool mp ON pam.mission_id = mp.id
+            WHERE pam.user_id = $1 AND mp.time_category = $2
+        `, [userId, missionType]);
+
+        // Sprawdź czy wszystkie misje są ukończone i odebrane
+        const allCompletedAndClaimed = completedMissions.every(mission => 
+            mission.is_completed && mission.is_claimed
+        );
+
+        if (!allCompletedAndClaimed) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Możesz odświeżyć misje tylko gdy wszystkie są ukończone i odebrane!' });
+        }
+
+        // Odejmij koszt od monet gracza
+        await client.query(
+            'UPDATE users SET coins = coins - $1 WHERE id = $2',
+            [cost, userId]
+        );
+
+        // Usuń stare misje tego typu
+        await client.query(`
+            DELETE FROM player_active_missions 
+            WHERE user_id = $1 AND mission_id IN (
+                SELECT id FROM missions_pool WHERE time_category = $2
+            )
+        `, [userId, missionType]);
+
+        // Wygeneruj nowe misje tego typu
+        const missionCounts = { daily: 3, weekly: 5, monthly: 10 };
+        const count = missionCounts[missionType];
+
+        const { rows: newMissions } = await client.query(
+            'SELECT id FROM missions_pool WHERE time_category = $1 ORDER BY RANDOM() LIMIT $2',
+            [missionType, count]
+        );
+
+        for (const mission of newMissions) {
+            await client.query(
+                'INSERT INTO player_active_missions (user_id, mission_id, generated_at) VALUES ($1, $2, NOW())',
+                [userId, mission.id]
+            );
+        }
+
+        // Pobierz zaktualizowane dane gracza
+        const { rows: updatedUser } = await client.query('SELECT * FROM users WHERE id = $1', [userId]);
+
+        await client.query('COMMIT');
+
+        res.status(200).json({
+            message: 'Misje zostały odświeżone!',
+            updatedUser: updatedUser[0]
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Błąd podczas odświeżania misji:', err);
+        res.status(500).json({ message: 'Błąd serwera podczas odświeżania misji.' });
+    } finally {
+        client.release();
+    }
+});
+
 // --- URUCHOMIENIE SERWERA ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

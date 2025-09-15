@@ -75,6 +75,12 @@ function initI18n() {
             loading: 'Ładowanie misji...',
             in_progress: 'W toku',
             claimed: 'Odebrano',
+            next_refresh: 'Następne odświeżenie:',
+            refresh: 'Odśwież',
+            refresh_confirm: 'Czy na pewno chcesz odświeżyć misje za',
+            refresh_success: 'Misje zostały odświeżone!',
+            refresh_error: 'Błąd odświeżania misji',
+            refresh_no_money: 'Za mało monet!',
             'desc.chop_50': 'Zetnij 50 pni',
             'desc.score_30': 'Zdobądź 30 punktów w jednej grze',
             'desc.chop_500': 'Zetnij łącznie 500 pni',
@@ -186,6 +192,12 @@ function initI18n() {
             loading: 'Loading missions...',
             in_progress: 'In Progress',
             claimed: 'Claimed',
+            next_refresh: 'Next refresh:',
+            refresh: 'Refresh',
+            refresh_confirm: 'Are you sure you want to refresh missions for',
+            refresh_success: 'Missions have been refreshed!',
+            refresh_error: 'Error refreshing missions',
+            refresh_no_money: 'Not enough coins!',
             // Keys from the database
             'desc.chop_50': 'Chop 50 trunks',
             'desc.score_30': 'Get 30 points in a single game',
@@ -414,6 +426,8 @@ let animationTimeout1 = null;
 let animationTimeout2 = null;
 let missionsCache = null; // Cache dla misji
 let missionsLastFetch = 0; // Timestamp ostatniego pobrania misji
+let missionRefreshTimer = null; // Timer do odliczania do odświeżenia
+let currentMissionType = 'daily'; // Aktualny typ misji (daily/weekly/monthly)
 
 // Zmienne timera
 let timer = 100;
@@ -1104,6 +1118,9 @@ function renderMissionCards(missions) {
     } else {
         monthlyContainer.innerHTML = `<p class="text-center text-gray-500">${(window.i18next && i18next.isInitialized) ? i18next.t('missions.no_monthly') : 'Brak misji miesięcznych.'}</p>`;
     }
+    
+    // Zaktualizuj przycisk refresh po renderowaniu
+    updateRefreshButton();
 }
 
 async function fetchAndDisplayMissions(forceRefresh = false) {
@@ -1120,6 +1137,7 @@ async function fetchAndDisplayMissions(forceRefresh = false) {
     if (cacheValid && !forceRefresh) {
         console.log('Używanie cache misji');
         renderMissionCards(missionsCache);
+        updateMissionRefreshTimer();
         return;
     }
 
@@ -1150,6 +1168,7 @@ async function fetchAndDisplayMissions(forceRefresh = false) {
         missionsLastFetch = now;
         
         renderMissionCards(missions);
+        updateMissionRefreshTimer();
 
     } catch (error) {
         const errorHTML = `<p class="text-center text-red-500">${error.message}</p>`;
@@ -1197,6 +1216,157 @@ async function claimMissionReward(missionId) {
         showNotification(error.message, 'error');
         // Jeśli wystąpił błąd, odśwież misje, aby przywrócić przycisk do stanu "Odbierz"
         fetchAndDisplayMissions(true); 
+    }
+}
+
+// Funkcje do obsługi timera i refresh misji
+function updateMissionRefreshTimer() {
+    if (!missionsCache) return;
+    
+    const now = new Date();
+    let nextRefresh = null;
+    
+    // Oblicz następne odświeżenie na podstawie aktualnego typu misji
+    switch (currentMissionType) {
+        case 'daily':
+            nextRefresh = new Date(now);
+            nextRefresh.setDate(nextRefresh.getDate() + 1);
+            nextRefresh.setHours(0, 0, 0, 0);
+            break;
+        case 'weekly':
+            nextRefresh = new Date(now);
+            const daysUntilMonday = (1 + 7 - now.getDay()) % 7;
+            nextRefresh.setDate(nextRefresh.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
+            nextRefresh.setHours(0, 0, 0, 0);
+            break;
+        case 'monthly':
+            nextRefresh = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            break;
+    }
+    
+    if (nextRefresh) {
+        startMissionTimer(nextRefresh);
+    }
+}
+
+function startMissionTimer(nextRefresh) {
+    if (missionRefreshTimer) {
+        clearInterval(missionRefreshTimer);
+    }
+    
+    const timerElement = document.getElementById('mission-refresh-timer');
+    if (!timerElement) return;
+    
+    function updateTimer() {
+        const now = new Date();
+        const diff = nextRefresh - now;
+        
+        if (diff <= 0) {
+            timerElement.textContent = 'Dostępne!';
+            clearInterval(missionRefreshTimer);
+            return;
+        }
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    updateTimer();
+    missionRefreshTimer = setInterval(updateTimer, 1000);
+}
+
+function updateRefreshButton() {
+    const refreshButton = document.getElementById('refresh-missions-button');
+    const refreshCost = document.getElementById('refresh-cost');
+    
+    if (!refreshButton || !refreshCost) return;
+    
+    // Ustaw koszt na podstawie aktualnego typu misji
+    const costs = { daily: 100, weekly: 200, monthly: 300 };
+    const cost = costs[currentMissionType] || 100;
+    refreshCost.textContent = cost;
+    
+    // Sprawdź czy gracz ma wystarczająco monet
+    const stats = loadStats();
+    const canAfford = stats.coins >= cost;
+    
+    refreshButton.disabled = !canAfford;
+    if (canAfford) {
+        refreshButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        refreshButton.classList.add('hover:bg-amber-700');
+    } else {
+        refreshButton.classList.add('opacity-50', 'cursor-not-allowed');
+        refreshButton.classList.remove('hover:bg-amber-700');
+    }
+}
+
+async function refreshMissions() {
+    if (!currentUser) {
+        showNotification('Musisz być zalogowany, aby odświeżyć misje!', 'error');
+        return;
+    }
+    
+    const costs = { daily: 100, weekly: 200, monthly: 300 };
+    const cost = costs[currentMissionType] || 100;
+    
+    const stats = loadStats();
+    if (stats.coins < cost) {
+        const noMoneyText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_no_money') : 'Za mało monet!';
+        showNotification(noMoneyText, 'error');
+        return;
+    }
+    
+    // Potwierdź odświeżenie
+    const confirmText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_confirm') : 'Czy na pewno chcesz odświeżyć misje za';
+    if (!confirm(`${confirmText} ${cost} monet?`)) {
+        return;
+    }
+    
+    const refreshButton = document.getElementById('refresh-missions-button');
+    if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.textContent = 'Odświeżanie...';
+    }
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/missions/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ missionType: currentMissionType })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Błąd odświeżania misji');
+        }
+        
+        // Sukces!
+        const successText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_success') : 'Misje zostały odświeżone!';
+        showNotification(successText, 'success');
+        
+        // Zaktualizuj dane użytkownika
+        currentUser = result.updatedUser;
+        updateStatsUI(loadStats());
+        
+        // Odśwież misje
+        missionsCache = null; // Wyczyść cache
+        fetchAndDisplayMissions(true);
+        
+    } catch (error) {
+        const errorText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_error') : 'Błąd odświeżania misji';
+        showNotification(`${errorText}: ${error.message}`, 'error');
+    } finally {
+        if (refreshButton) {
+            refreshButton.disabled = false;
+            const refreshText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh') : 'Odśwież';
+            refreshButton.innerHTML = `<span>${refreshText}</span> <span id="refresh-cost">${cost}</span> 💰`;
+            updateRefreshButton();
+        }
     }
 }
 
@@ -2877,3 +3047,39 @@ if (desktopMissionsButton) {
         fetchAndDisplayMissions(true);
     });
 }
+
+// Event listenery dla przycisków misji
+document.addEventListener('click', (e) => {
+    // Obsługa przełączania zakładek misji
+    if (e.target.matches('.mission-tab-button')) {
+        const target = e.target.dataset.missionTab;
+        currentMissionType = target;
+        
+        // Usuń aktywną klasę z wszystkich przycisków
+        document.querySelectorAll('.mission-tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Dodaj aktywną klasę do klikniętego przycisku
+        e.target.classList.add('active');
+        
+        // Pokaż/ukryj odpowiednią zawartość
+        const missionContents = document.querySelectorAll('.mission-content');
+        missionContents.forEach(content => {
+            if (content.id === `${target}-missions-content`) {
+                content.classList.remove('hidden');
+            } else {
+                content.classList.add('hidden');
+            }
+        });
+        
+        // Zaktualizuj przycisk refresh i timer
+        updateRefreshButton();
+        updateMissionRefreshTimer();
+    }
+    
+    // Obsługa przycisku refresh misji
+    if (e.target.matches('#refresh-missions-button')) {
+        refreshMissions();
+    }
+});
