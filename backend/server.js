@@ -241,36 +241,84 @@ app.get('/api/me', (req, res) => {
 });
 
 // Endpoint do zapisywania statystyk po grze
+// W pliku server.js, ZASTĄP stary endpoint /api/stats tym kodem
+
 app.post('/api/stats', async (req, res) => {
     if (!req.user) {
         return res.status(401).json({ message: 'Musisz być zalogowany, aby zapisać postęp.' });
     }
 
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN'); // Rozpocznij transakcję
+
         const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems, exp } = req.body;
         const userId = req.user.id;
 
-        // --- KLUCZOWA POPRAWKA ---
-        // Ręcznie formatujemy tablicę JS na format zrozumiały dla PostgreSQL ('{item1,item2}')
+        // --- 1. Zaktualizuj główne statystyki gracza ---
         const achievementsArrayLiteral = `{${unlockedAchievements.join(',')}}`;
-        // --- KONIEC POPRAWKI ---
-
         const unlockedItemsJSON = JSON.stringify(unlockedItems);
         const equippedItemsJSON = JSON.stringify(equippedItems);
 
-        const result = await pool.query(
+        await client.query(
             `UPDATE users 
              SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6, exp = $7 
-             WHERE id = $8 RETURNING *`,
-            // Przekazujemy do zapytania naszą nową, sformatowaną tablicę
+             WHERE id = $8`,
             [highScore, totalChops, coins, achievementsArrayLiteral, unlockedItemsJSON, equippedItemsJSON, exp || 0, userId]
         );
 
-        res.status(200).json(result.rows[0]);
+        // --- 2. NOWA LOGIKA: Zaktualizuj postęp w misjach ---
+        const scoreFromGame = req.body.highScore - req.user.high_score; // Proste wyliczenie wyniku z ostatniej gry
+        const chopsFromGame = scoreFromGame > 0 ? scoreFromGame : 0; // Zakładamy 1 chop = 1 pkt
+        const coinsFromGame = req.body.coins - req.user.coins;
+        
+        // Pobierz aktywne, nieukończone misje gracza
+        const { rows: activeMissions } = await client.query(`
+            SELECT pam.id, pam.progress, mp.type, mp.target_value
+            FROM player_active_missions pam
+            JOIN missions_pool mp ON pam.mission_id = mp.id
+            WHERE pam.user_id = $1 AND pam.is_completed = false
+        `, [userId]);
+
+        for (const mission of activeMissions) {
+            let newProgress = mission.progress;
+            
+            switch (mission.type) {
+                case 'CHOP_TOTAL':
+                    if (chopsFromGame > 0) newProgress += chopsFromGame;
+                    break;
+                case 'SCORE_SINGLE_GAME':
+                    if (scoreFromGame > mission.progress) newProgress = scoreFromGame;
+                    break;
+                case 'EARN_COINS_TOTAL':
+                    if (coinsFromGame > 0) newProgress += coinsFromGame;
+                    break;
+            }
+
+            // Sprawdź, czy misja została ukończona
+            const isNowCompleted = newProgress >= mission.target_value;
+
+            // Zapisz nowy postęp i status ukończenia
+            if (newProgress !== mission.progress) {
+                await client.query(
+                    'UPDATE player_active_missions SET progress = $1, is_completed = $2 WHERE id = $3',
+                    [newProgress, isNowCompleted, mission.id]
+                );
+            }
+        }
+        
+        // --- 3. Pobierz i odeślij zaktualizowane dane użytkownika ---
+        const { rows: updatedUser } = await client.query('SELECT * FROM users WHERE id = $1', [userId]);
+        await client.query('COMMIT'); // Zatwierdź wszystkie zmiany
+
+        res.status(200).json(updatedUser[0]);
 
     } catch (err) {
-        console.error('Błąd zapisu statystyk:', err);
+        await client.query('ROLLBACK'); // Wycofaj zmiany w razie błędu
+        console.error('Błąd zapisu statystyk i postępu misji:', err);
         res.status(500).json({ message: 'Błąd serwera podczas zapisywania postępu.' });
+    } finally {
+        client.release();
     }
 });
 
@@ -606,6 +654,75 @@ app.get('/api/missions', async (req, res) => {
     }
 });
 
+app.post('/api/missions/claim', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Musisz być zalogowany, aby odebrać nagrodę.' });
+    }
+
+    const { missionId } = req.body; // Oczekujemy ID z tabeli player_active_missions
+    if (!missionId) {
+        return res.status(400).json({ message: 'Nie podano ID misji.' });
+    }
+
+    const userId = req.user.id;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // 1. Pobierz misję i upewnij się, że spełnia wszystkie warunki
+        const missionResult = await client.query(`
+            SELECT pam.id, pam.user_id, pam.is_completed, pam.is_claimed,
+                   mp.reward_coins, mp.reward_exp
+            FROM player_active_missions pam
+            JOIN missions_pool mp ON pam.mission_id = mp.id
+            WHERE pam.id = $1 AND pam.user_id = $2
+            FOR UPDATE 
+        `, [missionId, userId]);
+
+        if (missionResult.rows.length === 0) {
+            throw new Error('Nie znaleziono misji lub nie należy ona do Ciebie.');
+        }
+
+        const mission = missionResult.rows[0];
+
+        if (!mission.is_completed) {
+            throw new Error('Ta misja nie została jeszcze ukończona!');
+        }
+        if (mission.is_claimed) {
+            throw new Error('Ta nagroda została już odebrana!');
+        }
+
+        // 2. Zaktualizuj statystyki gracza
+        await client.query(
+            'UPDATE users SET coins = coins + $1, exp = exp + $2 WHERE id = $3',
+            [mission.reward_coins, mission.reward_exp, userId]
+        );
+
+        // 3. Oznacz misję jako odebraną
+        await client.query(
+            'UPDATE player_active_missions SET is_claimed = true WHERE id = $1',
+            [missionId]
+        );
+
+        // 4. Pobierz zaktualizowane dane gracza, aby odesłać je do frontendu
+        const { rows: updatedUser } = await client.query('SELECT * FROM users WHERE id = $1', [userId]);
+
+        await client.query('COMMIT');
+        res.status(200).json({ 
+            message: 'Nagroda odebrana!',
+            updatedUser: updatedUser[0] 
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Błąd podczas odbierania nagrody za misję:', err);
+        // Sprawdzamy, czy błąd ma zdefiniowaną przez nas wiadomość
+        res.status(400).json({ message: err.message || 'Błąd serwera.' });
+    } finally {
+        client.release();
+    }
+});
 // --- URUCHOMIENIE SERWERA ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

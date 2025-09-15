@@ -1115,6 +1115,47 @@ async function fetchAndDisplayMissions() {
     }
 }
 
+async function claimMissionReward(missionId) {
+    console.log(`Próba odebrania nagrody za misję o ID: ${missionId}`);
+    
+    // Opcjonalnie: znajdź przycisk i go zablokuj, by uniknąć podwójnych kliknięć
+    const button = document.querySelector(`button[onclick="claimMissionReward(${missionId})"]`);
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Odbieranie...';
+    }
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/missions/claim`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ missionId: missionId })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message);
+        }
+        
+        // Sukces!
+        showNotification(result.message || 'Nagroda odebrana!', 'success');
+
+        // Zaktualizuj lokalne dane użytkownika i odśwież UI
+        currentUser = result.updatedUser;
+        updateStatsUI(loadStats());
+
+        // Odśwież widok misji, aby pokazać status "Odebrano"
+        fetchAndDisplayMissions();
+
+    } catch (error) {
+        showNotification(error.message, 'error');
+        // Jeśli wystąpił błąd, odśwież misje, aby przywrócić przycisk do stanu "Odbierz"
+        fetchAndDisplayMissions(); 
+    }
+}
+
 async function openLootbox(boxId, cardElement) {
     if (!currentUser) {
         showNotification('Musisz być zalogowany, aby kupować skrzynki!', 'error');
