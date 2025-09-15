@@ -18,7 +18,7 @@ function initI18n() {
         buttons: { loading: 'Ładowanie...', logout: 'Wyloguj się', login: 'Zaloguj się z Google' },
         bottomNav: { shop: 'Sklep', equipment: 'Ekwipunek', account: 'Konto' },
         statsPanel: {
-          title: 'Profil Gracza', guest: 'Gość', coins: 'Monety', level: 'Poziom', menu: 'Menu', equipment: 'Ekwipunek 🎒', account: 'Konto 👤'
+          title: 'Profil Gracza', guest: 'Gość', coins: 'Monety', level: 'Poziom', menu: 'Menu', equipment: 'Ekwipunek 🎒', account: 'Konto 👤', missions: 'Misje 📜'
         },
         startScreen: { ready: 'Gotowy?', prompt: 'Kliknij przycisk, aby rozpocząć!', play: 'Graj!', reset: 'Zresetuj postęp' },
         gameOver: { title: 'Koniec Gry!', result: 'Twój wynik', playAgain: 'Zagraj Ponownie' },
@@ -26,7 +26,26 @@ function initI18n() {
         shopPanel: { title: 'Sklep' },
         accountHub: {
           title: 'Konto Gracza',
-          tabs: { stats: 'Statystyki', achievements: 'Osiągnięcia', profile: 'Profil' },
+          tabs: { stats: 'Statystyki', achievements: 'Osiągnięcia', missions: 'Misje', profile: 'Profil' },
+          missions: {
+            daily: 'Dzienne',
+            weekly: 'Tygodniowe',
+            monthly: 'Miesięczne',
+            reward: 'Nagroda',
+            claim: 'Odbierz',
+            example_chop_desc: 'Zetnij 50 pni drzewa',
+            no_weekly: 'Brak misji tygodniowych.',
+            no_monthly: 'Brak misji miesięcznych.',
+            no_daily: 'Brak misji dziennych.',
+            loading: 'Ładowanie misji...',
+            in_progress: 'W toku',
+            claimed: 'Odebrano',
+            'desc.chop_50': 'Zetnij 50 pni',
+            'desc.score_30': 'Zdobądź 30 punktów w jednej grze',
+            'desc.chop_500': 'Zetnij łącznie 500 pni',
+            'desc.score_100': 'Zdobądź 100 punktów w jednej grze',
+            'desc.earn_1000': 'Zarób łącznie 1000 monet'
+        },
           stats_tab: { 
             high_score: 'Najlepszy Wynik', 
             total_chops: 'Suma Ściętych', 
@@ -110,7 +129,7 @@ function initI18n() {
         buttons: { loading: 'Loading...', logout: 'Log Out', login: 'Log in with Google' },
         bottomNav: { shop: 'Shop', equipment: 'Equipment', account: 'Account' },
         statsPanel: {
-          title: 'Player Profile', guest: 'Guest', coins: 'Coins', level: 'Level', menu: 'Menu', equipment: 'Equipment 🎒', account: 'Account 👤'
+          title: 'Player Profile', guest: 'Guest', coins: 'Coins', level: 'Level', menu: 'Menu', equipment: 'Equipment 🎒', account: 'Account 👤', missions: 'Missions 📜'
         },
         startScreen: { ready: 'Ready?', prompt: 'Click the button to start!', play: 'Play!', reset: 'Reset progress' },
         gameOver: { title: 'Game Over!', result: 'Your score', playAgain: 'Play Again' },
@@ -118,7 +137,27 @@ function initI18n() {
         shopPanel: { title: 'Shop' },
         accountHub: {
           title: 'Player Account',
-          tabs: { stats: 'Statistics', achievements: 'Achievements', profile: 'Profile' },
+          tabs: { stats: 'Statistics', achievements: 'Achievements', missions: 'Missions', profile: 'Profile' },
+          missions: {
+            daily: 'Daily',
+            weekly: 'Weekly',
+            monthly: 'Monthly',
+            reward: 'Reward',
+            claim: 'Claim',
+            example_chop_desc: 'Chop 50 tree trunks',
+            no_weekly: 'No weekly missions.',
+            no_monthly: 'No monthly missions.',
+            no_daily: 'No daily missions.',
+            loading: 'Loading missions...',
+            in_progress: 'In Progress',
+            claimed: 'Claimed',
+            // Keys from the database
+            'desc.chop_50': 'Chop 50 trunks',
+            'desc.score_30': 'Get 30 points in a single game',
+            'desc.chop_500': 'Chop a total of 500 trunks',
+            'desc.score_100': 'Get 100 points in a single game',
+            'desc.earn_1000': 'Earn a total of 1000 coins'
+        },
           stats_tab: { 
             high_score: 'High Score', 
             total_chops: 'Total Chops', 
@@ -244,6 +283,7 @@ const navEquipmentButton = document.getElementById('nav-equipment-button');
 const navAccountButton = document.getElementById('nav-account-button');
 const desktopEquipmentButton = document.getElementById('desktop-equipment-button');
 const desktopAccountButton = document.getElementById('desktop-account-button');
+const desktopMissionsButton = document.getElementById('desktop-missions-button');
 
 // Modale
 const shopModal = document.getElementById('shop-modal');
@@ -976,6 +1016,104 @@ function populateShopPreview() {
 
 
 // --- Logika gry ---
+
+/**
+ * Renderuje karty misji na podstawie danych z serwera.
+ * @param {object} missions - Obiekt z misjami pogrupowanymi na daily, weekly, monthly.
+ */
+function renderMissionCards(missions) {
+    const dailyContainer = document.getElementById('daily-missions-content');
+    const weeklyContainer = document.getElementById('weekly-missions-content');
+    const monthlyContainer = document.getElementById('monthly-missions-content');
+
+    // Wyczyść kontenery przed renderowaniem
+    dailyContainer.innerHTML = '';
+    weeklyContainer.innerHTML = '';
+    monthlyContainer.innerHTML = '';
+
+    const createCardHTML = (mission) => {
+        const progressPercent = Math.min((mission.progress / mission.target_value) * 100, 100);
+        const translatedDesc = (window.i18next && i18next.isInitialized) ? i18next.t(mission.description_key) : 'Wczytywanie opisu...';
+
+        let buttonHTML = '';
+        if (mission.is_claimed) {
+            const claimedText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.claimed') : 'Odebrano';
+            buttonHTML = `<button class="claim-button" disabled>${claimedText}</button>`;
+        } else if (mission.is_completed) {
+            const claimText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.claim') : 'Odbierz';
+            // WAŻNE: Dodajemy listener onclick, który wywoła funkcję odbioru nagrody
+            buttonHTML = `<button class="claim-button" onclick="claimMissionReward(${mission.id})">${claimText}</button>`;
+        } else {
+            const inProgressText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.in_progress') : 'W toku';
+            buttonHTML = `<button class="claim-button" disabled>${inProgressText}</button>`;
+        }
+
+        return `
+        <div class="mission-card">
+            <div class="flex items-center gap-4">
+                <div class="text-4xl">🪓</div> <div class="flex-grow">
+                    <p class="font-bold">${translatedDesc}</p>
+                    <div class="w-full bg-gray-700 rounded-full h-4 mt-1 border border-gray-600">
+                        <div class="bg-amber-500 h-full rounded-full text-xs text-black font-bold flex items-center justify-center" style="width: ${progressPercent}%">
+                            ${mission.progress} / ${mission.target_value}
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-400">${(window.i18next && i18next.isInitialized) ? i18next.t('missions.reward') : 'Nagroda'}</p>
+                    <p class="font-bold text-lg">${mission.reward_coins} 💰 ${mission.reward_exp > 0 ? `| ${mission.reward_exp} EXP` : ''}</p>
+                </div>
+            </div>
+            ${buttonHTML}
+        </div>`;
+    };
+
+    // Renderowanie misji dziennych
+    if (missions.daily.length > 0) {
+        missions.daily.forEach(mission => dailyContainer.innerHTML += createCardHTML(mission));
+    } else {
+        dailyContainer.innerHTML = `<p class="text-center text-gray-500">${(window.i18next && i18next.isInitialized) ? i18next.t('missions.no_daily') : 'Brak misji dziennych.'}</p>`;
+    }
+
+    // Renderowanie misji tygodniowych
+    if (missions.weekly.length > 0) {
+        missions.weekly.forEach(mission => weeklyContainer.innerHTML += createCardHTML(mission));
+    } else {
+        weeklyContainer.innerHTML = `<p class="text-center text-gray-500">${(window.i18next && i18next.isInitialized) ? i18next.t('missions.no_weekly') : 'Brak misji tygodniowych.'}</p>`;
+    }
+
+    // Renderowanie misji miesięcznych
+    if (missions.monthly.length > 0) {
+        missions.monthly.forEach(mission => monthlyContainer.innerHTML += createCardHTML(mission));
+    } else {
+        monthlyContainer.innerHTML = `<p class="text-center text-gray-500">${(window.i18next && i18next.isInitialized) ? i18next.t('missions.no_monthly') : 'Brak misji miesięcznych.'}</p>`;
+    }
+}
+
+async function fetchAndDisplayMissions() {
+    const dailyContainer = document.getElementById('daily-missions-content');
+    if (!dailyContainer) return;
+
+    const loadingText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.loading') : 'Ładowanie misji...';
+    dailyContainer.innerHTML = `<p class="text-center text-gray-400">${loadingText}</p>`;
+
+    try {
+        // Upewnij się, że tutaj jest BACKTICK (`), a nie apostrof (')
+        const response = await fetch(`${BACKEND_URL}/api/missions`, { credentials: 'include' });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Nie udało się załadować misji');
+        }
+        
+        const missions = await response.json();
+        renderMissionCards(missions);
+
+    } catch (error) {
+        // Tutaj również upewnij się, że jest BACKTICK (`), a nie apostrof (')
+        dailyContainer.innerHTML = `<p class="text-center text-red-500">${error.message}</p>`;
+    }
+}
 
 async function openLootbox(boxId, cardElement) {
     if (!currentUser) {
@@ -1829,6 +1967,18 @@ function updateContent() {
 }
 
 // Logika przełączania zakładek w modalu Konta
+function switchAccountTab(targetTabName) {
+    // Zdejmij 'active' ze wszystkich zakładek i ukryj całą zawartość
+    tabs.forEach(item => item.classList.remove('active'));
+    tabContents.forEach(content => content.classList.add('hidden'));
+
+    // Znajdź i aktywuj docelową zakładkę i jej zawartość
+    const targetTab = document.querySelector(`.tab-button[data-tab="${targetTabName}"]`);
+    const targetContent = document.getElementById(`${targetTabName}-tab-content`);
+
+    if (targetTab) targetTab.classList.add('active');
+    if (targetContent) targetContent.classList.remove('hidden');
+}
 const tabs = document.querySelectorAll('.tab-button');
 const tabContents = document.querySelectorAll('.tab-content');
 
@@ -1845,6 +1995,9 @@ tabs.forEach(tab => {
                 content.classList.add('hidden');
             }
         });
+        if (target === 'missions') {
+            fetchAndDisplayMissions();
+        }
     });
 });
 
@@ -2593,3 +2746,40 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+// Logika przełączania zakładek wewnątrz panelu Misji
+const missionTabs = document.querySelectorAll('.mission-tab-button');
+const missionContents = document.querySelectorAll('.mission-content');
+
+missionTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Zdejmij klasę 'active' ze wszystkich przycisków
+        missionTabs.forEach(item => item.classList.remove('active'));
+        // Dodaj klasę 'active' do klikniętego
+        tab.classList.add('active');
+
+        const target = tab.dataset.missionTab;
+
+        // Pokaż/ukryj odpowiednią zawartość
+        missionContents.forEach(content => {
+            if (content.id === `${target}-missions-content`) {
+                content.classList.remove('hidden');
+            } else {
+                content.classList.add('hidden');
+            }
+        });
+    });
+});
+
+desktopAccountButton.addEventListener('click', () => {
+    switchAccountTab('stats'); // Domyślnie otwieraj na statystykach
+    openAccountHub();
+});
+
+// DODAJ TEN BLOK KODU
+if (desktopMissionsButton) {
+    desktopMissionsButton.addEventListener('click', () => {
+        switchAccountTab('missions'); // Ustaw zakładkę 'Misje' jako aktywną
+        openAccountHub();
+    });
+}

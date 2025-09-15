@@ -123,7 +123,10 @@ app.use(express.json()); // Middleware do parsowania JSON w ciele zapytań POST
 
 // --- Konfiguracja CORS ---
 app.use(cors({
-    origin: 'https://timberkitty.netlify.app',
+    origin: [
+        'https://timberkitty.netlify.app', // Adres produkcyjny
+        'http://127.0.0.1:5500'          // Adres deweloperski
+    ],
     credentials: true
 }));
 
@@ -501,6 +504,105 @@ app.get('/api/leaderboard', async (req, res) => {
     } catch (err) {
         console.error('Błąd pobierania rankingu:', err);
         res.status(500).json({ message: 'Błąd serwera podczas pobierania rankingu.' });
+    }
+});
+
+// Wklej ten kod w server.js razem z innymi endpointami API
+
+app.get('/api/missions', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Musisz być zalogowany, aby zobaczyć misje.' });
+    }
+
+    const userId = req.user.id;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN'); // Rozpocznij transakcję
+
+        const timeCategories = [
+            { name: 'daily', count: 3 },
+            { name: 'weekly', count: 5 },
+            { name: 'monthly', count: 10 }
+        ];
+
+        const now = new Date();
+
+        for (const category of timeCategories) {
+            // 1. Sprawdź, czy gracz ma aktywne misje w tej kategorii
+            const { rows: activeMissions } = await client.query(
+                'SELECT * FROM player_active_missions WHERE user_id = $1 AND mission_id IN (SELECT id FROM missions_pool WHERE time_category = $2)',
+                [userId, category.name]
+            );
+
+            let needsNewMissions = true;
+            if (activeMissions.length > 0) {
+                const generatedAt = new Date(activeMissions[0].generated_at);
+                // Proste sprawdzenie, czy misje są przestarzałe
+                if (category.name === 'daily' && now.toDateString() === generatedAt.toDateString()) {
+                    needsNewMissions = false;
+                }
+                // Proste sprawdzenie tygodnia (można użyć biblioteki jak date-fns dla precyzji)
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)); // Poniedziałek
+                if (category.name === 'weekly' && generatedAt >= startOfWeek) {
+                    needsNewMissions = false;
+                }
+                if (category.name === 'monthly' && now.getFullYear() === generatedAt.getFullYear() && now.getMonth() === generatedAt.getMonth()) {
+                    needsNewMissions = false;
+                }
+            }
+
+            if (needsNewMissions) {
+                console.log(`Generowanie nowych misji [${category.name}] dla użytkownika ${userId}`);
+                // 2. Usuń stare misje z tej kategorii
+                await client.query(
+                    'DELETE FROM player_active_missions WHERE user_id = $1 AND mission_id IN (SELECT id FROM missions_pool WHERE time_category = $2)',
+                    [userId, category.name]
+                );
+
+                // 3. Wylosuj nowe misje
+                const { rows: missionPool } = await client.query(
+                    'SELECT id FROM missions_pool WHERE time_category = $1 ORDER BY RANDOM() LIMIT $2',
+                    [category.name, category.count]
+                );
+                
+                // 4. Wstaw nowe misje dla gracza
+                for (const mission of missionPool) {
+                    await client.query(
+                        'INSERT INTO player_active_missions (user_id, mission_id, progress, is_completed, is_claimed, generated_at) VALUES ($1, $2, 0, false, false, NOW())',
+                        [userId, mission.id]
+                    );
+                }
+            }
+        }
+        
+        // 5. Pobierz wszystkie aktualne misje gracza i zwróć je do frontendu
+        const { rows: finalMissions } = await client.query(`
+            SELECT pam.id, pam.progress, pam.is_completed, pam.is_claimed,
+                   mp.description_key, mp.type, mp.target_value, mp.reward_coins, mp.reward_exp, mp.time_category
+            FROM player_active_missions pam
+            JOIN missions_pool mp ON pam.mission_id = mp.id
+            WHERE pam.user_id = $1
+        `, [userId]);
+
+        await client.query('COMMIT'); // Zatwierdź transakcję
+
+        // Pogrupuj misje przed wysłaniem
+        const groupedMissions = {
+            daily: finalMissions.filter(m => m.time_category === 'daily'),
+            weekly: finalMissions.filter(m => m.time_category === 'weekly'),
+            monthly: finalMissions.filter(m => m.time_category === 'monthly'),
+        };
+
+        res.status(200).json(groupedMissions);
+
+    } catch (err) {
+        await client.query('ROLLBACK'); // Wycofaj zmiany w razie błędu
+        console.error('Błąd podczas generowania/pobierania misji:', err);
+        res.status(500).json({ message: 'Błąd serwera podczas obsługi misji.' });
+    } finally {
+        client.release();
     }
 });
 

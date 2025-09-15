@@ -83,6 +83,10 @@
                     class="panel-button w-full bg-gray-700/50 hover:bg-gray-600/50 px-4 py-3 rounded-lg font-bold">
                     Konto 👤
                 </button>
+                <button id="desktop-missions-button" data-i18n="statsPanel.missions"
+                class="panel-button w-full bg-gray-700/50 hover:bg-gray-600/50 px-4 py-3 rounded-lg font-bold">
+                Misje 📜
+            </button>
             </div>
         </div>
         <div class="w-full max-w-sm md:max-w-md order-1 md:order-2">
@@ -237,6 +241,7 @@
                 <nav class="flex flex-wrap border-b border-gray-700">
                     <button data-tab="stats" data-i18n="accountHub.tabs.stats" class="tab-button active">Statystyki</button>
                     <button data-tab="achievements" data-i18n="accountHub.tabs.achievements" class="tab-button">Osiągnięcia</button>
+                    <button data-tab="missions" data-i18n="accountHub.tabs.missions" class="tab-button">Misje</button>
                     <button data-tab="profile" data-i18n="accountHub.tabs.profile" class="tab-button">Profil</button></nav>
                 <div class="pt-4">
                     <div id="stats-tab-content" class="tab-content">
@@ -248,6 +253,42 @@
                     </div>
                     <div id="achievements-tab-content" class="tab-content hidden">
                         <div id="achievements-grid-modal" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                    </div>
+                    <div id="missions-tab-content" class="tab-content hidden">
+                        <nav class="flex gap-2 mb-4 border-b border-gray-800">
+                            <button data-mission-tab="daily" class="mission-tab-button active" data-i18n="missions.daily">Dzienne</button>
+                            <button data-mission-tab="weekly" class="mission-tab-button" data-i18n="missions.weekly">Tygodniowe</button>
+                            <button data-mission-tab="monthly" class="mission-tab-button" data-i18n="missions.monthly">Miesięczne</button>
+                        </nav>
+                    
+                        <div id="daily-missions-content" class="mission-content space-y-3">
+                            <div class="mission-card">
+                                <div class="flex items-center gap-4">
+                                    <div class="text-4xl">🪓</div>
+                                    <div class="flex-grow">
+                                        <p class="font-bold" data-i18n="missions.example_chop_desc">Zetnij 50 pni drzewa</p>
+                                        <div class="w-full bg-gray-700 rounded-full h-4 mt-1 border border-gray-600">
+                                            <div class="bg-amber-500 h-full rounded-full text-xs text-black font-bold flex items-center justify-center" style="width: 50%">
+                                                25 / 50
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-sm text-gray-400" data-i18n="missions.reward">Nagroda</p>
+                                        <p class="font-bold text-lg">100 💰</p>
+                                    </div>
+                                </div>
+                                <button class="claim-button" disabled data-i18n="missions.claim">Odbierz</button>
+                            </div>
+                            </div>
+                    
+                        <div id="weekly-missions-content" class="mission-content space-y-3 hidden">
+                            <p class="text-center text-gray-500" data-i18n="missions.no_weekly">Brak misji tygodniowych.</p>
+                        </div>
+                    
+                        <div id="monthly-missions-content" class="mission-content space-y-3 hidden">
+                            <p class="text-center text-gray-500" data-i18n="missions.no_monthly">Brak misji miesięcznych.</p>
+                        </div>
                     </div>
                     <div id="profile-tab-content" class="tab-content hidden flex flex-col gap-4">
                         <!-- Profil dla zalogowanych użytkowników -->
