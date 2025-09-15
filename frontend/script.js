@@ -27,25 +27,6 @@ function initI18n() {
         accountHub: {
           title: 'Konto Gracza',
           tabs: { stats: 'Statystyki', achievements: 'Osiągnięcia', missions: 'Misje', profile: 'Profil' },
-          missions: {
-            daily: 'Dzienne',
-            weekly: 'Tygodniowe',
-            monthly: 'Miesięczne',
-            reward: 'Nagroda',
-            claim: 'Odbierz',
-            example_chop_desc: 'Zetnij 50 pni drzewa',
-            no_weekly: 'Brak misji tygodniowych.',
-            no_monthly: 'Brak misji miesięcznych.',
-            no_daily: 'Brak misji dziennych.',
-            loading: 'Ładowanie misji...',
-            in_progress: 'W toku',
-            claimed: 'Odebrano',
-            'desc.chop_50': 'Zetnij 50 pni',
-            'desc.score_30': 'Zdobądź 30 punktów w jednej grze',
-            'desc.chop_500': 'Zetnij łącznie 500 pni',
-            'desc.score_100': 'Zdobądź 100 punktów w jednej grze',
-            'desc.earn_1000': 'Zarób łącznie 1000 monet'
-        },
           stats_tab: { 
             high_score: 'Najlepszy Wynik', 
             total_chops: 'Suma Ściętych', 
@@ -80,6 +61,25 @@ function initI18n() {
             cancel: 'Anuluj',
             save: 'Zapisz'
           }
+        },
+        missions: {
+            daily: 'Dzienne',
+            weekly: 'Tygodniowe',
+            monthly: 'Miesięczne',
+            reward: 'Nagroda',
+            claim: 'Odbierz',
+            example_chop_desc: 'Zetnij 50 pni drzewa',
+            no_weekly: 'Brak misji tygodniowych.',
+            no_monthly: 'Brak misji miesięcznych.',
+            no_daily: 'Brak misji dziennych.',
+            loading: 'Ładowanie misji...',
+            in_progress: 'W toku',
+            claimed: 'Odebrano',
+            'desc.chop_50': 'Zetnij 50 pni',
+            'desc.score_30': 'Zdobądź 30 punktów w jednej grze',
+            'desc.chop_500': 'Zetnij łącznie 500 pni',
+            'desc.score_100': 'Zdobądź 100 punktów w jednej grze',
+            'desc.earn_1000': 'Zarób łącznie 1000 monet'
         },
         inventoryHub: { title: 'Ekwipunek' },
         equipmentModal: { title: 'Wybierz przedmiot', unequip: 'Zdejmij przedmiot' },
@@ -138,26 +138,6 @@ function initI18n() {
         accountHub: {
           title: 'Player Account',
           tabs: { stats: 'Statistics', achievements: 'Achievements', missions: 'Missions', profile: 'Profile' },
-          missions: {
-            daily: 'Daily',
-            weekly: 'Weekly',
-            monthly: 'Monthly',
-            reward: 'Reward',
-            claim: 'Claim',
-            example_chop_desc: 'Chop 50 tree trunks',
-            no_weekly: 'No weekly missions.',
-            no_monthly: 'No monthly missions.',
-            no_daily: 'No daily missions.',
-            loading: 'Loading missions...',
-            in_progress: 'In Progress',
-            claimed: 'Claimed',
-            // Keys from the database
-            'desc.chop_50': 'Chop 50 trunks',
-            'desc.score_30': 'Get 30 points in a single game',
-            'desc.chop_500': 'Chop a total of 500 trunks',
-            'desc.score_100': 'Get 100 points in a single game',
-            'desc.earn_1000': 'Earn a total of 1000 coins'
-        },
           stats_tab: { 
             high_score: 'High Score', 
             total_chops: 'Total Chops', 
@@ -192,6 +172,26 @@ function initI18n() {
             cancel: 'Cancel',
             save: 'Save'
           }
+        },
+        missions: {
+            daily: 'Daily',
+            weekly: 'Weekly',
+            monthly: 'Monthly',
+            reward: 'Reward',
+            claim: 'Claim',
+            example_chop_desc: 'Chop 50 tree trunks',
+            no_weekly: 'No weekly missions.',
+            no_monthly: 'No monthly missions.',
+            no_daily: 'No daily missions.',
+            loading: 'Loading missions...',
+            in_progress: 'In Progress',
+            claimed: 'Claimed',
+            // Keys from the database
+            'desc.chop_50': 'Chop 50 trunks',
+            'desc.score_30': 'Get 30 points in a single game',
+            'desc.chop_500': 'Chop a total of 500 trunks',
+            'desc.score_100': 'Get 100 points in a single game',
+            'desc.earn_1000': 'Earn a total of 1000 coins'
         },
         inventoryHub: { title: 'Inventory' },
         equipmentModal: { title: 'Choose item', unequip: 'Unequip' },
