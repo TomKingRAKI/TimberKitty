@@ -86,13 +86,13 @@ function initI18n() {
           hat_tophat: { name: 'Cylinder', description: 'Spowalnia czas o 5%' },
           hat_grad: { name: 'Czapka Absolwenta', description: 'Spowalnia czas o 10%' },
           hat_crown: { name: 'Korona', description: 'Spowalnia czas o 15%' },
-          axe_sword: { name: 'Miecz', description: '+1 pkt za cięcie' },
-          axe_pickaxe: { name: 'Kilof', description: '+2 pkt za cięcie' },
-          axe_golden: { name: 'Złota Siekiera', description: '+3 pkt za cięcie' },
+          axe_sword: { name: 'Miecz', description: '+10% monet za wynik' },        // STARY OPIS: '+1 pkt za cięcie'
+          axe_pickaxe: { name: 'Kilof', description: '+20% monet za wynik' },       // STARY OPIS: '+2 pkt za cięcie'
+          axe_golden: { name: 'Złota Siekiera', description: '+30% monet za wynik' },
           acc_glasses: { name: 'Okulary 3D', description: 'Monety +10%' },
           acc_scarf: { name: 'Szalik', description: 'Monety +20%' },
-          pet_dog: { name: 'Piesek', description: 'Jednorazowa ochrona' },
-          pet_cat: { name: 'Kotek', description: 'Jednorazowa ochrona' }
+          pet_dog: { name: 'Piesek', description: '+15% EXP za wynik' },           // STARY OPIS: 'Jednorazowa ochrona'
+          pet_cat: { name: 'Kotek', description: '+15% EXP za wynik' }   
         },
         lootboxes: {
           box_hats_1: { name: 'Zwykła Skrzynia Kapelusznika', description: 'Zawiera pospolite i rzadkie czapki.' },
@@ -178,13 +178,13 @@ function initI18n() {
           hat_tophat: { name: 'Top Hat', description: 'Slows timer by 5%' },
           hat_grad: { name: 'Graduate Cap', description: 'Slows timer by 10%' },
           hat_crown: { name: 'Crown', description: 'Slows timer by 15%' },
-          axe_sword: { name: 'Sword', description: '+1 pt per chop' },
-          axe_pickaxe: { name: 'Pickaxe', description: '+2 pts per chop' },
-          axe_golden: { name: 'Golden Axe', description: '+3 pts per chop' },
+          axe_sword: { name: 'Sword', description: '+10% coins from score' },     // OLD DESC: '+1 pt per chop'
+          axe_pickaxe: { name: 'Pickaxe', description: '+20% coins from score' },   // OLD DESC: '+2 pts per chop'
+          axe_golden: { name: 'Golden Axe', description: '+30% coins from score' },
           acc_glasses: { name: '3D Glasses', description: 'Coins +10%' },
           acc_scarf: { name: 'Scarf', description: 'Coins +20%' },
-          pet_dog: { name: 'Puppy', description: 'One-time save' },
-          pet_cat: { name: 'Kitty', description: 'One-time save' }
+          pet_dog: { name: 'Puppy', description: '+15% EXP from score' },        // OLD DESC: 'One-time save'
+          pet_cat: { name: 'Kitty', description: '+15% EXP from score' }  
         },
         lootboxes: {
           box_hats_1: { name: 'Common Hatter Crate', description: 'Contains common and rare hats.' },
@@ -1174,8 +1174,12 @@ function populateShopModalWithBoxes(categoryKey) {
 
         const possibleLoot = box.lootPool.map(loot => {
             const item = shopData[loot.itemId];
-            const itemName = item.name;
-            const itemDescription = item.description;
+            const itemName = (window.i18next && i18next.isInitialized) 
+            ? (i18next.t(`items.${item.id}.name`) || item.name) 
+            : item.name;
+        const itemDescription = (window.i18next && i18next.isInitialized) 
+            ? (i18next.t(`items.${item.id}.description`) || item.description) 
+            : item.description;
             const itemRarity = loot.rarity; // np. 'common', 'rare', 'legendary'
 
             // Każda ikonka dostaje teraz tło, ramkę w kolorze rzadkości i tooltip
@@ -1738,6 +1742,7 @@ function updateContent() {
                 if (typeof txt === 'string' && txt.length) el.textContent = txt;
             });
 
+            if (shopPreviewContainer) populateShopPreview();
             // Zaktualizuj przycisk logowania/wylogowania zgodnie ze stanem
             if (authButton) {
                 authButton.textContent = currentUser ? i18next.t('buttons.logout') : i18next.t('buttons.login');
