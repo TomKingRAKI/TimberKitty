@@ -588,7 +588,7 @@ app.get('/api/missions', async (req, res) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0); // Normalizuj dzisiejszą datę do północy
         
-                if (category.name === 'daily' && (today.getTime() - generatedAt.getTime()) < 60000) {
+                if (category.name === 'daily' && today.getTime() === generatedAt.getTime()) {
                     needsNewMissions = false;
                 }
                 
