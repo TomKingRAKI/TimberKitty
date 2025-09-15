@@ -412,6 +412,8 @@ let gameState = 'start';
 let currentUser = null; // Przechowuje pełne dane zalogowanego użytkownika z bazy
 let animationTimeout1 = null;
 let animationTimeout2 = null;
+let missionsCache = null; // Cache dla misji
+let missionsLastFetch = 0; // Timestamp ostatniego pobrania misji
 
 // Zmienne timera
 let timer = 100;
@@ -782,11 +784,10 @@ async function updateAndSaveStats(scoreFromGame, oldStats) {
 
 async function animateStatUpdate(oldStats, score) {
     const newStats = await updateAndSaveStats(score, oldStats);
-        // Sprawdź, czy modal z misjami jest otwarty. Jeśli tak, odśwież go.
-        if (!accountHubModal.classList.contains('hidden') && document.querySelector('.tab-button[data-tab="missions"]').classList.contains('active')) {
-            console.log('Odświeżanie widoku misji po grze...');
-            fetchAndDisplayMissions();
-        }
+    
+    // Zawsze odśwież misje po grze, aby były aktualne
+    console.log('Odświeżanie misji po grze...');
+    fetchAndDisplayMissions(true); // Wymuś odświeżenie po grze
     const duration = 1500;
     const startTime = performance.now();
 
@@ -1105,15 +1106,36 @@ function renderMissionCards(missions) {
     }
 }
 
-async function fetchAndDisplayMissions() {
+async function fetchAndDisplayMissions(forceRefresh = false) {
     const dailyContainer = document.getElementById('daily-missions-content');
+    const weeklyContainer = document.getElementById('weekly-missions-content');
+    const monthlyContainer = document.getElementById('monthly-missions-content');
+    
     if (!dailyContainer) return;
 
-    const loadingText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.loading') : 'Ładowanie misji...';
-    dailyContainer.innerHTML = `<p class="text-center text-gray-400">${loadingText}</p>`;
+    // Sprawdź cache - jeśli mamy dane z ostatnich 30 sekund, użyj ich
+    const now = Date.now();
+    const cacheValid = missionsCache && (now - missionsLastFetch) < 30000; // 30 sekund cache
+    
+    if (cacheValid && !forceRefresh) {
+        console.log('Używanie cache misji');
+        renderMissionCards(missionsCache);
+        return;
+    }
+
+    // Dodaj ikonkę ładowania do wszystkich kontenerów
+    const loadingHTML = `
+        <div class="flex flex-col items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mb-3"></div>
+            <p class="text-center text-gray-400">${(window.i18next && i18next.isInitialized) ? i18next.t('missions.loading') : 'Ładowanie misji...'}</p>
+        </div>
+    `;
+    
+    dailyContainer.innerHTML = loadingHTML;
+    if (weeklyContainer) weeklyContainer.innerHTML = loadingHTML;
+    if (monthlyContainer) monthlyContainer.innerHTML = loadingHTML;
 
     try {
-        // Upewnij się, że tutaj jest BACKTICK (`), a nie apostrof (')
         const response = await fetch(`${BACKEND_URL}/api/missions`, { credentials: 'include' });
         
         if (!response.ok) {
@@ -1122,11 +1144,18 @@ async function fetchAndDisplayMissions() {
         }
         
         const missions = await response.json();
+        
+        // Zaktualizuj cache
+        missionsCache = missions;
+        missionsLastFetch = now;
+        
         renderMissionCards(missions);
 
     } catch (error) {
-        // Tutaj również upewnij się, że jest BACKTICK (`), a nie apostrof (')
-        dailyContainer.innerHTML = `<p class="text-center text-red-500">${error.message}</p>`;
+        const errorHTML = `<p class="text-center text-red-500">${error.message}</p>`;
+        dailyContainer.innerHTML = errorHTML;
+        if (weeklyContainer) weeklyContainer.innerHTML = errorHTML;
+        if (monthlyContainer) monthlyContainer.innerHTML = errorHTML;
     }
 }
 
@@ -1162,12 +1191,12 @@ async function claimMissionReward(missionId) {
         updateStatsUI(loadStats());
 
         // Odśwież widok misji, aby pokazać status "Odebrano"
-        fetchAndDisplayMissions();
+        fetchAndDisplayMissions(true);
 
     } catch (error) {
         showNotification(error.message, 'error');
         // Jeśli wystąpił błąd, odśwież misje, aby przywrócić przycisk do stanu "Odbierz"
-        fetchAndDisplayMissions(); 
+        fetchAndDisplayMissions(true); 
     }
 }
 
@@ -2052,7 +2081,7 @@ tabs.forEach(tab => {
             }
         });
         if (target === 'missions') {
-            fetchAndDisplayMissions();
+            fetchAndDisplayMissions(true);
         }
     });
 });
@@ -2119,6 +2148,10 @@ function updateProfileSection(user) {
 }
 
 function showLoginButton() {
+    // Wyczyść cache misji przy wylogowaniu
+    missionsCache = null;
+    missionsLastFetch = 0;
+    
     // Zmień przycisk w przycisk "Zaloguj"
     if (window.i18next && i18next.isInitialized) {
         authButton.textContent = i18next.t('buttons.login');
@@ -2553,7 +2586,7 @@ i18next.on('languageChanged', () => {
   console.log('[i18n] languageChanged =>', i18next.language);
   updateContent();
   if (!accountHubModal.classList.contains('hidden') && document.querySelector('.tab-button[data-tab="missions"]').classList.contains('active')) {
-    fetchAndDisplayMissions();
+    fetchAndDisplayMissions(true);
 }
 });
 
@@ -2840,5 +2873,7 @@ if (desktopMissionsButton) {
     desktopMissionsButton.addEventListener('click', () => {
         switchAccountTab('missions'); // Ustaw zakładkę 'Misje' jako aktywną
         openAccountHub();
+        // Załaduj misje po otwarciu modala
+        fetchAndDisplayMissions(true);
     });
 }
