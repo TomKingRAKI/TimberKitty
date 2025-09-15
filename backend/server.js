@@ -274,6 +274,7 @@ app.post('/api/stats', async (req, res) => {
         `, [userId]);
 
         for (const mission of activeMissions) {
+            console.log(`--- Przetwarzanie misji ID: ${mission.id}, Typ: ${mission.type}, Obecny postęp: ${mission.progress} ---`);
             let progressGained = 0;
             switch (mission.type) {
                 case 'CHOP_TOTAL':
@@ -292,10 +293,15 @@ app.post('/api/stats', async (req, res) => {
 
             if (progressGained > 0) {
                 // Dodajemy postęp do istniejącego
+                console.log(`Misja ${mission.id}: Obliczono postęp do dodania: ${progressGained}`);
                 await client.query(
                     'UPDATE player_active_missions SET progress = progress + $1 WHERE id = $2',
                     [progressGained, mission.id]
                 );
+                console.log(`Misja ${mission.id}: Wysłano aktualizację postępu do bazy.`);
+            } else {
+                // LOG 4: Sprawdzamy, dlaczego nic się nie stało
+                console.log(`Misja ${mission.id}: Brak postępu do dodania (obliczone progressGained = ${progressGained})`);
             }
         }
         
