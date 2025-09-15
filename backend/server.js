@@ -625,7 +625,7 @@ app.get('/api/missions', async (req, res) => {
                 );
                 for (const mission of missionPool) {
                     await client.query(
-                        'INSERT INTO player_active_missions (user_id, mission_id, generated_at) VALUES ($1, $2, NOW())',
+                        'INSERT INTO player_active_missions (user_id, mission_id, generated_at) VALUES ($1, $2, 0, NOW())',
                         [userId, mission.id]
                     );
                 }
