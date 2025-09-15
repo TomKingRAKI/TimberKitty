@@ -1077,6 +1077,13 @@ function renderMissionCards(missions) {
             const inProgressText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.in_progress') : 'W toku';
             buttonHTML = `<button class="claim-button" disabled>${inProgressText}</button>`;
         }
+        
+        // Dodaj przycisk refresh do każdej misji (tylko jeśli nie jest odebrana)
+        if (!mission.is_claimed) {
+            const refreshCost = getRefreshCost(mission.time_category);
+            const refreshText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh') : 'Odśwież';
+            buttonHTML += `<button class="refresh-mission-button ml-2 bg-amber-600 hover:bg-amber-700 px-3 py-1 rounded text-sm font-bold" onclick="refreshSingleMission(${mission.id}, '${mission.time_category}')" data-cost="${refreshCost}">${refreshText} ${refreshCost}💰</button>`;
+        }
 
         return `
         <div class="mission-card">
@@ -1119,8 +1126,6 @@ function renderMissionCards(missions) {
         monthlyContainer.innerHTML = `<p class="text-center text-gray-500">${(window.i18next && i18next.isInitialized) ? i18next.t('missions.no_monthly') : 'Brak misji miesięcznych.'}</p>`;
     }
     
-    // Zaktualizuj przycisk refresh po renderowaniu
-    updateRefreshButton();
 }
 
 async function fetchAndDisplayMissions(forceRefresh = false) {
@@ -1220,6 +1225,64 @@ async function claimMissionReward(missionId) {
 }
 
 // Funkcje do obsługi timera i refresh misji
+function getRefreshCost(timeCategory) {
+    const costs = { daily: 100, weekly: 200, monthly: 300 };
+    return costs[timeCategory] || 100;
+}
+
+async function refreshSingleMission(missionId, timeCategory) {
+    if (!currentUser) {
+        showNotification('Musisz być zalogowany, aby odświeżyć misje!', 'error');
+        return;
+    }
+    
+    const cost = getRefreshCost(timeCategory);
+    const stats = loadStats();
+    
+    if (stats.coins < cost) {
+        const noMoneyText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_no_money') : 'Za mało monet!';
+        showNotification(noMoneyText, 'error');
+        return;
+    }
+    
+    // Potwierdź odświeżenie
+    const confirmText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_confirm') : 'Czy na pewno chcesz odświeżyć tę misję za';
+    if (!confirm(`${confirmText} ${cost} monet?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/missions/refresh-single`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ missionId: missionId, timeCategory: timeCategory })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Błąd odświeżania misji');
+        }
+        
+        // Sukces!
+        const successText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_success') : 'Misja została odświeżona!';
+        showNotification(successText, 'success');
+        
+        // Zaktualizuj dane użytkownika
+        currentUser = result.updatedUser;
+        updateStatsUI(loadStats());
+        
+        // Odśwież misje
+        missionsCache = null; // Wyczyść cache
+        fetchAndDisplayMissions(true);
+        
+    } catch (error) {
+        const errorText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_error') : 'Błąd odświeżania misji';
+        showNotification(`${errorText}: ${error.message}`, 'error');
+    }
+}
+
 function updateMissionRefreshTimer() {
     if (!missionsCache) return;
     
@@ -1278,97 +1341,6 @@ function startMissionTimer(nextRefresh) {
     missionRefreshTimer = setInterval(updateTimer, 1000);
 }
 
-function updateRefreshButton() {
-    const refreshButton = document.getElementById('refresh-missions-button');
-    const refreshCost = document.getElementById('refresh-cost');
-    
-    if (!refreshButton || !refreshCost) return;
-    
-    // Ustaw koszt na podstawie aktualnego typu misji
-    const costs = { daily: 100, weekly: 200, monthly: 300 };
-    const cost = costs[currentMissionType] || 100;
-    refreshCost.textContent = cost;
-    
-    // Sprawdź czy gracz ma wystarczająco monet
-    const stats = loadStats();
-    const canAfford = stats.coins >= cost;
-    
-    refreshButton.disabled = !canAfford;
-    if (canAfford) {
-        refreshButton.classList.remove('opacity-50', 'cursor-not-allowed');
-        refreshButton.classList.add('hover:bg-amber-700');
-    } else {
-        refreshButton.classList.add('opacity-50', 'cursor-not-allowed');
-        refreshButton.classList.remove('hover:bg-amber-700');
-    }
-}
-
-async function refreshMissions() {
-    if (!currentUser) {
-        showNotification('Musisz być zalogowany, aby odświeżyć misje!', 'error');
-        return;
-    }
-    
-    const costs = { daily: 100, weekly: 200, monthly: 300 };
-    const cost = costs[currentMissionType] || 100;
-    
-    const stats = loadStats();
-    if (stats.coins < cost) {
-        const noMoneyText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_no_money') : 'Za mało monet!';
-        showNotification(noMoneyText, 'error');
-        return;
-    }
-    
-    // Potwierdź odświeżenie
-    const confirmText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_confirm') : 'Czy na pewno chcesz odświeżyć misje za';
-    if (!confirm(`${confirmText} ${cost} monet?`)) {
-        return;
-    }
-    
-    const refreshButton = document.getElementById('refresh-missions-button');
-    if (refreshButton) {
-        refreshButton.disabled = true;
-        refreshButton.textContent = 'Odświeżanie...';
-    }
-    
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/missions/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ missionType: currentMissionType })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.message || 'Błąd odświeżania misji');
-        }
-        
-        // Sukces!
-        const successText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_success') : 'Misje zostały odświeżone!';
-        showNotification(successText, 'success');
-        
-        // Zaktualizuj dane użytkownika
-        currentUser = result.updatedUser;
-        updateStatsUI(loadStats());
-        
-        // Odśwież misje
-        missionsCache = null; // Wyczyść cache
-        fetchAndDisplayMissions(true);
-        
-    } catch (error) {
-        const errorText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh_error') : 'Błąd odświeżania misji';
-        showNotification(`${errorText}: ${error.message}`, 'error');
-    } finally {
-        if (refreshButton) {
-            refreshButton.disabled = false;
-            const refreshText = (window.i18next && i18next.isInitialized) ? i18next.t('missions.refresh') : 'Odśwież';
-            refreshButton.innerHTML = `<span>${refreshText}</span> <span id="refresh-cost">${cost}</span> 💰`;
-            updateRefreshButton();
-        }
-    }
-}
 
 async function openLootbox(boxId, cardElement) {
     if (!currentUser) {
@@ -3073,13 +3045,8 @@ document.addEventListener('click', (e) => {
             }
         });
         
-        // Zaktualizuj przycisk refresh i timer
-        updateRefreshButton();
+        // Zaktualizuj timer
         updateMissionRefreshTimer();
     }
     
-    // Obsługa przycisku refresh misji
-    if (e.target.matches('#refresh-missions-button')) {
-        refreshMissions();
-    }
 });
