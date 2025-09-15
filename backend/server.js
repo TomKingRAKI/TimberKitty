@@ -250,71 +250,69 @@ app.post('/api/stats', async (req, res) => {
 
     const client = await pool.connect();
     try {
-        await client.query('BEGIN'); // Rozpocznij transakcję
+        await client.query('BEGIN');
 
-        const { highScore, totalChops, coins, unlockedAchievements, unlockedItems, equippedItems, exp } = req.body;
+        // Odczytujemy wyniki z gry i nowe sumy bezpośrednio z zapytania
+        const { scoreFromGame, coinsEarned, newTotals } = req.body;
         const userId = req.user.id;
 
-        // --- 1. Zaktualizuj główne statystyki gracza ---
-        const achievementsArrayLiteral = `{${unlockedAchievements.join(',')}}`;
-        const unlockedItemsJSON = JSON.stringify(unlockedItems);
-        const equippedItemsJSON = JSON.stringify(equippedItems);
+        // --- 1. Zaktualizuj główne statystyki gracza używając gotowych sum ---
+        const achievementsArrayLiteral = `{${newTotals.unlockedAchievements.join(',')}}`;
+        const unlockedItemsJSON = JSON.stringify(newTotals.unlockedItems);
+        const equippedItemsJSON = JSON.stringify(newTotals.equippedItems);
 
         await client.query(
-            `UPDATE users 
-             SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6, exp = $7 
-             WHERE id = $8`,
-            [highScore, totalChops, coins, achievementsArrayLiteral, unlockedItemsJSON, equippedItemsJSON, exp || 0, userId]
+            `UPDATE users SET high_score = $1, total_chops = $2, coins = $3, unlocked_achievements = $4, unlocked_items = $5, equipped_items = $6, exp = $7 WHERE id = $8`,
+            [newTotals.highScore, newTotals.totalChops, newTotals.coins, achievementsArrayLiteral, unlockedItemsJSON, equippedItemsJSON, newTotals.exp, userId]
         );
 
-        // --- 2. NOWA LOGIKA: Zaktualizuj postęp w misjach ---
-        const scoreFromGame = req.body.highScore - req.user.high_score; // Proste wyliczenie wyniku z ostatniej gry
-        const chopsFromGame = scoreFromGame > 0 ? scoreFromGame : 0; // Zakładamy 1 chop = 1 pkt
-        const coinsFromGame = req.body.coins - req.user.coins;
-        
-        // Pobierz aktywne, nieukończone misje gracza
+        // --- 2. Zaktualizuj postęp w misjach używając wyników z TEJ JEDNEJ GRY ---
         const { rows: activeMissions } = await client.query(`
             SELECT pam.id, pam.progress, mp.type, mp.target_value
-            FROM player_active_missions pam
-            JOIN missions_pool mp ON pam.mission_id = mp.id
+            FROM player_active_missions pam JOIN missions_pool mp ON pam.mission_id = mp.id
             WHERE pam.user_id = $1 AND pam.is_completed = false
         `, [userId]);
 
         for (const mission of activeMissions) {
-            let newProgress = mission.progress;
-            
+            let progressGained = 0;
             switch (mission.type) {
                 case 'CHOP_TOTAL':
-                    if (chopsFromGame > 0) newProgress += chopsFromGame;
+                    progressGained = scoreFromGame || 0;
                     break;
                 case 'SCORE_SINGLE_GAME':
-                    if (scoreFromGame > mission.progress) newProgress = scoreFromGame;
+                    // Ta misja jest o najwyższym wyniku, a nie sumie, więc aktualizujemy inaczej
+                    if (scoreFromGame > mission.progress) {
+                         await client.query('UPDATE player_active_missions SET progress = $1 WHERE id = $2', [scoreFromGame, mission.id]);
+                    }
+                    continue; // Przejdź do następnej misji
+                case 'EARN_COINS_TOTAL':
+                    progressGained = Math.floor(coinsEarned || 0);
                     break;
-                    case 'EARN_COINS_TOTAL':
-                        if (coinsFromGame > 0) newProgress += Math.floor(coinsFromGame);
-                        break;
             }
 
-            // Sprawdź, czy misja została ukończona
-            const isNowCompleted = newProgress >= mission.target_value;
-
-            // Zapisz nowy postęp i status ukończenia
-            if (newProgress !== mission.progress) {
+            if (progressGained > 0) {
+                // Dodajemy postęp do istniejącego
                 await client.query(
-                    'UPDATE player_active_missions SET progress = $1, is_completed = $2 WHERE id = $3',
-                    [newProgress, isNowCompleted, mission.id]
+                    'UPDATE player_active_missions SET progress = progress + $1 WHERE id = $2',
+                    [progressGained, mission.id]
                 );
             }
         }
         
-        // --- 3. Pobierz i odeślij zaktualizowane dane użytkownika ---
+        // Sprawdź, które misje zostały właśnie ukończone
+        await client.query(`
+            UPDATE player_active_missions
+            SET is_completed = true
+            WHERE user_id = $1 AND is_completed = false AND progress >= (SELECT target_value FROM missions_pool WHERE id = mission_id)
+        `, [userId]);
+
         const { rows: updatedUser } = await client.query('SELECT * FROM users WHERE id = $1', [userId]);
-        await client.query('COMMIT'); // Zatwierdź wszystkie zmiany
+        await client.query('COMMIT');
 
         res.status(200).json(updatedUser[0]);
 
     } catch (err) {
-        await client.query('ROLLBACK'); // Wycofaj zmiany w razie błędu
+        await client.query('ROLLBACK');
         console.error('Błąd zapisu statystyk i postępu misji:', err);
         res.status(500).json({ message: 'Błąd serwera podczas zapisywania postępu.' });
     } finally {

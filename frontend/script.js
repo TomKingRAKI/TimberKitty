@@ -729,44 +729,54 @@ function loadStats() {
 }
 
 // ZMODYFIKOWANA FUNKCJA: Teraz jest asynchroniczna i zapisuje dane na serwerze lub w localStorage
-async function updateAndSaveStats(currentScore, oldStats) {
-    const newStats = {
+// W pliku script.js ZASTĄP TĘ FUNKCJĘ
+async function updateAndSaveStats(scoreFromGame, oldStats) {
+    const coinsEarned = (scoreFromGame * (0.1 + (activeBonuses.coinMultiplierBonus || 0))) * (1 + (activeBonuses.coinMultiplier || 0));
+    const expEarned = Math.round(scoreFromGame * (1 + (activeBonuses.expMultiplierBonus || 0)));
+
+    const newTotals = {
         ...oldStats,
-        highScore: Math.max(oldStats.highScore, currentScore),
-        totalChops: oldStats.totalChops + currentScore,
-        coins: oldStats.coins + (currentScore * (0.1 + (activeBonuses.coinMultiplierBonus || 0))) * (1 + (activeBonuses.coinMultiplier || 0)),
-        exp: oldStats.exp + Math.round(currentScore * (1 + (activeBonuses.expMultiplierBonus || 0)))
+        highScore: Math.max(oldStats.highScore, scoreFromGame),
+        totalChops: oldStats.totalChops + scoreFromGame,
+        coins: oldStats.coins + coinsEarned,
+        exp: oldStats.exp + expEarned
     };
 
+    // Sprawdź osiągnięcia na podstawie nowych sum
     for (const id in achievementsData) {
-        if (!newStats.unlockedAchievements.includes(id) && achievementsData[id].condition(newStats)) {
-            newStats.unlockedAchievements.push(id);
-            showNotification(`Osiągnięcie: ${achievementsData[id].name}`, 'success');
+        if (!newTotals.unlockedAchievements.includes(id) && achievementsData[id].condition(newTotals)) {
+            newTotals.unlockedAchievements.push(id);
+            const achievementName = (window.i18next && i18next.isInitialized) ? i18next.t(`achievements.${id}.name`) : achievementsData[id].name;
+            showNotification(`Osiągnięcie: ${achievementName}`, 'success');
         }
     }
 
     if (currentUser) {
         console.log("Zapisywanie statystyk na serwerze...");
         try {
+            // TERAZ WYSYŁAMY DO SERWERA ZARÓWNO WYNIK Z GRY, JAK I NOWE SUMY
             const response = await fetch(`${BACKEND_URL}/api/stats`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify(newStats)
+                body: JSON.stringify({
+                    scoreFromGame: scoreFromGame,
+                    coinsEarned: coinsEarned,
+                    newTotals: newTotals // Wysyłamy całe, przeliczone statystyki
+                })
             });
             if (!response.ok) throw new Error('Błąd zapisu na serwerze');
             const updatedUser = await response.json();
-            console.log('2. Serwer odesłał zaktualizowane dane użytkownika:', updatedUser);
-            currentUser = updatedUser; // Zaktualizuj dane lokalne o odpowiedź z serwera
+            currentUser = updatedUser;
             return parseStatsFromDB(updatedUser);
         } catch (error) {
             console.error("Nie udało się zapisać statystyk na serwerze:", error);
-            return newStats;
+            return newTotals; // W razie błędu zwróć to co obliczyliśmy lokalnie
         }
     } else {
         console.log("Zapisywanie statystyk w localStorage (Tryb Gościa)...");
-        localStorage.setItem('timbermanStats', JSON.stringify(newStats));
-        return newStats;
+        localStorage.setItem('timbermanStats', JSON.stringify(newTotals));
+        return newTotals;
     }
 }
 
