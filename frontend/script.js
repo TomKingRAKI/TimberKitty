@@ -594,6 +594,18 @@ const lootBoxData = {
     ]
 };
 
+const itemRarityMap = {};
+for (const category in lootBoxData) {
+    lootBoxData[category].forEach(box => {
+        box.lootPool.forEach(item => {
+            // Zapisujemy rzadkość dla danego ID przedmiotu, jeśli jeszcze nie istnieje
+            if (!itemRarityMap[item.itemId]) {
+                itemRarityMap[item.itemId] = item.rarity;
+            }
+        });
+    });
+}
+
 const categoryToSlotMap = {
     characters: 'character', hats: 'hat', axes: 'axe', accessories: 'accessory', pets: 'pet'
 };
@@ -1162,8 +1174,15 @@ function populateShopModalWithBoxes(categoryKey) {
 
         const possibleLoot = box.lootPool.map(loot => {
             const item = shopData[loot.itemId];
-            return `<span class="text-2xl" title="${item.name}">${item.icon}</span>`;
-        }).join(' ');
+            const itemName = item.name;
+            const itemDescription = item.description;
+            const itemRarity = loot.rarity; // np. 'common', 'rare', 'legendary'
+
+            // Każda ikonka dostaje teraz tło, ramkę w kolorze rzadkości i tooltip
+            return `<div class="loot-preview-item rarity-${itemRarity} has-tooltip" data-tooltip="${itemName}: ${itemDescription}">
+                        ${item.icon}
+                    </div>`;
+        }).join(''); // join('') jest ważne, bo łączymy divy bez dodatkowych spacji
 
         const coinsLabel = (window.i18next && i18next.isInitialized) ? i18next.t('shop.coins_label') : 'monet';
         const buyOpenLabel = (window.i18next && i18next.isInitialized) ? i18next.t('shop.buy_open') : 'KUP i OTWÓRZ';
@@ -1269,7 +1288,8 @@ async function populateEquipmentSelectionModal(category) {
         ownedItemsInCategory.forEach(item => {
             const quantity = stats.unlockedItems[item.id];
             const card = document.createElement('div');
-            card.className = 'equipment-selection-item relative'; // Dodano relative
+            const rarity = itemRarityMap[item.id] || 'common'; // Pobierz rzadkość z naszej mapy, domyślnie 'common'
+            card.className = `equipment-selection-item relative rarity-${rarity}`;
             // Dodaj wskaźnik ilości
             const translatedName = (window.i18next && i18next.isInitialized)
                 ? (i18next.t(`items.${item.id}.name`) || item.name)

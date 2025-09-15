@@ -301,6 +301,7 @@ canvas {
 .equipment-selection-item {
     background-color: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    border-style: solid;
     height: 6rem;
     display: flex;
     flex-direction: column;
@@ -1282,4 +1283,32 @@ body.modal-open {
 .post-game-ranking-value {
     color: #f59e0b;
     font-weight: bold;
+}
+
+/* Style dla podglądu przedmiotów w sekcji "Możliwa zawartość" */
+.loot-preview-item {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 8px;
+    font-size: 1.75rem; /* 28px */
+    margin: 4px;
+}
+
+/* Style dla ramek rzadkości w ekwipunku */
+.equipment-selection-item.rarity-common {
+    border-color: #6b7280; /* Szary */
+}
+
+.equipment-selection-item.rarity-rare {
+    border-color: #3b82f6; /* Niebieski */
+}
+
+.equipment-selection-item.rarity-legendary {
+    border-color: #f59e0b; /* Bursztynowy/Złoty */
 }
