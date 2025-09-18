@@ -19,6 +19,14 @@ canvas {
     border: 2px solid #333;
 }
 
+/* Zapewnij, że timer nie wpływa na wysokość kontenera gdy jest ukryty */
+#timer-bar-container[style*="display: none"] {
+    position: absolute;
+    top: 0;
+    height: 0;
+    overflow: hidden;
+}
+
 #timer-bar {
     background-color: #ef4444;
     /* red-500 */
@@ -544,9 +552,6 @@ canvas {
 }
 
 /* --- Style dla Animacji Otwierania Skrzynki --- */
-#animation-reel {
-    /* Puste, bo animacja jest w JS */
-}
 
 .reel-item {
     width: 120px;
@@ -1366,4 +1371,91 @@ body.modal-open {
     background-color: #4b5563; /* gray-600 */
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+/* --- Style dla Nowego Menu Głównego --- */
+.main-menu-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.25rem;
+    font-weight: bold;
+    border-radius: 0.5rem;
+    background-color: rgba(31, 41, 55, 0.8); /* gray-800 z przezroczystością */
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease-in-out;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.main-menu-button:not(:disabled):hover {
+    transform: scale(1.05);
+    border-color: #f59e0b; /* amber-500 */
+    background-color: rgba(55, 65, 81, 0.9);
+}
+
+.main-menu-button:disabled {
+    background-color: rgba(17, 24, 39, 0.7); /* gray-900 */
+    color: #6b7280; /* gray-500 */
+    cursor: not-allowed;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Dodajemy ikonę kłódki do zablokowanych przycisków */
+.main-menu-button:disabled::after {
+    content: '🔒';
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+}
+
+/* Animacja dla odliczania */
+@keyframes pulse-countdown {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+#countdown-overlay {
+    animation: pulse-countdown 1s ease-in-out infinite;
+}
+
+
+#game-container.menu-state canvas {
+    visibility: hidden; /* Ukryj canvas w menu, ale zachowaj jego wymiary */
+}
+
+#game-container.game-state canvas {
+    display: block; /* Pokaż canvas w grze */
+    margin-top: 32px; /* Miejsce dla timera */
+}
+
+#menu-background {
+    background-image: url('assets/menu-background.jpg');
+    background-size: cover;
+    background-position: center;
+    /* Dodajemy cień, żeby pasował do canvas */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 6px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Zapewnij, że menu ma taką samą wysokość jak gra */
+#game-container.menu-state #menu-background {
+    display: block !important;
+}
+
+#game-container.game-state #menu-background {
+    display: none !important;
+}
+
+/* Upewnij się, że instrukcje są zawsze widoczne */
+.mt-4.text-center.text-gray-400.text-sm {
+    position: relative;
+    z-index: 10;
+    visibility: visible !important;
+    display: block !important;
 }

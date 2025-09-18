@@ -62,6 +62,23 @@ function initI18n() {
             save: 'Zapisz'
           }
         },
+        gameOver: { 
+            title: 'Koniec Gry!', 
+            result: 'Twój wynik', 
+            playAgain: 'Zagraj Ponownie',
+            returnToMenu: 'Powrót do Menu' // <-- NOWY KLUCZ
+        },
+        mainMenu: {
+            classic: 'Gra Zwykła',
+            competition: 'Rywalizacja',
+            birds: 'Uratuj Ptaki',
+            challenges: 'Wyzwania'
+        },
+        classicMenu: {
+            title: 'Tryb Klasyczny',
+            start: 'Rozpocznij',
+            back: 'Powrót'
+        },
         missions: {
             daily: 'Dzienne',
             weekly: 'Tygodniowe',
@@ -179,6 +196,23 @@ function initI18n() {
             save: 'Save'
           }
         },
+        gameOver: { 
+            title: 'Game Over!', 
+            result: 'Your score', 
+            playAgain: 'Play Again',
+            returnToMenu: 'Return to Menu' // <-- NEW KEY
+        },
+        mainMenu: {
+            classic: 'Classic Game',
+            competition: 'Competition',
+            birds: 'Save the Birds',
+            challenges: 'Challenges'
+        },
+        classicMenu: {
+            title: 'Classic Mode',
+            start: 'Start',
+            back: 'Back'
+        },
         missions: {
             daily: 'Daily',
             weekly: 'Weekly',
@@ -267,6 +301,18 @@ function initI18n() {
 initI18n();
 
 // Elementy UI
+const mainMenu = document.getElementById('main-menu');
+const classicMenu = document.getElementById('classic-menu');
+const countdownOverlay = document.getElementById('countdown-overlay');
+const countdownText = document.getElementById('countdown-text');
+const gameOverMenu = document.getElementById('game-over-menu');
+const gameOverScore = document.getElementById('game-over-score');
+const playAgainBtn = document.getElementById('play-again-btn');
+const returnToMenuBtn = document.getElementById('return-to-menu-btn');
+
+const classicModeBtn = document.getElementById('classic-mode-btn');
+const startClassicBtn = document.getElementById('start-classic-btn');
+const backToMainMenuBtn = document.getElementById('back-to-main-menu-btn');
 const authButton = document.getElementById('auth-button');
 const mainAvatarContainer = document.getElementById('main-avatar-container');
 const mainUsername = document.getElementById('main-username');
@@ -285,9 +331,7 @@ const scoreElement = document.getElementById('score');
 const messageOverlay = document.getElementById('message-overlay');
 const messageTitle = document.getElementById('message-title');
 const messageText = document.getElementById('message-text');
-const startButton = document.getElementById('startButton');
 const timerBar = document.getElementById('timer-bar');
-const resetButton = document.getElementById('resetButton');
 
 // Przyciski nawigacyjne
 const navShopButton = document.getElementById('nav-shop-button');
@@ -389,8 +433,13 @@ function setActiveLanguageButtons(langCode) {
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
+const TIMER_HEIGHT = 32; // wysokość timera + marginesy (24px + 8px)
 canvas.width = gameContainer.clientWidth;
 canvas.height = window.innerHeight * 0.7;
+gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Dodaj miejsce dla timera
+
+// Ustaw początkowy stan menu z odpowiednią wysokością
+gameContainer.classList.add('menu-state');
 
 // Stałe gry
 const TRUNK_WIDTH = canvas.width * 0.25;
@@ -1679,7 +1728,8 @@ async function populateEquipmentSelectionModal(category) {
     openModal(equipmentModal);
 }
 
-async function init() {
+function drawReadyState() {
+    // Ta funkcja to uproszczona wersja init(), która tylko rysuje scenę, ale nie startuje gry
     score = 0;
     player.side = 'left';
     gameState = 'playing';
@@ -1715,10 +1765,13 @@ async function init() {
         }
     }
     scoreElement.textContent = score;
-    messageOverlay.style.display = 'none';
+    draw();
+}
+
+async function init() {
+    gameState = 'playing';
     if (gameLoopInterval) clearInterval(gameLoopInterval);
     gameLoopInterval = setInterval(gameLoop, 1000 / 60);
-    draw();
 }
 
 function gameLoop() {
@@ -1853,32 +1906,31 @@ function drawPlayer() {
 }
 async function gameOver() {
     if (gameState === 'gameOver') return;
+    countdownOverlay.classList.add('hidden');
     gameState = 'gameOver';
     clearInterval(gameLoopInterval);
+
+    // Pokaż overlay i odpowiednie menu
+    messageOverlay.style.display = 'flex';
+    mainMenu.classList.add('hidden');
+    classicMenu.classList.add('hidden');
+    gameOverMenu.classList.remove('hidden');
+
+    // Ustaw tekst wyniku
+    const resultText = (window.i18next && i18next.isInitialized) ? i18next.t('gameOver.result') : 'Twój wynik';
+    gameOverScore.textContent = `${resultText}: ${score}.`;
+
     const oldStats = loadStats();
     await animateStatUpdate(oldStats, score);
     
-    // Sprawdź czy to nowy rekord i pokaż ranking
     if (currentUser && score > 0) {
         const newStats = loadStats();
         if (score === newStats.highScore) {
-            // To jest nowy rekord - pokaż ranking po grze
             setTimeout(() => {
                 showPostGameRanking(score);
-            }, 2000); // Poczekaj 2 sekundy po animacji statystyk
+            }, 2000);
         }
     }
-    
-    if (window.i18next && i18next.isInitialized) {
-        messageTitle.textContent = i18next.t('gameOver.title');
-        messageText.textContent = `${i18next.t('gameOver.result')}: ${score}.`;
-        startButton.textContent = i18next.t('gameOver.playAgain');
-    } else {
-        messageTitle.textContent = 'Koniec Gry!';
-        messageText.textContent = `Twój wynik: ${score}.`;
-        startButton.textContent = 'Zagraj Ponownie';
-    }
-    messageOverlay.style.display = 'flex';
 }
 
 function performChop(sideToChop) {
@@ -2710,6 +2762,28 @@ async function showPostGameRanking(score) {
 // Event Listeners
 // Event Listeners
 
+playAgainBtn.addEventListener('click', startCountdown);
+
+returnToMenuBtn.addEventListener('click', () => {
+    gameOverMenu.classList.add('hidden');
+    showStartScreen(); // Pokaż główne menu
+});
+
+classicModeBtn.addEventListener('click', () => {
+    mainMenu.classList.add('hidden');
+    classicMenu.classList.remove('hidden');
+});
+
+backToMainMenuBtn.addEventListener('click', () => {
+    classicMenu.classList.add('hidden');
+    mainMenu.classList.remove('hidden');
+});
+
+startClassicBtn.addEventListener('click', () => {
+    // Zamiast od razu startować grę, uruchom odliczanie
+    startCountdown();
+});
+
 function safeChangeLanguage(lng) {
   const i18n = window.i18next;
   try {
@@ -2793,87 +2867,92 @@ document.querySelectorAll('#inventory-hub-modal .equipment-slot').forEach(slot =
 canvas.addEventListener('mousedown', handleMouseInput);
 canvas.addEventListener('touchstart', handleTouchInput);
 window.addEventListener('keydown', handleKeyboardInput);
-startButton.addEventListener('click', init);
-resetButton.addEventListener('click', resetProgress);
 
 function showStartScreen() {
     gameState = 'start';
-    if (window.i18next && i18next.isInitialized) {
-        messageTitle.textContent = i18next.t('title');
-        messageText.textContent = i18next.t('startScreen.prompt');
-        startButton.textContent = i18next.t('startScreen.play');
-    } else {
-        messageTitle.textContent = 'TimberKitty';
-        messageText.textContent = 'Kliknij przycisk, aby rozpocząć!';
-        startButton.textContent = 'Graj!';
-    }
     messageOverlay.style.display = 'flex';
-    timerBar.style.width = '100%';
-    
-    // Oznacz render gry jako gotowy
-    markComponentReady('gameRender');
+
+    // Pokaż odpowiednie menu i ukryj resztę
+    mainMenu.classList.remove('hidden');
+    classicMenu.classList.add('hidden');
+    gameOverMenu.classList.add('hidden');
+    countdownOverlay.classList.add('hidden');
+
+    // Ustaw tło i UI dla stanu menu
+    setGameStateUI('menu');
+}
+
+function startCountdown() {
+    // Ukryj wszystkie menu
+    mainMenu.classList.add('hidden');
+    classicMenu.classList.add('hidden');
+    gameOverMenu.classList.add('hidden');
+
+    // Pokaż odliczanie
+    countdownOverlay.classList.remove('hidden');
+
+    // Ustaw tło i UI dla stanu gry
+    setGameStateUI('game');
+    // Narysuj postać i drzewo w stanie gotowości
+    drawReadyState();
+
+    let count = 3;
+
+    function tick() {
+        if (count > 0) {
+            countdownText.textContent = count;
+            count--;
+            setTimeout(tick, 1000);
+        } else {
+            countdownText.textContent = 'GO!';
+            setTimeout(() => {
+                messageOverlay.style.display = 'none';
+                countdownOverlay.classList.add('hidden');
+                init(); // Uruchom właściwą grę
+            }, 500);
+        }
+    }
+    tick();
 }
 
 window.onresize = () => {
     canvas.width = gameContainer.clientWidth;
     canvas.height = window.innerHeight * 0.7;
+    gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Dodaj miejsce dla timera
     if (gameState !== 'start') draw();
 };
 
 window.onload = async () => {
-    try {
-        // Ustaw domyślny język jeśli brak w localStorage, oraz natychmiast podświetl
-        if (!localStorage.getItem('i18nextLng')) {
-            localStorage.setItem('i18nextLng', 'pl');
-        }
-        setActiveLanguageButtons((localStorage.getItem('i18nextLng') || 'pl'));
-
-        // Czekaj na załadowanie tłumaczeń
-        updateContent();
-        
-        // Sprawdź czy i18next jest gotowy
-        if (window.i18next && i18next.isInitialized) {
-            console.log('Tłumaczenia załadowane!');
-            markComponentReady('translations');
-        } else {
-            console.log('Oczekiwanie na i18next...');
-            // Jeśli i18next nie jest gotowy, oznacz jako gotowy po krótkim czasie
-            setTimeout(() => {
-                console.log('i18next timeout - oznaczanie jako gotowy');
-                markComponentReady('translations');
-            }, 2000);
-        }
-
-        startLoadingAnimation(); // Rozpocznij animację
-
-        // Uruchom ładowanie zasobów równocześnie
-        await Promise.all([
-            loadSprites(),
-            loadSounds()
-        ]);
-
-        showStartScreen();
-        
-        // Uruchom sprawdzenie logowania - daj więcej czasu na "obudzenie" serwera
-        console.log('Rozpoczynanie sprawdzania logowania...');
-        const loginPromise = checkLoginStatus();
-        const timeout = new Promise(resolve => setTimeout(resolve, 8000)); // Zwiększono do 8 sekund
-        await Promise.race([loginPromise, timeout]);
-        console.log('Sprawdzanie logowania zakończone');
-        
-        // Dodatkowy timeout na wszelki wypadek - jeśli coś się zawiesi
-        setTimeout(() => {
-            if (!Object.values(loadingStates).every(state => state === true)) {
-                console.log('Timeout - wymuszanie zakończenia ładowania');
-                finishLoadingAnimation();
-            }
-        }, 10000); // 10 sekund całkowitego timeoutu
-
-    } catch (error) {
-        console.error("Błąd inicjalizacji gry:", error);
-        // W przypadku błędu, zakończ ładowanie
-        finishLoadingAnimation();
+    // Natychmiastowe ustawienie języka i próba tłumaczenia
+    if (!localStorage.getItem('i18nextLng')) {
+        localStorage.setItem('i18nextLng', 'pl');
     }
+    setActiveLanguageButtons(localStorage.getItem('i18nextLng'));
+    updateContent();
+
+    // Uruchom animację ładowania
+    startLoadingAnimation();
+
+    // Równocześnie uruchom dwie niezależne operacje:
+    // 1. Ładowanie zasobów wizualnych i dźwiękowych
+    const assetsPromise = Promise.all([
+        loadSprites(),
+        loadSounds()
+    ]).catch(error => console.error("Błąd ładowania podstawowych zasobów:", error));
+
+    // 2. Sprawdzanie statusu logowania w tle (NIE CZEKAMY na to)
+    checkLoginStatus(); 
+
+    // Czekaj TYLKO na załadowanie grafik i dźwięków
+    await assetsPromise;
+    console.log('Zasoby (grafiki, dźwięki) gotowe.');
+
+    // Gdy tylko zasoby są gotowe, zakończ ładowanie i pokaż menu
+    finishLoadingAnimation();
+    showStartScreen();
+    
+    // Oznaczanie komponentów jako gotowe nie jest już potrzebne w ten sposób
+    // Możesz usunąć cały system 'markComponentReady' i 'loadingStates' jeśli chcesz uprościć kod
 };
 
 authButton.addEventListener('click', () => {
@@ -3053,3 +3132,23 @@ document.addEventListener('click', (e) => {
     }
     
 });
+
+function setGameStateUI(state) {
+    const gameContainer = document.getElementById('game-container');
+    const scoreEl = document.getElementById('score');
+    const timerContainer = document.getElementById('timer-bar-container');
+
+    if (state === 'menu') {
+        gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Zawsze ta sama wysokość
+        gameContainer.classList.add('menu-state');
+        gameContainer.classList.remove('game-state');
+        scoreEl.style.display = 'none';
+        timerContainer.style.display = 'none';
+    } else { // 'game' or 'ready'
+        gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Zawsze ta sama wysokość
+        gameContainer.classList.remove('menu-state');
+        gameContainer.classList.add('game-state');
+        scoreEl.style.display = 'block';
+        timerContainer.style.display = 'flex';
+    }
+}

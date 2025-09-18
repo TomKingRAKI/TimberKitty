@@ -89,22 +89,48 @@
             </button>
             </div>
         </div>
-        <div class="w-full max-w-sm md:max-w-md order-1 md:order-2">
+        <div class="w-full max-w-sm md:max-w-md order-1 md:order-2 flex flex-col">
             <div id="game-container" class="relative w-full">
+                <div id="menu-background" class="absolute inset-0 rounded-lg"></div>
                 <div id="timer-bar-container"
-                    class="w-full h-6 bg-gray-700 border-2 border-gray-600 rounded-md mb-2 overflow-hidden">
+                    class="absolute top-0 left-0 right-0 h-6 bg-gray-700 border-2 border-gray-600 rounded-md overflow-hidden z-20">
                     <div id="timer-bar" class="h-full bg-red-500 transition-width duration-100 linear"></div>
                 </div>
-                <div id="score" class="absolute top-10 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow">0</div>
+                <div id="score" class="absolute top-12 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow z-20">0</div>
                 <canvas id="gameCanvas"></canvas>
                 <div id="message-overlay"
-                    class="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4">
-                    <h2 id="message-title" data-i18n="startScreen.ready" class="text-4xl font-bold mb-2 text-shadow">Gotowy?</h2>
-                    <p id="message-text" data-i18n="startScreen.prompt" class="text-xl text-shadow mb-4">Kliknij przycisk, aby rozpocząć!</p><button
-                        id="startButton" data-i18n="startScreen.play"
-                        class="px-8 py-3 bg-green-500 hover:bg-green-600 rounded-lg text-2xl font-bold transition-transform transform hover:scale-105 text-shadow">Graj!</button><button
-                        id="resetButton" data-i18n="startScreen.reset" class="text-sm text-gray-400 hover:text-red-500 underline mt-4">Zresetuj
-                        postęp</button>
+                    class="absolute inset-0 h-full bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4">
+                    <div id="main-menu" class="flex flex-col items-center justify-center text-center">
+                        <h2 class="text-6xl font-bold mb-8 text-shadow">TimberKitty</h2>
+                        <div class="flex flex-col gap-4 w-full max-w-xs">
+                            <button id="classic-mode-btn" data-i18n="mainMenu.classic" class="main-menu-button">Gra Zwykła</button>
+                            <button id="competition-mode-btn" data-i18n="mainMenu.competition" class="main-menu-button" disabled>Rywalizacja</button>
+                            <button id="birds-mode-btn" data-i18n="mainMenu.birds" class="main-menu-button" disabled>Uratuj Ptaki</button>
+                            <button id="challenges-mode-btn" data-i18n="mainMenu.challenges" class="main-menu-button" disabled>Wyzwania</button>
+                        </div>
+                    </div>
+                    
+                    <div id="classic-menu" class="hidden flex flex-col items-center justify-center text-center">
+                        <h2 data-i18n="classicMenu.title" class="text-4xl font-bold mb-8 text-shadow">Tryb Klasyczny</h2>
+                        <p class="text-lg mb-6 text-gray-300">W przyszłości tutaj pojawi się np. wybór mapy!</p>
+                        <div class="flex flex-col gap-4 w-full max-w-xs">
+                            <button id="start-classic-btn" data-i18n="classicMenu.start" class="main-menu-button bg-green-600 hover:bg-green-700">Rozpocznij</button>
+                            <button id="back-to-main-menu-btn" data-i18n="classicMenu.back" class="main-menu-button bg-gray-600 hover:bg-gray-700">Powrót</button>
+                        </div>
+                    </div>
+                    
+                    <div id="countdown-overlay" class="hidden text-8xl font-bold text-shadow animate-pulse">
+                        <span id="countdown-text">3</span>
+                    </div>
+
+                    <div id="game-over-menu" class="hidden flex flex-col items-center justify-center text-center">
+                        <h2 data-i18n="gameOver.title" class="text-4xl font-bold mb-2 text-shadow">Koniec Gry!</h2>
+                        <p id="game-over-score" class="text-xl text-shadow mb-6"></p>
+                        <div class="flex flex-col gap-4 w-full max-w-xs">
+                            <button id="play-again-btn" data-i18n="gameOver.playAgain" class="main-menu-button bg-green-600 hover:bg-green-700">Zagraj Ponownie</button>
+                            <button id="return-to-menu-btn" data-i18n="gameOver.returnToMenu" class="main-menu-button bg-gray-600 hover:bg-gray-700">Powrót do Menu</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="mt-4 text-center text-gray-400 text-sm">
