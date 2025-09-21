@@ -79,6 +79,21 @@ function initI18n() {
             start: 'Rozpocznij',
             back: 'Powrót'
         },
+        birdsMenu: {
+            title: 'Uratuj Ptaki',
+            description: 'Wybierz poziom trudności i zetnij wymaganą liczbę pni, aby uratować ptaki!',
+            easy: 'Łatwy',
+            medium: 'Średni',
+            hard: 'Trudny'
+        },
+        birdsMode: {
+            warning: 'Ptaki są w niebezpieczeństwie!',
+            preStart: 'Ptaki są w niebezpieczeństwie! Zetnij {{count}} pni, aby je ochronić.',
+            success: 'Ptaki uratowane!',
+            fail: 'Nie udało się uratować ptaków.',
+            playAgain: 'Zagraj jeszcze raz',
+            returnToMenu: 'Powrót do menu'
+        },
         missions: {
             daily: 'Dzienne',
             weekly: 'Tygodniowe',
@@ -213,6 +228,21 @@ function initI18n() {
             start: 'Start',
             back: 'Back'
         },
+        birdsMenu: {
+            title: 'Save the Birds',
+            description: 'Choose difficulty level and chop the required number of trunks to save the birds!',
+            easy: 'Easy',
+            medium: 'Medium',
+            hard: 'Hard'
+        },
+        birdsMode: {
+            warning: 'Birds are in danger!',
+            preStart: 'Birds are in danger! Chop {{count}} trunks to save them.',
+            success: 'Birds saved!',
+            fail: 'Failed to save the birds.',
+            playAgain: 'Play again',
+            returnToMenu: 'Return to menu'
+        },
         missions: {
             daily: 'Daily',
             weekly: 'Weekly',
@@ -313,6 +343,19 @@ const returnToMenuBtn = document.getElementById('return-to-menu-btn');
 const classicModeBtn = document.getElementById('classic-mode-btn');
 const startClassicBtn = document.getElementById('start-classic-btn');
 const backToMainMenuBtn = document.getElementById('back-to-main-menu-btn');
+
+// Elementy trybu ptaków
+const birdsModeBtn = document.getElementById('birds-mode-btn');
+const birdsMenu = document.getElementById('birds-menu');
+const birdsEasyBtn = document.getElementById('birds-easy-btn');
+const birdsMediumBtn = document.getElementById('birds-medium-btn');
+const birdsHardBtn = document.getElementById('birds-hard-btn');
+const backToMainFromBirdsBtn = document.getElementById('back-to-main-from-birds-btn');
+const birdsWarningOverlay = document.getElementById('birds-warning-overlay');
+const birdsWarningText = document.getElementById('birds-warning-text');
+const rescueProgressContainer = document.getElementById('rescue-progress-container');
+const rescueProgressBar = document.getElementById('rescue-progress-bar');
+const rescueProgressText = document.getElementById('rescue-progress-text');
 const authButton = document.getElementById('auth-button');
 const mainAvatarContainer = document.getElementById('main-avatar-container');
 const mainUsername = document.getElementById('main-username');
@@ -382,6 +425,7 @@ const revealCloseButton = document.getElementById('reveal-close-button');
 const resetWarningModal = document.getElementById('reset-warning-modal');
 const resetConfirmButton = document.getElementById('reset-confirm-button');
 const resetCancelButton = document.getElementById('reset-cancel-button');
+let isKeyPressed = false; // Ta zmienna będzie naszą blokadą
 
 // Elementy profilu
 const userProfileSection = document.getElementById('user-profile-section');
@@ -484,6 +528,28 @@ const MAX_TIME = 100;
 let gameLoopInterval = null;
 let activeBonuses = {};
 let petSaveUsed = false;
+
+// --- Konfiguracja trybu ptaków ---
+const BIRDS_CONFIG = {
+  ranges: {
+    easy:   { min: 100, max: 300 },
+    medium: { min: 400, max: 600 },
+    hard:   { min: 700, max: 1000 },
+  },
+  rewards: {
+    easy:   { coins: 50, exp: 25 },
+    medium: { coins: 100, exp: 50 },
+    hard:   { coins: 200, exp: 100 },
+  },
+  totalChopsPolicy: 'UPDATE' // 'UPDATE' lub 'NO_UPDATE'
+};
+
+// Zmienne stanu trybu ptaków
+let gameMode = 'classic'; // 'classic' | 'birds'
+let birdsDifficulty = null; // 'easy' | 'medium' | 'hard'
+let birdsTarget = 0;        // wylosowane N
+let birdsProgress = 0;      // = score w tej rozgrywce
+let birdsSuccess = false;
 
 // System sprawdzania gotowości wszystkich komponentów
 const loadingStates = {
@@ -795,14 +861,40 @@ function loadStats() {
 
 // ZMODYFIKOWANA FUNKCJA: Teraz jest asynchroniczna i zapisuje dane na serwerze lub w localStorage
 // W pliku script.js ZASTĄP TĘ FUNKCJĘ
-async function updateAndSaveStats(scoreFromGame, oldStats) {
-    const coinsEarned = (scoreFromGame * (0.1 + (activeBonuses.coinMultiplierBonus || 0))) * (1 + (activeBonuses.coinMultiplier || 0));
-    const expEarned = Math.round(scoreFromGame * (1 + (activeBonuses.expMultiplierBonus || 0)));
+async function updateAndSaveStats(scoreFromGame, oldStats, options = {}) {
+    // options:
+    // - mode: 'classic' | 'birds'
+    // - birds: { success: boolean, coinsReward?: number, expReward?: number, countChopsInTotal?: boolean }
+    // - overrideScoreContributions?: boolean // jeśli true, to highScore/coins/exp nie liczą się z "scoreFromGame"
+    
+    let coinsEarned = 0;
+    let expEarned = 0;
+    let newHighScore = oldStats.highScore;
+    let newTotalChops = oldStats.totalChops;
+    
+    if (options.mode === 'birds') {
+        // Tryb ptaków - nie naliczaj standardowych nagród ze score
+        if (options.birds && options.birds.success) {
+            coinsEarned = options.birds.coinsReward || 0;
+            expEarned = options.birds.expReward || 0;
+        }
+        // W trybie ptaków nie aktualizuj highScore
+        // Dla totalChops: sprawdź politykę
+        if (BIRDS_CONFIG.totalChopsPolicy === 'UPDATE') {
+            newTotalChops = oldStats.totalChops + scoreFromGame;
+        }
+    } else {
+        // Tryb klasyczny - standardowe naliczanie
+        coinsEarned = (scoreFromGame * (0.1 + (activeBonuses.coinMultiplierBonus || 0))) * (1 + (activeBonuses.coinMultiplier || 0));
+        expEarned = Math.round(scoreFromGame * (1 + (activeBonuses.expMultiplierBonus || 0)));
+        newHighScore = Math.max(oldStats.highScore, scoreFromGame);
+        newTotalChops = oldStats.totalChops + scoreFromGame;
+    }
 
     const newTotals = {
         ...oldStats,
-        highScore: Math.max(oldStats.highScore, scoreFromGame),
-        totalChops: oldStats.totalChops + scoreFromGame,
+        highScore: newHighScore,
+        totalChops: newTotalChops,
         coins: oldStats.coins + coinsEarned,
         exp: oldStats.exp + expEarned
     };
@@ -845,8 +937,8 @@ async function updateAndSaveStats(scoreFromGame, oldStats) {
     }
 }
 
-async function animateStatUpdate(oldStats, score) {
-    const newStats = await updateAndSaveStats(score, oldStats);
+async function animateStatUpdate(oldStats, score, options = {}) {
+    const newStats = await updateAndSaveStats(score, oldStats, options);
     
     // Zawsze odśwież misje po grze, aby były aktualne
     console.log('Odświeżanie misji po grze...');
@@ -1732,7 +1824,7 @@ function drawReadyState() {
     // Ta funkcja to uproszczona wersja init(), która tylko rysuje scenę, ale nie startuje gry
     score = 0;
     player.side = 'left';
-    gameState = 'playing';
+    //gameState = 'playing';
     tree = [];
     particles = [];
     timer = MAX_TIME;
@@ -1775,13 +1867,20 @@ async function init() {
 }
 
 function gameLoop() {
-    if (gameState !== 'playing') return;
-    timer -= (0.2 * (1 - activeBonuses.timerSlowdown));
-    if (timer <= 0) {
-        timer = 0;
-        gameOver();
+    // ZMIANA 1: Pozwól pętli działać także w stanie 'birds-success'
+    if (gameState !== 'playing' && gameState !== 'birds-success') return;
+
+    // ZMIANA 2: Logika gry (timer) działa tylko w stanie 'playing'
+    if (gameState === 'playing') {
+        timer -= (0.2 * (1 - activeBonuses.timerSlowdown));
+        if (timer <= 0) {
+            timer = 0;
+            gameOver();
+        }
+        timerBar.style.width = `${(timer / MAX_TIME) * 100}%`;
     }
-    timerBar.style.width = `${(timer / MAX_TIME) * 100}%`;
+
+    // Te funkcje odpowiadają za animacje i będą działać w obu stanach
     updateParticles();
     draw();
 }
@@ -1802,8 +1901,26 @@ function draw() {
     // Krok 3: Narysuj drzewo i jego gałęzie
     tree.forEach((segment, index) => {
         const y = canvas.height - (index + 1) * SEGMENT_HEIGHT;
-        drawTrunkSegment(TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
-        if (segment.branch) drawBranch(TRUNK_X, y, segment.branch);
+        
+        // Ta poprawka stabilizuje numery pni w momencie zatrzymania gry
+        //const effectiveScore = (gameMode === 'birds' && birdsSuccess) ? score - 1 : score;
+        const segmentNumber = score + index + 1;
+    
+        let isSpecialSegment = false;
+    
+        // Rysuj niebieski blok (gniazdo), jeśli to ten właściwy segment
+        if (gameMode === 'birds' && segmentNumber === birdsTarget + 1) {
+            drawBirdsTreeTop(TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
+            isSpecialSegment = true;
+        } else {
+            // W każdym innym przypadku rysuj zwykły pień.
+            drawTrunkSegment(TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
+        }
+    
+        // Rysuj gałęzie tylko, jeśli segment nie jest gniazdem
+        if (segment.branch && !isSpecialSegment) {
+            drawBranch(TRUNK_X, y, segment.branch);
+        }
     });
 
     // Krok 4: Narysuj elementy, które są "za" graczem, ale "przed" drzewem
@@ -1860,6 +1977,32 @@ function drawBranch(trunkX, segmentY, side) {
     }
 }
 
+function drawBirdsTreeTop(x, y, width, height) {
+    // Narysuj niebieski blok z ptakami
+    ctx.fillStyle = '#4A90E2'; // Niebieski kolor
+    ctx.fillRect(x, y, width, height);
+    
+    // Dodaj gradient dla lepszego efektu
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, '#87CEEB'); // Jasny niebieski
+    gradient.addColorStop(1, '#4A90E2'); // Ciemniejszy niebieski
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x, y, width, height);
+    
+    // Dodaj obramowanie
+    ctx.strokeStyle = '#2E5984';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+    
+    // Narysuj ptaki na bloku
+    ctx.fillStyle = '#000';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    ctx.fillText('🕊️', centerX, centerY + 8);
+}
+
 function drawGrass() {
     ctx.fillStyle = GROUND_COLOR;
     ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
@@ -1910,25 +2053,63 @@ async function gameOver() {
     gameState = 'gameOver';
     clearInterval(gameLoopInterval);
 
+    // Ukryj pasek postępu w trybie ptaków
+    if (gameMode === 'birds') {
+        rescueProgressContainer.classList.add('hidden');
+        document.getElementById('game-container').classList.remove('birds-success');
+    }
+
     // Pokaż overlay i odpowiednie menu
     messageOverlay.style.display = 'flex';
     mainMenu.classList.add('hidden');
     classicMenu.classList.add('hidden');
+    birdsMenu.classList.add('hidden');
     gameOverMenu.classList.remove('hidden');
 
-    // Ustaw tekst wyniku
-    const resultText = (window.i18next && i18next.isInitialized) ? i18next.t('gameOver.result') : 'Twój wynik';
-    gameOverScore.textContent = `${resultText}: ${score}.`;
+    // Ustaw tekst wyniku w zależności od trybu
+    let resultText = '';
+    if (gameMode === 'birds') {
+        if (birdsSuccess) {
+            resultText = (window.i18next && i18next.isInitialized) ? i18next.t('birdsMode.success') : 'Ptaki uratowane!';
+            gameOverScore.textContent = `${resultText} (${score} pni)`;
+        } else {
+            resultText = (window.i18next && i18next.isInitialized) ? i18next.t('birdsMode.fail') : 'Nie udało się uratować ptaków.';
+            gameOverScore.textContent = `${resultText} (${score}/${birdsTarget})`;
+        }
+    } else {
+        resultText = (window.i18next && i18next.isInitialized) ? i18next.t('gameOver.result') : 'Twój wynik';
+        gameOverScore.textContent = `${resultText}: ${score}.`;
+    }
 
     const oldStats = loadStats();
-    await animateStatUpdate(oldStats, score);
     
-    if (currentUser && score > 0) {
-        const newStats = loadStats();
-        if (score === newStats.highScore) {
-            setTimeout(() => {
-                showPostGameRanking(score);
-            }, 2000);
+    if (gameMode === 'birds') {
+        // Tryb ptaków - specjalne naliczanie nagród
+        if (birdsSuccess) {
+            const { coins, exp } = BIRDS_CONFIG.rewards[birdsDifficulty];
+            await animateStatUpdate(oldStats, score, {
+                mode: 'birds',
+                birds: { success: true, coinsReward: coins, expReward: exp },
+                overrideScoreContributions: true
+            });
+        } else {
+            await animateStatUpdate(oldStats, score, {
+                mode: 'birds',
+                birds: { success: false, coinsReward: 0, expReward: 0 },
+                overrideScoreContributions: true
+            });
+        }
+    } else {
+        // Tryb klasyczny - bez zmian
+        await animateStatUpdate(oldStats, score);
+        
+        if (currentUser && score > 0) {
+            const newStats = loadStats();
+            if (score === newStats.highScore) {
+                setTimeout(() => {
+                    showPostGameRanking(score);
+                }, 2000);
+            }
         }
     }
 }
@@ -1944,22 +2125,21 @@ function performChop(sideToChop) {
         return;
     }
 
-    // --- NOWA, BŁYSKAWICZNA LOGIKA ---
-
-    // 1. Logika gry wykonuje się NATYCHMIAST, bez czekania na animację
+    // --- UNIWERSALNA LOGIKA CIĘCIA ---
     player.side = sideToChop;
-        if (gameSounds.chop) {
+    if (gameSounds.chop) {
         const chopSound = gameSounds.chop.cloneNode();
-        chopSound.volume = 0.7; // Możesz dostosować głośność
+        chopSound.volume = 0.7;
         chopSound.play();
     }
-    score += 1; 
+    score += 1;
     scoreElement.textContent = score;
-    let timeGain = 5 - (score / 50);
+    let timeGain = 5 - (Math.sqrt(score) / 10);
     if (timeGain < 1) timeGain = 1;
     timer += (timeGain + activeBonuses.timeGainBonus);
     if (timer > MAX_TIME) timer = MAX_TIME;
 
+    // KROK 1: ZAWSZE wykonaj ścięcie pnia i stwórz animację.
     const choppedSegment = tree.shift();
     if (choppedSegment) {
         particles.push({
@@ -1968,15 +2148,52 @@ function performChop(sideToChop) {
             velocityY: -7, rotation: 0, rotationSpeed: (player.side === 'left' ? 1 : -1) * (Math.random() * 0.05 + 0.05)
         });
     }
-    let newBranch = null;
-    const lastSegment = tree[tree.length - 1];
-    const branchChance = 0.35 + (score / 200);
-    if (Math.random() < branchChance) {
-        const potentialSide = Math.random() < 0.5 ? 'left' : 'right';
-        if (lastSegment && lastSegment.branch && lastSegment.branch !== potentialSide) newBranch = null;
-        else newBranch = potentialSide;
+    
+    // KROK 2: POTEM sprawdź, czy to było zwycięskie cięcie.
+    if (gameMode === 'birds') {
+        birdsProgress = score;
+        updateRescueProgressUI(birdsProgress, birdsTarget);
+
+        if (birdsProgress >= birdsTarget) {
+            birdsSuccess = true;
+            birdsRescueComplete();
+            
+            // Uruchom animację gracza i zakończ funkcję.
+            clearTimeout(animationTimeout1);
+            clearTimeout(animationTimeout2);
+            player.frame = 'swing';
+            animationTimeout1 = setTimeout(() => { player.frame = 'chop'; }, 75);
+            animationTimeout2 = setTimeout(() => { player.frame = 'idle'; }, 150);
+            return; // Zakończ, aby nie generować nowego pnia i nie sprawdzać kolizji.
+        }
     }
-    tree.push({ branch: newBranch });
+
+    // KROK 3: Jeśli to NIE było zwycięskie cięcie, kontynuuj normalnie.
+    // Logika generowania nowych pni
+    if (gameMode === 'birds') {
+        if (score + tree.length < birdsTarget + 1) {
+            let newBranch = null;
+            const lastSegment = tree[tree.length - 1];
+            const branchChance = 0.35 + (score / 200);
+            if (Math.random() < branchChance) {
+                const potentialSide = Math.random() < 0.5 ? 'left' : 'right';
+                if (lastSegment && lastSegment.branch && lastSegment.branch !== potentialSide) newBranch = null;
+                else newBranch = potentialSide;
+            }
+            tree.push({ branch: newBranch });
+        }
+    } else {
+        // Generowanie dla trybu klasycznego
+        let newBranch = null;
+        const lastSegment = tree[tree.length - 1];
+        const branchChance = 0.35 + (score / 200);
+        if (Math.random() < branchChance) {
+            const potentialSide = Math.random() < 0.5 ? 'left' : 'right';
+            if (lastSegment && lastSegment.branch && lastSegment.branch !== potentialSide) newBranch = null;
+            else newBranch = potentialSide;
+        }
+        tree.push({ branch: newBranch });
+    }
 
     const segmentNextToPlayer = tree[0];
     if (segmentNextToPlayer && segmentNextToPlayer.branch === player.side) {
@@ -1984,24 +2201,17 @@ function performChop(sideToChop) {
         return;
     }
 
-    // 2. Animacja jest tylko dodatkiem wizualnym i restartuje się przy każdym kliknięciu
     clearTimeout(animationTimeout1);
     clearTimeout(animationTimeout2);
-
     player.frame = 'swing';
-
-    animationTimeout1 = setTimeout(() => {
-        player.frame = 'chop';
-    }, 75);
-
-    animationTimeout2 = setTimeout(() => {
-        player.frame = 'idle';
-    }, 150);
+    animationTimeout1 = setTimeout(() => { player.frame = 'chop'; }, 75);
+    animationTimeout2 = setTimeout(() => { player.frame = 'idle'; }, 150);
 }
 
 function handleMouseInput(event) { performChopBasedOnInput(event); }
 function handleTouchInput(event) { event.preventDefault(); performChopBasedOnInput(event); }
 function performChopBasedOnInput(event) {
+    // Zablokuj input podczas odliczania i w innych stanach niż 'playing'
     if (gameState !== 'playing') return;
     const rect = canvas.getBoundingClientRect();
     const clickX = (event.clientX !== undefined ? event.clientX : event.changedTouches[0].clientX) - rect.left;
@@ -2009,13 +2219,17 @@ function performChopBasedOnInput(event) {
     performChop(side);
 }
 function handleKeyboardInput(event) {
-    if (gameState !== 'playing') return;
+    if (gameState !== 'playing' || isKeyPressed) return; // <-- 1. Sprawdź blokadę
+
     let side = null;
     switch (event.key.toLowerCase()) {
         case 'arrowleft': case 'a': case 'j': side = 'left'; break;
         case 'arrowright': case 'd': case 'l': side = 'right'; break;
     }
-    if (side) performChop(side);
+    if (side) {
+        isKeyPressed = true; // <-- 2. Włącz blokadę
+        performChop(side);
+    }
 }
 
 // --- Logika Modali ---
@@ -2762,7 +2976,16 @@ async function showPostGameRanking(score) {
 // Event Listeners
 // Event Listeners
 
-playAgainBtn.addEventListener('click', startCountdown);
+playAgainBtn.addEventListener('click', () => {
+    if (gameMode === 'birds' && birdsDifficulty) {
+        // W trybie ptaków - ponownie losuj cel z tej samej trudności
+        startBirdsSetup(birdsDifficulty);
+    } else {
+        // W trybie klasycznym - standardowe odliczanie
+        gameMode = 'classic';
+        startCountdown();
+    }
+});
 
 returnToMenuBtn.addEventListener('click', () => {
     gameOverMenu.classList.add('hidden');
@@ -2781,7 +3004,31 @@ backToMainMenuBtn.addEventListener('click', () => {
 
 startClassicBtn.addEventListener('click', () => {
     // Zamiast od razu startować grę, uruchom odliczanie
+    gameMode = 'classic';
     startCountdown();
+});
+
+// Event listenery dla trybu ptaków
+birdsModeBtn.addEventListener('click', () => {
+    mainMenu.classList.add('hidden');
+    birdsMenu.classList.remove('hidden');
+});
+
+backToMainFromBirdsBtn.addEventListener('click', () => {
+    birdsMenu.classList.add('hidden');
+    mainMenu.classList.remove('hidden');
+});
+
+birdsEasyBtn.addEventListener('click', () => {
+    startBirdsSetup('easy');
+});
+
+birdsMediumBtn.addEventListener('click', () => {
+    startBirdsSetup('medium');
+});
+
+birdsHardBtn.addEventListener('click', () => {
+    startBirdsSetup('hard');
 });
 
 function safeChangeLanguage(lng) {
@@ -2868,25 +3115,145 @@ canvas.addEventListener('mousedown', handleMouseInput);
 canvas.addEventListener('touchstart', handleTouchInput);
 window.addEventListener('keydown', handleKeyboardInput);
 
+function handleKeyUp(event) {
+    // Sprawdź, czy puszczony klawisz jest jednym z naszych klawiszy do gry
+    const gameKeys = ['arrowleft', 'a', 'j', 'arrowright', 'd', 'l'];
+    if (gameKeys.includes(event.key.toLowerCase())) {
+        isKeyPressed = false; // <-- Zwolnij blokadę
+    }
+}
+
 function showStartScreen() {
     gameState = 'start';
     messageOverlay.style.display = 'flex';
 
+    // Reset trybu ptaków
+    gameMode = 'classic';
+    birdsDifficulty = null;
+    birdsTarget = 0;
+    birdsProgress = 0;
+    birdsSuccess = false;
+    
+    // Ukryj pasek postępu i usuń klasy sukcesu
+    rescueProgressContainer.classList.add('hidden');
+    document.getElementById('game-container').classList.remove('birds-success');
+
     // Pokaż odpowiednie menu i ukryj resztę
     mainMenu.classList.remove('hidden');
     classicMenu.classList.add('hidden');
+    birdsMenu.classList.add('hidden');
     gameOverMenu.classList.add('hidden');
     countdownOverlay.classList.add('hidden');
+    birdsWarningOverlay.classList.add('hidden');
 
     // Ustaw tło i UI dla stanu menu
     setGameStateUI('menu');
 }
 
-function startCountdown() {
+// --- Funkcje trybu ptaków ---
+
+function startBirdsSetup(difficulty) {
+    // Ustaw parametry trybu ptaków
+    gameMode = 'birds';
+    birdsDifficulty = difficulty;
+    birdsTarget = Math.floor(Math.random() * (BIRDS_CONFIG.ranges[difficulty].max - BIRDS_CONFIG.ranges[difficulty].min + 1)) + BIRDS_CONFIG.ranges[difficulty].min;
+    birdsProgress = 0;
+    birdsSuccess = false;
+    
+    // Ukryj wszystkie menu (włącznie z game over menu)
+    birdsMenu.classList.add('hidden');
+    gameOverMenu.classList.add('hidden');
+    mainMenu.classList.add('hidden');
+    classicMenu.classList.add('hidden');
+    
+    // Pokaż animację ostrzegawczą
+    showBirdsWarning();
+}
+
+function showBirdsWarning() {
+    // Zablokuj input już od razu
+    gameState = 'birds-warning';
+    
+    // Ustaw tekst ostrzeżenia
+    const i18n = window.i18next;
+    if (i18n && i18n.t) {
+        birdsWarningText.textContent = i18n.t('birdsMode.preStart', { count: birdsTarget });
+    } else {
+        birdsWarningText.textContent = `Zetnij ${birdsTarget} pni, aby je ochronić.`;
+    }
+    
+    // Pokaż overlay ostrzegawczy z czarnym tłem
+    messageOverlay.style.display = 'flex';
+    birdsWarningOverlay.classList.remove('hidden');
+    
+    // Po 2 sekundach przejdź do odliczania
+    setTimeout(() => {
+        birdsWarningOverlay.classList.add('hidden');
+        startCountdown(() => initBirdsMode());
+    }, 2000);
+}
+
+function initBirdsMode() {
+    // Wyzeruj score i ustaw początkowy stan
+    score = 0;
+    birdsProgress = 0;
+    birdsSuccess = false;
+    
+    // Pokaż pasek postępu
+    rescueProgressContainer.classList.remove('hidden');
+    updateRescueProgressUI(0, birdsTarget);
+    
+    // Uruchom normalną logikę gry
+    gameState = 'playing';
+    if (gameLoopInterval) clearInterval(gameLoopInterval);
+    gameLoopInterval = setInterval(gameLoop, 1000 / 60);
+}
+
+function updateRescueProgressUI(current, target) {
+    const percentage = Math.min((current / target) * 100, 100);
+    rescueProgressBar.style.width = `${percentage}%`;
+    rescueProgressText.textContent = `${current} / ${target}`;
+    
+    // Dodaj efekt sukcesu gdy osiągnięto cel
+    if (current >= target) {
+        document.getElementById('game-container').classList.add('birds-success');
+    }
+}
+
+function birdsRescueComplete() {
+    birdsSuccess = true;
+    gameState = 'birds-success';
+    
+    // Pokaż efekt sukcesu
+    document.getElementById('game-container').classList.add('birds-success');
+    
+    // Zatrzymaj dalsze generowanie segmentów, ale pozwól grze działać jeszcze chwilę
+    // Po krótkim czasie zakończ grę
+    setTimeout(() => {
+        endBirdsRun();
+    }, 1500);
+}
+
+function endBirdsRun() {
+    // Zatrzymaj grę
+    if (gameLoopInterval) clearInterval(gameLoopInterval);
+    
+    // Ukryj pasek postępu
+    rescueProgressContainer.classList.add('hidden');
+    
+    // Pokaż menu końca gry (gameState zostanie ustawiony w gameOver())
+    gameOver();
+}
+
+function startCountdown(onGo) {
     // Ukryj wszystkie menu
     mainMenu.classList.add('hidden');
     classicMenu.classList.add('hidden');
+    birdsMenu.classList.add('hidden');
     gameOverMenu.classList.add('hidden');
+
+    // Ustaw stan odliczania - to zablokuje input
+    gameState = 'countdown';
 
     // Pokaż odliczanie
     countdownOverlay.classList.remove('hidden');
@@ -2908,7 +3275,7 @@ function startCountdown() {
             setTimeout(() => {
                 messageOverlay.style.display = 'none';
                 countdownOverlay.classList.add('hidden');
-                init(); // Uruchom właściwą grę
+                onGo ? onGo() : init(); // Uruchom właściwą grę
             }, 500);
         }
     }
@@ -3062,6 +3429,8 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+window.addEventListener('keyup', handleKeyUp);
 
 // Logika przełączania zakładek wewnątrz panelu Misji
 const missionTabs = document.querySelectorAll('.mission-tab-button');

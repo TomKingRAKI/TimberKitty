@@ -7,7 +7,7 @@
     <title>TimberKitty</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -26,7 +26,7 @@
             </div>
             <div class="flex flex-col items-center justify-center md:col-span-6">
                 <h1 data-i18n="title" class="text-4xl md:text-6xl font-bold text-shadow text-center">TimberKitty</h1>
-                <div class="text-sm text-gray-400 -mt-1">Alpha 0.4</div>
+                <div class="text-sm text-gray-400 -mt-1">Alpha 0.5</div>
             </div>
             <div class="flex justify-center md:justify-start md:col-span-3">
                 <button id="auth-button" data-i18n="buttons.loading"
@@ -96,16 +96,22 @@
                     class="absolute top-0 left-0 right-0 h-6 bg-gray-700 border-2 border-gray-600 rounded-md overflow-hidden z-20">
                     <div id="timer-bar" class="h-full bg-red-500 transition-width duration-100 linear"></div>
                 </div>
-                <div id="score" class="absolute top-12 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow z-20">0</div>
+                <div id="rescue-progress-container" class="hidden absolute top-8 left-4 right-4 h-8 bg-gray-700 border-2 border-gray-600 rounded-md overflow-hidden z-20">
+                    <div id="rescue-progress-bar" class="h-full bg-blue-500 transition-width duration-300 ease-out" style="width: 0%"></div>
+                    <div id="rescue-icon-player" class="absolute top-1/2 -translate-y-1/2 left-2 text-lg">🐱</div>
+                    <div id="rescue-icon-birds" class="absolute top-1/2 -translate-y-1/2 right-2 text-lg">🪹</div>
+                    <div id="rescue-progress-text" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-white text-shadow">0 / 0</div>
+                </div>
+                <div id="score" class="absolute top-16 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow z-20">0</div>
                 <canvas id="gameCanvas"></canvas>
                 <div id="message-overlay"
                     class="absolute inset-0 h-full bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4">
                     <div id="main-menu" class="flex flex-col items-center justify-center text-center">
-                        <h2 class="text-6xl font-bold mb-8 text-shadow">TimberKitty</h2>
+                        
                         <div class="flex flex-col gap-4 w-full max-w-xs">
                             <button id="classic-mode-btn" data-i18n="mainMenu.classic" class="main-menu-button">Gra Zwykła</button>
                             <button id="competition-mode-btn" data-i18n="mainMenu.competition" class="main-menu-button" disabled>Rywalizacja</button>
-                            <button id="birds-mode-btn" data-i18n="mainMenu.birds" class="main-menu-button" disabled>Uratuj Ptaki</button>
+                            <button id="birds-mode-btn" data-i18n="mainMenu.birds" class="main-menu-button">Uratuj Ptaki</button>
                             <button id="challenges-mode-btn" data-i18n="mainMenu.challenges" class="main-menu-button" disabled>Wyzwania</button>
                         </div>
                     </div>
@@ -118,9 +124,27 @@
                             <button id="back-to-main-menu-btn" data-i18n="classicMenu.back" class="main-menu-button bg-gray-600 hover:bg-gray-700">Powrót</button>
                         </div>
                     </div>
+
+                    <div id="birds-menu" class="hidden flex flex-col items-center justify-center text-center">
+                        <h2 data-i18n="birdsMenu.title" class="text-4xl font-bold mb-8 text-shadow">Uratuj Ptaki</h2>
+                        <p data-i18n="birdsMenu.description" class="text-lg mb-6 text-gray-300">Wybierz poziom trudności i zetnij wymaganą liczbę pni, aby uratować ptaki!</p>
+                        <div class="flex flex-col gap-4 w-full max-w-xs">
+                            <button id="birds-easy-btn" data-i18n="birdsMenu.easy" class="main-menu-button bg-green-600 hover:bg-green-700">Łatwy</button>
+                            <button id="birds-medium-btn" data-i18n="birdsMenu.medium" class="main-menu-button bg-yellow-600 hover:bg-yellow-700">Średni</button>
+                            <button id="birds-hard-btn" data-i18n="birdsMenu.hard" class="main-menu-button bg-red-600 hover:bg-red-700">Trudny</button>
+                            <button id="back-to-main-from-birds-btn" data-i18n="classicMenu.back" class="main-menu-button bg-gray-600 hover:bg-gray-700">Powrót</button>
+                        </div>
+                    </div>
                     
                     <div id="countdown-overlay" class="hidden text-8xl font-bold text-shadow animate-pulse">
                         <span id="countdown-text">3</span>
+                    </div>
+
+                    <div id="birds-warning-overlay" class="hidden flex flex-col items-center justify-center text-center">
+                        <div class="text-6xl mb-4">🚨</div>
+                        <h2 data-i18n="birdsMode.warning" class="text-3xl font-bold mb-4 text-shadow text-red-400">Ptaki są w niebezpieczeństwie!</h2>
+                        <p id="birds-warning-text" class="text-xl text-gray-300 mb-6">Zetnij 0 pni, aby je ochronić.</p>
+                        <div class="text-4xl animate-bounce">🪹🕊️</div>
                     </div>
 
                     <div id="game-over-menu" class="hidden flex flex-col items-center justify-center text-center">
@@ -245,7 +269,17 @@
                         <li><b>Poprawki tłumaczeń:</b> Znacząco poprawiono stabilność systemu tłumaczeń w całej aplikacji.</li>
                     </ul>
                 </div>
+                <div>
+                    <h3 class="text-xl font-bold text-amber-400">Alpha 0.5 - Tryb Uratuj Ptaki i Poprawki</h3>
+                    <ul class="list-disc pl-6 space-y-1 text-gray-300">
+                        <li><b>Dodano tryb "Uratuj Ptaki":</b> Nowy tryb gry, w którym celem jest jak najszybsze ścięcie określonej liczby pni, aby uratować gniazdo.</li>
+                        <li><b>Zmiana fontu gry:</b> Zmieniono domyślny font na "Jersey 10", aby poprawić czytelność w całym interfejsie.</li>
+                        <li><b>Zbalansowanie timera:</b> Zmieniono logikę przyznawania czasu, aby krzywa trudności była bardziej sprawiedliwa.</li>
+                        <li><b>Poprawki błędów:</b> Usunięto błąd pozwalający na wielokrotne cięcia przy przytrzymaniu klawisza i naprawiono liczne usterki wizualne.</li>
+                    </ul>
+                </div>
                 <hr class="border-gray-700 my-4">
+                
                 <div>
                     <h3 class="text-xl font-bold text-cyan-400">W PRZYSZŁOŚCI - ROADMAPA</h3>
                     <p class="text-sm text-gray-400 mb-4">Oto niektóre z funkcji, które planujemy wprowadzić, aby gra była jeszcze lepsza!</p>

@@ -1,5 +1,5 @@
 body {
-    font-family: 'Pixelify Sans', sans-serif;
+    font-family: 'Jersey 10', sans-serif;
     touch-action: manipulation;
 }
 
@@ -1458,4 +1458,119 @@ body.modal-open {
     z-index: 10;
     visibility: visible !important;
     display: block !important;
+}
+
+/* --- Style dla Trybu Ptaków --- */
+
+/* Pasek postępu ratunku */
+#rescue-progress-container {
+    background-color: #374151; /* gray-700 */
+    border: 2px solid #4b5563; /* gray-600 */
+}
+
+#rescue-progress-bar {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8, #1e40af); /* blue gradient */
+    transition: width 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efekt świecenia paska postępu */
+#rescue-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer-rescue 2s infinite;
+}
+
+@keyframes shimmer-rescue {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* Animacja dla overlay'a ostrzegawczego */
+#birds-warning-overlay {
+    animation: warningPulse 2s ease-in-out;
+}
+
+@keyframes warningPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    25% {
+        transform: scale(1.02);
+        opacity: 0.95;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+    75% {
+        transform: scale(1.02);
+        opacity: 0.95;
+    }
+}
+
+/* Style dla przycisków trudności */
+.main-menu-button.bg-green-600:hover {
+    background-color: #16a34a !important; /* green-700 */
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+}
+
+.main-menu-button.bg-yellow-600:hover {
+    background-color: #ca8a04 !important; /* yellow-700 */
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+}
+
+.main-menu-button.bg-red-600:hover {
+    background-color: #dc2626 !important; /* red-700 */
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+/* Responsywność dla paska postępu na telefony */
+@media (max-width: 768px) {
+    #rescue-progress-container {
+        left: 0.5rem !important;
+        right: 0.5rem !important;
+        height: 2rem !important;
+    }
+    
+    #rescue-icon-player,
+    #rescue-icon-birds {
+        font-size: 1rem !important;
+    }
+    
+    #rescue-progress-text {
+        font-size: 0.75rem !important;
+    }
+    
+    #score {
+        top: 4.5rem !important;
+        font-size: 2.5rem !important;
+    }
+}
+
+/* Specjalne style dla sukcesu w trybie ptaków */
+.birds-success #rescue-progress-bar {
+    background: linear-gradient(90deg, #10b981, #059669, #047857); /* green gradient */
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    animation: successPulse 1s ease-in-out infinite;
+}
+
+@keyframes successPulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.9);
+    }
 }
