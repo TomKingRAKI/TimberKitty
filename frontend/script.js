@@ -1,5 +1,6 @@
 // --- Ustawienia gry ---
 const BACKEND_URL = 'https://timberman-backend.onrender.com';
+const GAME_AREA_WIDTH_BASE = 400;
 
 // --- Konfiguracja Tłumaczeń (i18next) ---
 function initI18n() {
@@ -405,8 +406,25 @@ const changelogModal = document.getElementById('changelog-modal');
 const closeChangelogButton = document.getElementById('close-changelog-button');
 
 // Inne
+const transitionCanvas = document.getElementById('transitionCanvas');
+const transitionCtx = transitionCanvas.getContext('2d');
 const notificationContainer = document.getElementById('notification-container');
 const bottomNav = document.getElementById('bottom-nav');
+const toggleFullscreenBtn = document.getElementById('toggle-fullscreen-btn');
+const expandIcon = document.getElementById('expand-icon');
+const collapseIcon = document.getElementById('collapse-icon');
+const fullscreenModal = document.getElementById('fullscreen-modal');
+const fullscreenGameWrapper = document.getElementById('fullscreen-game-wrapper');
+const gameElementsToMove = [
+    document.getElementById('menu-background'),
+    document.getElementById('transitionCanvas'),
+    document.getElementById('timer-bar-container'),
+    document.getElementById('rescue-progress-container'),
+    document.getElementById('score'),
+    document.getElementById('toggle-fullscreen-btn'),
+    document.getElementById('gameCanvas'),
+    document.getElementById('message-overlay')
+];
 const shopPreviewContainer = document.getElementById('shop-preview-container');
 const loadingOverlay = document.getElementById('loading-overlay');
 const progressBarFill = document.getElementById('progress-bar-fill');
@@ -477,25 +495,21 @@ function setActiveLanguageButtons(langCode) {
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
-const TIMER_HEIGHT = 32; // wysokość timera + marginesy (24px + 8px)
+const TIMER_HEIGHT = 32;
+// Stałe gry
+
+let TRUNK_WIDTH, TRUNK_X, SEGMENT_HEIGHT, PLAYER_HEIGHT, PLAYER_WIDTH, 
+    BRANCH_WIDTH, BRANCH_HEIGHT, GROUND_HEIGHT, PLAYER_OFFSET_X, LUNGE_MULTIPLIER; 
+    // wysokość timera + marginesy (24px + 8px)
 canvas.width = gameContainer.clientWidth;
 canvas.height = window.innerHeight * 0.7;
-gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Dodaj miejsce dla timera
+gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; 
 
+// Dodaj miejsce dla timera
+recalculateGameConstants(); 
 // Ustaw początkowy stan menu z odpowiednią wysokością
 gameContainer.classList.add('menu-state');
 
-// Stałe gry
-const TRUNK_WIDTH = canvas.width * 0.25;
-const TRUNK_X = (canvas.width - TRUNK_WIDTH) / 2;
-const SEGMENT_HEIGHT = canvas.height * 0.15;
-const PLAYER_HEIGHT = SEGMENT_HEIGHT * 0.8;
-const PLAYER_WIDTH = TRUNK_WIDTH * 0.6;
-const BRANCH_WIDTH = TRUNK_WIDTH * 1.2;
-const BRANCH_HEIGHT = SEGMENT_HEIGHT * 0.4;
-const GROUND_HEIGHT = 20;
-const PLAYER_OFFSET_X = 15;
-const LUNGE_MULTIPLIER = 1.7; 
 
 // Kolory
 const SKY_COLOR = '#87CEEB';
@@ -2049,6 +2063,7 @@ function drawPlayer() {
 }
 async function gameOver() {
     if (gameState === 'gameOver') return;
+    toggleFullscreenBtn.disabled = false;
     countdownOverlay.classList.add('hidden');
     gameState = 'gameOver';
     clearInterval(gameLoopInterval);
@@ -2993,13 +3008,19 @@ returnToMenuBtn.addEventListener('click', () => {
 });
 
 classicModeBtn.addEventListener('click', () => {
-    mainMenu.classList.add('hidden');
-    classicMenu.classList.remove('hidden');
+    performTransition(() => {
+        // Ten kod wykona się w połowie animacji, gdy ekran jest czarny
+        mainMenu.classList.add('hidden');
+        classicMenu.classList.remove('hidden');
+    });
 });
 
 backToMainMenuBtn.addEventListener('click', () => {
-    classicMenu.classList.add('hidden');
-    mainMenu.classList.remove('hidden');
+    performTransition(() => {
+        // Ten kod również wykona się w połowie animacji
+        classicMenu.classList.add('hidden');
+        mainMenu.classList.remove('hidden');
+    });
 });
 
 startClassicBtn.addEventListener('click', () => {
@@ -3010,13 +3031,17 @@ startClassicBtn.addEventListener('click', () => {
 
 // Event listenery dla trybu ptaków
 birdsModeBtn.addEventListener('click', () => {
-    mainMenu.classList.add('hidden');
-    birdsMenu.classList.remove('hidden');
+    performTransition(() => {
+        mainMenu.classList.add('hidden');
+        birdsMenu.classList.remove('hidden');
+    });
 });
 
 backToMainFromBirdsBtn.addEventListener('click', () => {
-    birdsMenu.classList.add('hidden');
-    mainMenu.classList.remove('hidden');
+    performTransition(() => {
+        birdsMenu.classList.add('hidden');
+        mainMenu.classList.remove('hidden');
+    });
 });
 
 birdsEasyBtn.addEventListener('click', () => {
@@ -3124,6 +3149,7 @@ function handleKeyUp(event) {
 }
 
 function showStartScreen() {
+    toggleFullscreenBtn.disabled = false;
     gameState = 'start';
     messageOverlay.style.display = 'flex';
 
@@ -3246,6 +3272,7 @@ function endBirdsRun() {
 }
 
 function startCountdown(onGo) {
+    toggleFullscreenBtn.disabled = true;
     // Ukryj wszystkie menu
     mainMenu.classList.add('hidden');
     classicMenu.classList.add('hidden');
@@ -3282,12 +3309,53 @@ function startCountdown(onGo) {
     tick();
 }
 
-window.onresize = () => {
-    canvas.width = gameContainer.clientWidth;
-    canvas.height = window.innerHeight * 0.7;
-    gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Dodaj miejsce dla timera
-    if (gameState !== 'start') draw();
-};
+function handleResize() {
+    const isFullscreen = !fullscreenModal.classList.contains('hidden');
+
+    if (isFullscreen) {
+        // --- LOGIKA DLA TRYBU PEŁNOEKRANOWEGO ---
+        const currentContainer = fullscreenGameWrapper;
+        canvas.width = currentContainer.clientWidth;
+        canvas.height = currentContainer.clientHeight;
+
+    } else {
+        // --- LOGIKA DLA TRYBU NORMALNEGO ---
+        const containerWidth = gameContainer.clientWidth;
+        // Obliczamy wysokość na nowo, tak jak na początku
+        const calculatedCanvasHeight = window.innerHeight * 0.7; 
+        
+        canvas.width = containerWidth;
+        canvas.height = calculatedCanvasHeight;
+        // Ustawiamy wysokość kontenera na podstawie obliczonej wysokości canvas + miejsca na timer
+        gameContainer.style.height = `${calculatedCanvasHeight + TIMER_HEIGHT}px`;
+    }
+    recalculateGameConstants(); 
+    // Na koniec zawsze przerysuj grę z nowymi wymiarami
+    drawReadyState();
+}
+
+window.onresize = handleResize;
+
+function recalculateGameConstants() {
+    // --- Szerokości elementów są oparte na STAŁEJ wartości bazowej ---
+    TRUNK_WIDTH = GAME_AREA_WIDTH_BASE * 0.25;
+    PLAYER_WIDTH = TRUNK_WIDTH * 0.6;
+    BRANCH_WIDTH = TRUNK_WIDTH * 1.2;
+
+    // --- Wysokości elementów TEŻ są oparte na STAŁEJ wartości bazowej, aby zachować proporcje ---
+    // Kluczowa zmiana: wysokość segmentu zależy teraz od jego stałej szerokości, a nie od wysokości canvas!
+    SEGMENT_HEIGHT = TRUNK_WIDTH * 0.9;
+    PLAYER_HEIGHT = SEGMENT_HEIGHT * 0.8;
+    BRANCH_HEIGHT = SEGMENT_HEIGHT * 0.4;
+
+    // --- Pozycja X jest obliczana tak, by wycentrować grę na DYNAMICZNEJ szerokości płótna ---
+    TRUNK_X = (canvas.width - TRUNK_WIDTH) / 2;
+    
+    // --- Pozostałe stałe ---
+    GROUND_HEIGHT = 20;
+    PLAYER_OFFSET_X = 15;
+    LUNGE_MULTIPLIER = 1.7;
+}
 
 window.onload = async () => {
     // Natychmiastowe ustawienie języka i próba tłumaczenia
@@ -3430,7 +3498,188 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+function openFullscreen() {
+    // Krok 1: "First" - Zmierz pozycję początkową
+    const startRect = gameContainer.getBoundingClientRect();
+
+    // Krok 2: Ukryj interfejs (przyciski, menu) na czas animacji ramki
+    messageOverlay.style.opacity = '0';
+
+    // Przenieś elementy gry do modalu
+    gameElementsToMove.forEach(el => {
+        if (el) fullscreenGameWrapper.appendChild(el);
+    });
+
+    // Pokaż modal, ale wciąż jest on niewidoczny (opacity: 0)
+    fullscreenModal.classList.remove('hidden');
+
+    // Krok 3: "Last" - Zmierz pozycję końcową
+    const endRect = fullscreenGameWrapper.getBoundingClientRect();
+
+    // Krok 4: "Invert" - Oblicz i zastosuj odwrotną transformację
+    const scaleX = startRect.width / endRect.width;
+    const scaleY = startRect.height / endRect.height;
+    const translateX = startRect.left - endRect.left;
+    const translateY = startRect.top - endRect.top;
+    fullscreenGameWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+
+    // Krok 5: "Play" - Uruchom animację
+    requestAnimationFrame(() => {
+        fullscreenModal.classList.add('is-active');
+        fullscreenGameWrapper.style.transform = ''; 
+    });
+
+    // Krok 6: Po zakończeniu animacji ramki, pokaż interfejs
+    setTimeout(() => {
+        messageOverlay.style.opacity = '1';
+    }, 400); // Czas musi być równy czasowi transition (0.4s)
+
+    // Zaktualizuj ikonę i przelicz rozmiar
+    expandIcon.classList.add('hidden');
+    collapseIcon.classList.remove('hidden');
+    toggleFullscreenBtn.title = 'Wyjdź z trybu pełnoekranowego';
+    setTimeout(handleResize, 50);
+}
+
+function closeFullscreen() {
+    // Krok 1: Zmierz pozycje
+    const endRect = gameContainer.getBoundingClientRect();
+    const startRect = fullscreenGameWrapper.getBoundingClientRect();
+
+    // Krok 2: Ukryj interfejs na czas animacji ramki
+    messageOverlay.style.opacity = '0';
+
+    // Krok 3: "Invert" & "Play" - Oblicz i uruchom animację powrotną
+    const scaleX = endRect.width / startRect.width;
+    const scaleY = endRect.height / startRect.height;
+    const translateX = endRect.left - startRect.left;
+    const translateY = endRect.top - startRect.top;
+    fullscreenGameWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+    fullscreenModal.classList.remove('is-active');
+
+    // Krok 4: Poczekaj na koniec animacji i posprzątaj
+    setTimeout(() => {
+        gameElementsToMove.forEach(el => {
+            if (el) gameContainer.appendChild(el);
+        });
+
+        // Pokaż interfejs z powrotem w oryginalnym kontenerze
+        messageOverlay.style.opacity = '1';
+        
+        fullscreenModal.classList.add('hidden');
+        fullscreenGameWrapper.style.transform = '';
+        handleResize();
+    }, 400);
+
+    // Zaktualizuj ikonę
+    expandIcon.classList.remove('hidden');
+    collapseIcon.classList.add('hidden');
+    toggleFullscreenBtn.title = 'Pełny ekran';
+}
+
+
+toggleFullscreenBtn.addEventListener('click', () => {
+    const isFullscreen = !fullscreenModal.classList.contains('hidden');
+    if (isFullscreen) {
+        closeFullscreen();
+    } else {
+        openFullscreen();
+    }
+});
+
 window.addEventListener('keyup', handleKeyUp);
+
+/**
+ * Wykonuje animację pixelowego przejścia między ekranami.
+ * @param {function} onTransitionMidpoint - Funkcja, która zostanie wykonana w połowie animacji (gdy ekran jest czarny). To tutaj podmieniamy menu.
+ */
+function performTransition(onTransitionMidpoint) {
+    const isFullscreen = !fullscreenModal.classList.contains('hidden');
+    
+    if (isFullscreen) {
+        // W trybie pełnoekranowym używaj pixelowej animacji
+        const PIXEL_SIZE = 40;
+        const DURATION = 400;
+        
+        // Pixelowa animacja przejścia
+        messageOverlay.style.opacity = '0';
+        
+        // Stwórz canvas dla pixelowej animacji
+        const transitionCanvas = document.createElement('canvas');
+        transitionCanvas.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            pointer-events: none;
+        `;
+        
+        // Dodaj canvas do kontenera gry
+        fullscreenGameWrapper.appendChild(transitionCanvas);
+
+        // Ustaw wymiary canvas
+        transitionCanvas.width = fullscreenGameWrapper.clientWidth;
+        transitionCanvas.height = fullscreenGameWrapper.clientHeight;
+        const ctx = transitionCanvas.getContext('2d');
+
+        // Generuj pixele do animacji
+        const pixels = [];
+        for (let y = 0; y < transitionCanvas.height; y += PIXEL_SIZE) {
+            for (let x = 0; x < transitionCanvas.width; x += PIXEL_SIZE) {
+                pixels.push({ x, y });
+            }
+        }
+        pixels.sort(() => Math.random() - 0.5);
+
+        let pixelsToAnimate = [...pixels];
+        let startTime = performance.now();
+
+        function animateIn(currentTime) {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / DURATION, 1);
+            
+            const pixelsToDrawCount = Math.floor(progress * pixels.length);
+            const pixelsToDrawNow = pixelsToAnimate.splice(0, pixelsToDrawCount - (pixels.length - pixelsToAnimate.length));
+
+            ctx.fillStyle = '#111827';
+            pixelsToDrawNow.forEach(p => ctx.fillRect(p.x, p.y, PIXEL_SIZE, PIXEL_SIZE));
+
+            if (progress < 1) {
+                requestAnimationFrame(animateIn);
+            } else {
+                if (typeof onTransitionMidpoint === 'function') onTransitionMidpoint();
+                pixelsToAnimate = [...pixels];
+                startTime = performance.now();
+                requestAnimationFrame(animateOut);
+            }
+        }
+
+        function animateOut(currentTime) {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / DURATION, 1);
+
+            const pixelsToClearCount = Math.floor(progress * pixels.length);
+            const pixelsToClearNow = pixelsToAnimate.splice(0, pixelsToClearCount - (pixels.length - pixelsToAnimate.length));
+            
+            pixelsToClearNow.forEach(p => ctx.clearRect(p.x, p.y, PIXEL_SIZE, PIXEL_SIZE));
+
+            if (progress < 1) {
+                requestAnimationFrame(animateOut);
+            } else {
+                // Po zakończeniu animacji usuń canvas i przywróć message-overlay
+                fullscreenGameWrapper.removeChild(transitionCanvas);
+                messageOverlay.style.opacity = '1';
+            }
+        }
+
+        requestAnimationFrame(animateIn);
+    } else {
+        // W trybie minimalistycznym bez animacji - po prostu zmień menu
+        if (typeof onTransitionMidpoint === 'function') onTransitionMidpoint();
+    }
+}
 
 // Logika przełączania zakładek wewnątrz panelu Misji
 const missionTabs = document.querySelectorAll('.mission-tab-button');
@@ -3507,16 +3756,25 @@ function setGameStateUI(state) {
     const scoreEl = document.getElementById('score');
     const timerContainer = document.getElementById('timer-bar-container');
 
+    // Lista kontenerów, którymi zarządzamy
+    const containers = [gameContainer, fullscreenGameWrapper];
+
     if (state === 'menu') {
-        gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Zawsze ta sama wysokość
-        gameContainer.classList.add('menu-state');
-        gameContainer.classList.remove('game-state');
+        containers.forEach(container => {
+            if (container) {
+                container.classList.add('menu-state');
+                container.classList.remove('game-state');
+            }
+        });
         scoreEl.style.display = 'none';
         timerContainer.style.display = 'none';
     } else { // 'game' or 'ready'
-        gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; // Zawsze ta sama wysokość
-        gameContainer.classList.remove('menu-state');
-        gameContainer.classList.add('game-state');
+        containers.forEach(container => {
+            if (container) {
+                container.classList.remove('menu-state');
+                container.classList.add('game-state');
+            }
+        });
         scoreEl.style.display = 'block';
         timerContainer.style.display = 'flex';
     }

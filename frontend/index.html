@@ -2,6 +2,31 @@
 <html lang="pl">
 
 <head>
+        <!-- Meta podstawowe -->
+    <meta name="description" content="TimberKitty - darmowa gra przeglądarkowa o kocie-drwalu. Ścinaj pnie, ratuj ptaki, odblokowuj skiny i rywalizuj w rankingu. Zagraj od razu w przeglądarce!">
+
+    <link rel="canonical" href="https://timberkitty.netlify.app/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TimberKitty">
+    <meta property="og:title" content="TimberKitty - darmowa gra przeglądarkowa o kocie-drwalu">
+    <meta property="og:description" content="Ścinaj pnie, ratuj ptaki, odblokowuj skiny i rywalizuj w rankingu. Zagraj od razu!">
+    <meta property="og:url" content="https://timberkitty.netlify.app/">
+    <meta property="og:image" content="https://timberkitty.netlify.app/og-image.png">
+    <meta property="og:locale" content="pl_PL">
+    <meta property="og:locale:alternate" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TimberKitty - darmowa gra przeglądarkowa o kocie-drwalu">
+    <meta name="twitter:description" content="Ścinaj pnie, ratuj ptaki, skiny i ranking. Graj w przeglądarce!">
+    <meta name="twitter:image" content="https://timberkitty.netlify.app/og-image.png">
+
+    <!-- Ikony -->
+    <link rel="icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+    <meta name="theme-color" content="#111827">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TimberKitty</title>
@@ -10,6 +35,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
+    <script type="application/ld+json">
+        {
+          "@context":"https://schema.org",
+          "@type":"SoftwareApplication",
+          "name":"TimberKitty",
+          "applicationCategory":"GameApplication",
+          "operatingSystem":"Web",
+          "url":"https://timberkitty.netlify.app/",
+          "inLanguage":["pl","en"],
+          "offers":{"@type":"Offer","price":"0","priceCurrency":"PLN"},
+          "publisher":{"@type":"Organization","name":"TimberKitty"}
+        }
+        </script>
+        
+        <script type="application/ld+json">
+        {
+          "@context":"https://schema.org",
+          "@type":"Organization",
+          "name":"TimberKitty",
+          "url":"https://timberkitty.netlify.app/",
+          "logo":"https://timberkitty.netlify.app/og-image.png",
+          "sameAs":[
+            "https://twitter.com/TwojProfil",
+            "https://github.com/TwojRepo",
+            "https://www.youtube.com/@TwojKanal"
+          ]
+        }
+        </script>
+        
 </head>
 
 <body
@@ -48,7 +102,7 @@
             <p id="loading-status-text" class="text-lg font-bold mt-4 text-shadow text-gray-400">Inicjalizacja...</p>
         </div>
         <div id="stats-panel"
-            class="w-full md:w-1/4 panel rounded-lg p-4 flex flex-col items-center gap-4 order-2 md:order-1">
+            class=" w-full md:w-1/4 panel rounded-lg p-4 flex flex-col items-center gap-4 order-2 md:order-1">
             <h2 data-i18n="statsPanel.title" class="text-2xl font-bold text-shadow text-center">Profil Gracza</h2>
             <div id="main-avatar-container"
                 class="w-24 h-24 bg-gray-700 rounded-full border-4 border-gray-500 flex items-center justify-center">
@@ -92,6 +146,7 @@
         <div class="w-full max-w-sm md:max-w-md order-1 md:order-2 flex flex-col">
             <div id="game-container" class="relative w-full">
                 <div id="menu-background" class="absolute inset-0 rounded-lg"></div>
+                <canvas id="transitionCanvas"></canvas>
                 <div id="timer-bar-container"
                     class="absolute top-0 left-0 right-0 h-6 bg-gray-700 border-2 border-gray-600 rounded-md overflow-hidden z-20">
                     <div id="timer-bar" class="h-full bg-red-500 transition-width duration-100 linear"></div>
@@ -103,6 +158,14 @@
                     <div id="rescue-progress-text" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-white text-shadow">0 / 0</div>
                 </div>
                 <div id="score" class="absolute top-16 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow z-20">0</div>
+                <button id="toggle-fullscreen-btn" title="Pełny ekran" class="absolute top-2 right-2 z-30 p-2 bg-gray-900/50 rounded-full hover:bg-gray-900/80 transition-colors">
+                    <svg id="expand-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-white">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15m0-6l4.5-4.5m-4.5 0h4.5m0 0v4.5M3.75 15l4.5 4.5" />
+                    </svg>
+                    <svg id="collapse-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-white hidden">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" />
+                    </svg>
+                </button>
                 <canvas id="gameCanvas"></canvas>
                 <div id="message-overlay"
                     class="absolute inset-0 h-full bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4">
@@ -163,10 +226,18 @@
             </div>
         </div>
         <div id="shop-panel"
-            class="w-full md:w-1/4 panel rounded-lg p-4 flex-col items-center gap-4 order-3 hidden md:flex">
+            class=" w-full md:w-1/4 panel rounded-lg p-4 flex-col items-center gap-4 order-3 hidden md:flex">
             <h2 data-i18n="shopPanel.title" class="text-2xl font-bold text-shadow text-center mb-4">Sklep</h2>
             <div id="shop-preview-container" class="w-full flex flex-col gap-4"></div>
         </div>
+        <noscript>
+            <section class="p-4">
+              <h2>Graj w TimberKitty w przeglądarce</h2>
+              <p>TimberKitty to darmowa gra o kocie-drwalu. Ścinaj pnie, ratuj ptaki, zdobywaj monety i skiny. 
+                 Aby zagrać, włącz JavaScript lub przejdź do <a href="/pl/">wersji PL</a> / <a href="/en/">EN</a>.</p>
+            </section>
+          </noscript>
+          
     </main>
     <footer id="bottom-nav" class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center z-40"><button
             id="nav-shop-button" class="nav-button"><svg class="w-7 h-7" fill="none" stroke="currentColor"
@@ -656,6 +727,10 @@
 </div>
 
 <div id="notification-container" class="fixed top-5 right-5 z-[100] flex flex-col items-end gap-3"></div>
+<div id="fullscreen-modal" class="hidden fixed inset-0 bg-gray-900/90 z-[90] flex justify-center items-center">
+    <div id="fullscreen-game-wrapper" class="relative w-[95vw] h-[95vh] max-w-[1400px] panel">
+        </div>
+</div>
 <script src="https://unpkg.com/i18next/dist/umd/i18next.min.js" defer></script>
 <script src="https://unpkg.com/i18next-http-backend/dist/umd/i18nextHttpBackend.min.js" defer></script>
 <script src="https://unpkg.com/i18next-browser-languagedetector/dist/umd/i18nextBrowserLanguageDetector.min.js" defer></script>

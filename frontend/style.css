@@ -1401,12 +1401,10 @@ body.modal-open {
 
 /* Dodajemy ikonę kłódki do zablokowanych przycisków */
 .main-menu-button:disabled::after {
-    content: '🔒';
-    position: absolute;
-    right: 1.25rem;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.5;
+    content: ' 🔒'; /* Dodaj spację przed kłódką */
+    position: relative; /* Zmień na relative, żeby nie nachodziła na tekst */
+    opacity: 0.7;
+    margin-left: 0.5rem;
 }
 
 /* Animacja dla odliczania */
@@ -1443,12 +1441,15 @@ body.modal-open {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 6px 6px rgba(0, 0, 0, 0.25);
 }
 
-/* Zapewnij, że menu ma taką samą wysokość jak gra */
-#game-container.menu-state #menu-background {
+/* Kiedy dowolny z kontenerów jest w stanie menu, POKAŻ tło */
+#game-container.menu-state #menu-background,
+#fullscreen-game-wrapper.menu-state #menu-background {
     display: block !important;
 }
 
-#game-container.game-state #menu-background {
+/* Kiedy dowolny z kontenerów jest w stanie gry, UKRYJ tło */
+#game-container.game-state #menu-background,
+#fullscreen-game-wrapper.game-state #menu-background {
     display: none !important;
 }
 
@@ -1573,4 +1574,51 @@ body.modal-open {
     50% {
         box-shadow: 0 0 30px rgba(16, 185, 129, 0.9);
     }
+}
+
+#toggle-fullscreen-btn svg {
+    shape-rendering: geometricPrecision;
+}
+
+/* --- Style dla Animacji Pełnego Ekranu --- */
+
+/* Tło modalu będzie się płynnie pojawiać (przezroczystość) */
+#fullscreen-modal {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+/* Stan aktywny - modal jest w pełni widoczny */
+#fullscreen-modal.is-active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Wewnętrzny kontener gry będzie się płynnie skalował */
+#fullscreen-game-wrapper {
+    /* Ustawiamy punkt odniesienia transformacji na lewy górny róg */
+    transform-origin: top left;
+    /* Zmieniamy animację, aby była bardziej dynamiczna */
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* W stanie aktywnym kontener gry ma normalny rozmiar */
+#fullscreen-modal.is-active #fullscreen-game-wrapper {
+    transform: scale(1);
+}
+
+#message-overlay {
+
+    transition: opacity 0.2s ease-in-out;
+}
+
+#transitionCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%; 
+    z-index: 100; /* Musi być na wierzchu wszystkiego */
+    pointer-events: none; /* Ignoruje kliknięcia, gdy jest niewidoczny */
+    display: none; /* Domyślnie ukryty */
 }
