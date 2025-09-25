@@ -1430,7 +1430,7 @@ body.modal-open {
 
 #game-container.game-state canvas {
     display: block; /* Pokaż canvas w grze */
-    margin-top: 32px; /* Miejsce dla timera */
+    margin-top: 0; /* Usuwamy margines, aby canvas był na górze */
 }
 
 #menu-background {
@@ -1621,4 +1621,43 @@ body.modal-open {
     z-index: 100; /* Musi być na wierzchu wszystkiego */
     pointer-events: none; /* Ignoruje kliknięcia, gdy jest niewidoczny */
     display: none; /* Domyślnie ukryty */
+}
+
+@media (max-width: 768px) {
+
+    /* Reguła ukrywająca przycisk rywalizacji została USUNIĘTA. */
+    /* Teraz przycisk będzie domyślnie widoczny. */
+
+    /* NOWA REGUŁA: Ukrywamy przycisk pełnego ekranu na telefonach */
+    #toggle-fullscreen-btn {
+        display: none;
+    }
+
+    /* --- Style dla Kompaktowego Trybu Rywalizacji (pozostają bez zmian) --- */
+    #bot-progress-container,
+    #player-progress-container {
+        height: 24px;
+    }
+
+    #bot-score,
+    #player-score {
+        font-size: 2.5rem;
+    }
+}
+/* ========================================================= */
+/* === STYLE DLA KOMPAKTOWEGO TRYBU RYWALIZACJI (WIDOK 3-KOLUMNOWY) === */
+/* ========================================================= */
+
+/* Te style zadziałają tylko, gdy kontener gry ma klasę 'compact-mode' */
+
+/* Zmniejszamy paski postępu */
+#game-container.compact-mode #bot-progress-container,
+#game-container.compact-mode #player-progress-container {
+    height: 24px; /* 24px zamiast 32px */
+}
+
+/* Zmniejszamy liczniki punktów */
+#game-container.compact-mode #bot-score,
+#game-container.compact-mode #player-score {
+    font-size: 2.5rem; /* Mniejsza czcionka (40px) */
 }

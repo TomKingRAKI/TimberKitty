@@ -95,6 +95,27 @@ function initI18n() {
             playAgain: 'Zagraj jeszcze raz',
             returnToMenu: 'Powrót do menu'
         },
+        competitionMenu: {
+            title: 'Rywalizacja',
+            description: 'Wybierz z kim chcesz rywalizować!',
+            players: 'Rywalizuj z innymi graczami',
+            bot: 'Rywalizuj z botem'
+        },
+        competitionBotMenu: {
+            title: 'Wybierz trudność bota',
+            description: 'Kto pierwszy zetnie wymaganą liczbę pni wygrywa!',
+            easy: 'Łatwy Bot',
+            medium: 'Średni Bot',
+            hard: 'Trudny Bot'
+        },
+        competitionMode: {
+            warning: 'Rywalizacja rozpoczęta!',
+            preStart: 'Kto pierwszy zetnie {{count}} pni wygrywa!',
+            success: 'Wygrałeś rywalizację!',
+            fail: 'Przegrałeś rywalizację.',
+            playAgain: 'Zagraj jeszcze raz',
+            returnToMenu: 'Powrót do menu'
+        },
         missions: {
             daily: 'Dzienne',
             weekly: 'Tygodniowe',
@@ -244,6 +265,27 @@ function initI18n() {
             playAgain: 'Play again',
             returnToMenu: 'Return to menu'
         },
+        competitionMenu: {
+            title: 'Competition',
+            description: 'Choose who you want to compete against!',
+            players: 'Compete with other players',
+            bot: 'Compete with bot'
+        },
+        competitionBotMenu: {
+            title: 'Choose bot difficulty',
+            description: 'Whoever chops the required number of trunks first wins!',
+            easy: 'Easy Bot',
+            medium: 'Medium Bot',
+            hard: 'Hard Bot'
+        },
+        competitionMode: {
+            warning: 'Competition started!',
+            preStart: 'Whoever chops {{count}} trunks first wins!',
+            success: 'You won the competition!',
+            fail: 'You lost the competition.',
+            playAgain: 'Play again',
+            returnToMenu: 'Return to menu'
+        },
         missions: {
             daily: 'Daily',
             weekly: 'Weekly',
@@ -332,6 +374,7 @@ function initI18n() {
 initI18n();
 
 // Elementy UI
+let gameMode = 'classic'; // 'classic' | 'birds' | 'competition'
 const mainMenu = document.getElementById('main-menu');
 const classicMenu = document.getElementById('classic-menu');
 const countdownOverlay = document.getElementById('countdown-overlay');
@@ -354,9 +397,35 @@ const birdsHardBtn = document.getElementById('birds-hard-btn');
 const backToMainFromBirdsBtn = document.getElementById('back-to-main-from-birds-btn');
 const birdsWarningOverlay = document.getElementById('birds-warning-overlay');
 const birdsWarningText = document.getElementById('birds-warning-text');
+
+// Elementy trybu rywalizacji
+const competitionModeBtn = document.getElementById('competition-mode-btn');
+const competitionMenu = document.getElementById('competition-menu');
+const competitionPlayersBtn = document.getElementById('competition-players-btn');
+const competitionBotBtn = document.getElementById('competition-bot-btn');
+const backToMainFromCompetitionBtn = document.getElementById('back-to-main-from-competition-btn');
+const competitionBotMenu = document.getElementById('competition-bot-menu');
+const botEasyBtn = document.getElementById('bot-easy-btn');
+const botMediumBtn = document.getElementById('bot-medium-btn');
+const botHardBtn = document.getElementById('bot-hard-btn');
+const backToCompetitionBtn = document.getElementById('back-to-competition-btn');
+const competitionWarningOverlay = document.getElementById('competition-warning-overlay');
+const competitionWarningText = document.getElementById('competition-warning-text');
 const rescueProgressContainer = document.getElementById('rescue-progress-container');
 const rescueProgressBar = document.getElementById('rescue-progress-bar');
 const rescueProgressText = document.getElementById('rescue-progress-text');
+
+// Elementy UI dla trybu rywalizacji
+const botProgressContainer = document.getElementById('bot-progress-container');
+const botProgressBar = document.getElementById('bot-progress-bar');
+const botProgressText = document.getElementById('bot-progress-text');
+const playerProgressContainer = document.getElementById('player-progress-container');
+const playerProgressBar = document.getElementById('player-progress-bar');
+const playerProgressText = document.getElementById('player-progress-text');
+
+// Liczniki punktów dla trybu rywalizacji
+const botScoreElement = document.getElementById('bot-score');
+const playerScoreElement = document.getElementById('player-score');
 const authButton = document.getElementById('auth-button');
 const mainAvatarContainer = document.getElementById('main-avatar-container');
 const mainUsername = document.getElementById('main-username');
@@ -376,6 +445,7 @@ const messageOverlay = document.getElementById('message-overlay');
 const messageTitle = document.getElementById('message-title');
 const messageText = document.getElementById('message-text');
 const timerBar = document.getElementById('timer-bar');
+const timerBarContainer = document.getElementById('timer-bar-container');
 
 // Przyciski nawigacyjne
 const navShopButton = document.getElementById('nav-shop-button');
@@ -420,7 +490,11 @@ const gameElementsToMove = [
     document.getElementById('transitionCanvas'),
     document.getElementById('timer-bar-container'),
     document.getElementById('rescue-progress-container'),
+    document.getElementById('bot-progress-container'),
+    document.getElementById('player-progress-container'),
     document.getElementById('score'),
+    document.getElementById('bot-score'),
+    document.getElementById('player-score'),
     document.getElementById('toggle-fullscreen-btn'),
     document.getElementById('gameCanvas'),
     document.getElementById('message-overlay')
@@ -495,7 +569,7 @@ function setActiveLanguageButtons(langCode) {
 
 // Ustawienie rozmiaru płótna
 const gameContainer = document.getElementById('game-container');
-const TIMER_HEIGHT = 32;
+//const TIMER_HEIGHT = 32;
 // Stałe gry
 
 let TRUNK_WIDTH, TRUNK_X, SEGMENT_HEIGHT, PLAYER_HEIGHT, PLAYER_WIDTH, 
@@ -503,7 +577,7 @@ let TRUNK_WIDTH, TRUNK_X, SEGMENT_HEIGHT, PLAYER_HEIGHT, PLAYER_WIDTH,
     // wysokość timera + marginesy (24px + 8px)
 canvas.width = gameContainer.clientWidth;
 canvas.height = window.innerHeight * 0.7;
-gameContainer.style.height = `${canvas.height + TIMER_HEIGHT}px`; 
+gameContainer.style.height = `${canvas.height}px`; 
 
 // Dodaj miejsce dla timera
 recalculateGameConstants(); 
@@ -523,12 +597,14 @@ const BRANCH_COLOR = '#228B22';
 const BRANCH_DARK_COLOR = '#006400';
 
 // Zmienne stanu gry
+
 let player = { side: 'left', frame: 'idle' };
 let tree = [];
 let particles = [];
 let score = 0;
 let gameState = 'start';
 let currentUser = null; // Przechowuje pełne dane zalogowanego użytkownika z bazy
+let lastChopTime = 0;
 let animationTimeout1 = null;
 let animationTimeout2 = null;
 let missionsCache = null; // Cache dla misji
@@ -558,12 +634,45 @@ const BIRDS_CONFIG = {
   totalChopsPolicy: 'UPDATE' // 'UPDATE' lub 'NO_UPDATE'
 };
 
+// --- Konfiguracja trybu rywalizacji ---
+const COMPETITION_CONFIG = {
+    targetRange: { min: 600, max: 900 }, // Zawsze ten sam zakres
+    botDifficulty: {
+      easy:   { reactionTime: 150, accuracy: 0.6, avoidChance: 0.80 },   // 80% szansy na unik
+      medium: { reactionTime: 100,  accuracy: 0.8, avoidChance: 0.95 },   // 95% szansy na unik
+      hard:   { reactionTime: 50,  accuracy: 0.95, avoidChance: 1.0 }    // 100% szansy na unik (nigdy się nie myli)
+    },
+    timeoutDuration: 2000, // 2 sekundy timeoutu
+    rewards: {
+        win: {
+          easy:   { coins: 75, exp: 30 },   // Mała nagroda
+          medium: { coins: 150, exp: 75 },  // Średnia nagroda
+          hard:   { coins: 300, exp: 150 }   // Duża nagroda
+        },
+        lose: { coins: 0, exp: 0 } // Brak nagrody za przegraną
+      }
+  };
+
 // Zmienne stanu trybu ptaków
-let gameMode = 'classic'; // 'classic' | 'birds'
 let birdsDifficulty = null; // 'easy' | 'medium' | 'hard'
 let birdsTarget = 0;        // wylosowane N
 let birdsProgress = 0;      // = score w tej rozgrywce
 let birdsSuccess = false;
+
+// Zmienne stanu trybu rywalizacji
+let competitionDifficulty = null; // 'easy' | 'medium' | 'hard'
+let competitionTarget = 0;        // wylosowane N (600-900)
+let competitionProgress = 0;      // = score gracza w tej rozgrywce
+let botProgress = 0;              // = score bota w tej rozgrywce
+let competitionWinner = null;     // 'player' | 'bot' | null
+let playerTimeout = 0;            // czas do końca timeoutu gracza
+let botTimeout = 0;               // czas do końca timeoutu bota
+
+// Zmienne dla bota
+let botTree = [];                 // drzewo bota
+let botPlayer = { side: 'right', frame: 'idle' }; // postać bota
+let botAnimationTimeout1 = null;  // timeout animacji bota
+let botAnimationTimeout2 = null;  // timeout animacji bota
 
 // System sprawdzania gotowości wszystkich komponentów
 const loadingStates = {
@@ -1835,10 +1944,10 @@ async function populateEquipmentSelectionModal(category) {
 }
 
 function drawReadyState() {
-    // Ta funkcja to uproszczona wersja init(), która tylko rysuje scenę, ale nie startuje gry
+    recalculateGameConstants();
+    
     score = 0;
     player.side = 'left';
-    //gameState = 'playing';
     tree = [];
     particles = [];
     timer = MAX_TIME;
@@ -1848,8 +1957,8 @@ function drawReadyState() {
         timeGainBonus: 0, 
         timerSlowdown: 0, 
         coinMultiplier: 0, 
-        coinMultiplierBonus: 0, // Nowy bonus z siekier
-        expMultiplierBonus: 0   // Nowy bonus ze zwierzaków
+        coinMultiplierBonus: 0,
+        expMultiplierBonus: 0
     };
     if (stats.equippedItems) {
         for (const slot in stats.equippedItems) {
@@ -1871,6 +1980,14 @@ function drawReadyState() {
         }
     }
     scoreElement.textContent = score;
+
+    // --- NOWY KOD ---
+    // Jeśli to tryb rywalizacji, zainicjuj również drzewo bota
+    if (gameMode === 'competition') {
+        initBotTree();
+    }
+    // --- KONIEC NOWEGO KODU ---
+
     draw();
 }
 
@@ -1886,12 +2003,28 @@ function gameLoop() {
 
     // ZMIANA 2: Logika gry (timer) działa tylko w stanie 'playing'
     if (gameState === 'playing') {
-        timer -= (0.2 * (1 - activeBonuses.timerSlowdown));
-        if (timer <= 0) {
-            timer = 0;
-            gameOver();
+        // Timer tylko w trybach innych niż rywalizacja
+        if (gameMode !== 'competition') {
+            timer -= (0.2 * (1 - activeBonuses.timerSlowdown));
+            if (timer <= 0) {
+                timer = 0;
+                gameOver();
+            }
+            timerBar.style.width = `${(timer / MAX_TIME) * 100}%`;
         }
-        timerBar.style.width = `${(timer / MAX_TIME) * 100}%`;
+        
+        // Obsługa timeoutów w trybie rywalizacji
+        if (gameMode === 'competition') {
+            if (playerTimeout > 0) {
+                playerTimeout -= 1000 / 60; // Odejmij czas jednej klatki
+                if (playerTimeout <= 0) playerTimeout = 0;
+            }
+            
+            if (botTimeout > 0) {
+                botTimeout -= 1000 / 60; // Odejmij czas jednej klatki
+                if (botTimeout <= 0) botTimeout = 0;
+            }
+        }
     }
 
     // Te funkcje odpowiadają za animacje i będą działać w obu stanach
@@ -1912,7 +2045,28 @@ function draw() {
     ctx.fillStyle = SKY_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Krok 3: Narysuj drzewo i jego gałęzie
+    if (gameMode === 'competition') {
+        // W trybie rywalizacji rysuj dwa drzewa
+        drawCompetitionTrees();
+    } else {
+        // W innych trybach rysuj jedno drzewo (stara logika)
+        drawSingleTree();
+    }
+
+    // Krok 4: Narysuj elementy, które są "za" graczem, ale "przed" drzewem
+    drawParticles();
+    drawGrass();
+
+    // Krok 5: Narysuj gracza (NA SAMYM KOŃCU, aby był na wierzchu)
+    if (gameMode === 'competition') {
+        drawCompetitionPlayers();
+    } else {
+        drawPlayer();
+    }
+}
+
+function drawSingleTree() {
+    // Krok 3: Narysuj drzewo i jego gałęzie (stara logika)
     tree.forEach((segment, index) => {
         const y = canvas.height - (index + 1) * SEGMENT_HEIGHT;
         
@@ -1922,9 +2076,12 @@ function draw() {
     
         let isSpecialSegment = false;
     
-        // Rysuj niebieski blok (gniazdo), jeśli to ten właściwy segment
+        // Rysuj specjalny blok w zależności od trybu
         if (gameMode === 'birds' && segmentNumber === birdsTarget + 1) {
             drawBirdsTreeTop(TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
+            isSpecialSegment = true;
+        } else if (gameMode === 'competition' && segmentNumber === competitionTarget + 1) {
+            drawCompetitionTreeTop(TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
             isSpecialSegment = true;
         } else {
             // W każdym innym przypadku rysuj zwykły pień.
@@ -1936,14 +2093,157 @@ function draw() {
             drawBranch(TRUNK_X, y, segment.branch);
         }
     });
-
-    // Krok 4: Narysuj elementy, które są "za" graczem, ale "przed" drzewem
-    drawParticles();
-    drawGrass();
-
-    // Krok 5: Narysuj gracza (NA SAMYM KOŃCU, aby był na wierzchu)
-    drawPlayer();
 }
+
+function drawCompetitionTrees() {
+    // Rysuj drzewo bota po lewej stronie (używa własnego drzewa)
+    const BOT_TRUNK_X = canvas.width * 0.25 - TRUNK_WIDTH / 2;
+    botTree.forEach((segment, index) => {
+        const y = canvas.height - (index + 1) * SEGMENT_HEIGHT;
+        const segmentNumber = botProgress + index + 1;
+        
+        let isSpecialSegment = false;
+        
+        // Rysuj specjalny blok w zależności od trybu
+        if (segmentNumber === competitionTarget + 1) {
+            drawCompetitionTreeTop(BOT_TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
+            isSpecialSegment = true;
+        } else {
+            drawTrunkSegment(BOT_TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
+        }
+        
+        // Rysuj gałęzie tylko, jeśli segment nie jest specjalny
+        if (segment.branch && !isSpecialSegment) {
+            drawBranch(BOT_TRUNK_X, y, segment.branch);
+        }
+    });
+    
+    // Rysuj drzewo gracza po prawej stronie
+    const PLAYER_TRUNK_X = canvas.width * 0.75 - TRUNK_WIDTH / 2;
+    tree.forEach((segment, index) => {
+        const y = canvas.height - (index + 1) * SEGMENT_HEIGHT;
+        const segmentNumber = score + index + 1;
+        
+        let isSpecialSegment = false;
+        
+        // Rysuj specjalny blok w zależności od trybu
+        if (segmentNumber === competitionTarget + 1) {
+            drawCompetitionTreeTop(PLAYER_TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
+            isSpecialSegment = true;
+        } else {
+            drawTrunkSegment(PLAYER_TRUNK_X, y, TRUNK_WIDTH, SEGMENT_HEIGHT);
+        }
+        
+        // Rysuj gałęzie tylko, jeśli segment nie jest specjalny
+        if (segment.branch && !isSpecialSegment) {
+            drawBranch(PLAYER_TRUNK_X, y, segment.branch);
+        }
+    });
+    
+    // Rysuj linię oddzielającą gracza od bota
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 10]); // Przerywana linia
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+    ctx.setLineDash([]); // Resetuj styl linii
+    
+    // Rysuj napisy "Bot" i "Gracz" na górze ekranu
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 24px "Jersey 10", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    
+    // Napis "Bot" po lewej stronie
+    const botLabelX = canvas.width * 0.25;
+    const botLabelY = 40;
+    ctx.strokeText('Bot', botLabelX, botLabelY);
+    ctx.fillText('Bot', botLabelX, botLabelY);
+    
+    // Napis "Gracz" po prawej stronie
+    const playerLabelX = canvas.width * 0.75;
+    const playerLabelY = 40;
+    ctx.strokeText('Gracz', playerLabelX, playerLabelY);
+    ctx.fillText('Gracz', playerLabelX, playerLabelY);
+}
+
+function drawCompetitionPlayers() {
+    const BOT_X = canvas.width * 0.25 - TRUNK_WIDTH / 2;
+    const PLAYER_X = canvas.width * 0.75 - TRUNK_WIDTH / 2;
+    
+    // Bot - przekazujemy mu wartość botTimeout
+    drawPlayerAtPosition(botPlayer, BOT_X, botTimeout);
+    
+    // Gracz - przekazujemy mu wartość playerTimeout
+    drawPlayerAtPosition(player, PLAYER_X, playerTimeout);
+}
+
+function drawPlayerAtPosition(playerObj, x, timeoutValue) { // Zmieniliśmy 'isTimeout' na 'timeoutValue'
+    const playerY = canvas.height - PLAYER_HEIGHT;
+    
+    let spriteToDraw;
+    if (playerObj.frame === 'idle') {
+        spriteToDraw = playerSprites.idle;
+    } else if (playerObj.frame === 'swing') {
+        spriteToDraw = playerSprites.swing;
+    } else {
+        spriteToDraw = playerSprites.chop;
+    }
+
+    if (spriteToDraw && spriteToDraw.complete && spriteToDraw.naturalWidth > 0) {
+        const aspectRatio = spriteToDraw.naturalWidth / spriteToDraw.naturalHeight;
+        const dynamicWidth = PLAYER_HEIGHT * aspectRatio;
+        const widthDifference = dynamicWidth - PLAYER_WIDTH;
+        let playerX, scaleX;
+
+        if (playerObj.side === 'left') {
+            playerX = (x - PLAYER_WIDTH - PLAYER_OFFSET_X) + widthDifference;
+            scaleX = -1;
+        } else {
+            playerX = (x + TRUNK_WIDTH + PLAYER_OFFSET_X) - (widthDifference * LUNGE_MULTIPLIER);
+            scaleX = 1;
+        }
+
+        // --- POCZĄTEK MODYFIKACJI ---
+        if (timeoutValue > 0) {
+            ctx.globalAlpha = 0.5; // Postać jest lekko przezroczysta podczas ogłuszenia
+        }
+        
+        ctx.save();
+        ctx.translate(playerX + dynamicWidth / 2, playerY + PLAYER_HEIGHT / 2);
+        ctx.scale(scaleX, 1);
+        ctx.drawImage(spriteToDraw, -dynamicWidth / 2, -PLAYER_HEIGHT / 2, dynamicWidth, PLAYER_HEIGHT);
+        ctx.restore();
+        
+        // Rysuj tekst i timer tylko jeśli postać jest ogłuszona
+        if (timeoutValue > 0) {
+            ctx.globalAlpha = 1.0;
+            ctx.fillStyle = '#FF4444';
+            ctx.font = 'bold 16px "Jersey 10", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            
+            const textX = playerX + dynamicWidth / 2;
+            const textY = playerY - 25; // Trochę wyżej, żeby zrobić miejsce na timer
+
+            // Rysuj tekst "Ogłuszony"
+            ctx.strokeText('Ogłuszony', textX, textY);
+            ctx.fillText('Ogłuszony', textX, textY);
+
+            // Oblicz i rysuj timer
+            const remainingSeconds = (timeoutValue / 1000).toFixed(2);
+            ctx.font = 'bold 20px "Jersey 10", sans-serif';
+            ctx.strokeText(`${remainingSeconds}s`, textX, textY + 22);
+            ctx.fillText(`${remainingSeconds}s`, textX, textY + 22);
+        }
+        // --- KONIEC MODYFIKACJI ---
+    }
+}
+
 function drawParticles() {
     particles.forEach(p => {
         ctx.save();
@@ -2017,6 +2317,32 @@ function drawBirdsTreeTop(x, y, width, height) {
     ctx.fillText('🕊️', centerX, centerY + 8);
 }
 
+function drawCompetitionTreeTop(x, y, width, height) {
+    // Narysuj żółty blok z koronką
+    ctx.fillStyle = '#FFD700'; // Złoty kolor
+    ctx.fillRect(x, y, width, height);
+    
+    // Dodaj gradient dla lepszego efektu
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, '#FFA500'); // Jasny pomarańczowy
+    gradient.addColorStop(1, '#FFD700'); // Złoty
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x, y, width, height);
+    
+    // Dodaj obramowanie
+    ctx.strokeStyle = '#B8860B';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+    
+    // Narysuj koronkę na bloku
+    ctx.fillStyle = '#000';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    ctx.fillText('👑', centerX, centerY + 8);
+}
+
 function drawGrass() {
     ctx.fillStyle = GROUND_COLOR;
     ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
@@ -2068,79 +2394,88 @@ async function gameOver() {
     gameState = 'gameOver';
     clearInterval(gameLoopInterval);
 
-    // Ukryj pasek postępu w trybie ptaków
     if (gameMode === 'birds') {
         rescueProgressContainer.classList.add('hidden');
         document.getElementById('game-container').classList.remove('birds-success');
+    } else if (gameMode === 'competition') {
+        // Nie usuwamy klas, żeby było widać wynik na paskach
     }
 
-    // Pokaż overlay i odpowiednie menu
     messageOverlay.style.display = 'flex';
     mainMenu.classList.add('hidden');
     classicMenu.classList.add('hidden');
     birdsMenu.classList.add('hidden');
+    competitionMenu.classList.add('hidden'); // Ukryj też te menu
+    competitionBotMenu.classList.add('hidden');
     gameOverMenu.classList.remove('hidden');
 
-    // Ustaw tekst wyniku w zależności od trybu
     let resultText = '';
     if (gameMode === 'birds') {
-        if (birdsSuccess) {
-            resultText = (window.i18next && i18next.isInitialized) ? i18next.t('birdsMode.success') : 'Ptaki uratowane!';
-            gameOverScore.textContent = `${resultText} (${score} pni)`;
-        } else {
-            resultText = (window.i18next && i18next.isInitialized) ? i18next.t('birdsMode.fail') : 'Nie udało się uratować ptaków.';
-            gameOverScore.textContent = `${resultText} (${score}/${birdsTarget})`;
-        }
+        resultText = birdsSuccess ? i18next.t('birdsMode.success') : i18next.t('birdsMode.fail');
+        gameOverScore.textContent = `${resultText} (${score}/${birdsTarget})`;
+    } else if (gameMode === 'competition') {
+        resultText = competitionWinner === 'player' ? i18next.t('competitionMode.success') : i18next.t('competitionMode.fail');
+        gameOverScore.textContent = `${resultText} (${score}/${competitionTarget})`;
     } else {
-        resultText = (window.i18next && i18next.isInitialized) ? i18next.t('gameOver.result') : 'Twój wynik';
+        resultText = i18next.t('gameOver.result');
         gameOverScore.textContent = `${resultText}: ${score}.`;
     }
 
     const oldStats = loadStats();
     
     if (gameMode === 'birds') {
-        // Tryb ptaków - specjalne naliczanie nagród
-        if (birdsSuccess) {
-            const { coins, exp } = BIRDS_CONFIG.rewards[birdsDifficulty];
+        const rewardKey = birdsSuccess ? birdsDifficulty : 'fail';
+        const { coins, exp } = BIRDS_CONFIG.rewards[rewardKey] || { coins: 0, exp: 0 };
+        await animateStatUpdate(oldStats, score, {
+            mode: 'birds',
+            birds: { success: birdsSuccess, coinsReward: coins, expReward: exp }
+        });
+    } else if (gameMode === 'competition') {
+        if (competitionWinner === 'player') {
+            // ZMIANA TUTAJ: Wybieramy nagrodę na podstawie poziomu trudności
+            const { coins, exp } = COMPETITION_CONFIG.rewards.win[competitionDifficulty];
             await animateStatUpdate(oldStats, score, {
-                mode: 'birds',
-                birds: { success: true, coinsReward: coins, expReward: exp },
-                overrideScoreContributions: true
+                mode: 'competition',
+                competition: { winner: 'player', coinsReward: coins, expReward: exp }
             });
-        } else {
+        } else { // Przegrana z botem
+            const { coins, exp } = COMPETITION_CONFIG.rewards.lose; // Tutaj zawsze będzie 0
             await animateStatUpdate(oldStats, score, {
-                mode: 'birds',
-                birds: { success: false, coinsReward: 0, expReward: 0 },
-                overrideScoreContributions: true
+                mode: 'competition',
+                competition: { winner: 'bot', coinsReward: coins, expReward: exp }
             });
         }
     } else {
-        // Tryb klasyczny - bez zmian
         await animateStatUpdate(oldStats, score);
-        
         if (currentUser && score > 0) {
             const newStats = loadStats();
             if (score === newStats.highScore) {
-                setTimeout(() => {
-                    showPostGameRanking(score);
-                }, 2000);
+                setTimeout(() => showPostGameRanking(score), 2000);
             }
         }
     }
 }
 
+// ZNAJDŹ I ZASTĄP CAŁĄ TĘ FUNKCJJĘ
 function performChop(sideToChop) {
+    if (gameMode === 'competition' && competitionProgress >= competitionTarget) return;
     if (gameState !== 'playing') return;
+    if (gameMode === 'competition' && playerTimeout > 0) return;
 
     const segmentToCut = tree[0];
     if (segmentToCut && segmentToCut.branch === sideToChop) {
         player.side = sideToChop;
         draw();
-        setTimeout(gameOver, 50);
-        return;
+        if (gameMode === 'competition') {
+            playerTimeout = COMPETITION_CONFIG.timeoutDuration;
+            showPlayerTimeoutEffect();
+            return;
+        } else {
+            setTimeout(gameOver, 50);
+            return;
+        }
     }
 
-    // --- UNIWERSALNA LOGIKA CIĘCIA ---
     player.side = sideToChop;
     if (gameSounds.chop) {
         const chopSound = gameSounds.chop.cloneNode();
@@ -2154,51 +2489,42 @@ function performChop(sideToChop) {
     timer += (timeGain + activeBonuses.timeGainBonus);
     if (timer > MAX_TIME) timer = MAX_TIME;
 
-    // KROK 1: ZAWSZE wykonaj ścięcie pnia i stwórz animację.
     const choppedSegment = tree.shift();
     if (choppedSegment) {
-        particles.push({
-            x: TRUNK_X, y: canvas.height - SEGMENT_HEIGHT, width: TRUNK_WIDTH, height: SEGMENT_HEIGHT,
-            branch: choppedSegment.branch, velocityX: (player.side === 'left' ? 1 : -1) * (Math.random() * 3 + 3),
-            velocityY: -7, rotation: 0, rotationSpeed: (player.side === 'left' ? 1 : -1) * (Math.random() * 0.05 + 0.05)
-        });
+        let particleOriginX;
+        if (gameMode === 'competition') {
+            particleOriginX = canvas.width * 0.75 - TRUNK_WIDTH / 2;
+        } else {
+            particleOriginX = TRUNK_X;
+        }
+        createChopParticles(choppedSegment, particleOriginX, player.side);
     }
     
-    // KROK 2: POTEM sprawdź, czy to było zwycięskie cięcie.
     if (gameMode === 'birds') {
         birdsProgress = score;
         updateRescueProgressUI(birdsProgress, birdsTarget);
-
         if (birdsProgress >= birdsTarget) {
             birdsSuccess = true;
             birdsRescueComplete();
-            
-            // Uruchom animację gracza i zakończ funkcję.
             clearTimeout(animationTimeout1);
             clearTimeout(animationTimeout2);
             player.frame = 'swing';
             animationTimeout1 = setTimeout(() => { player.frame = 'chop'; }, 75);
             animationTimeout2 = setTimeout(() => { player.frame = 'idle'; }, 150);
-            return; // Zakończ, aby nie generować nowego pnia i nie sprawdzać kolizji.
+            return; 
+        }
+    } else if (gameMode === 'competition') {
+        competitionProgress = score;
+        updateCompetitionProgressUI();
+        if (score >= competitionTarget) {
+            competitionWinner = 'player';
+            setTimeout(gameOver, 1000);
+            tree.splice(1); 
         }
     }
 
-    // KROK 3: Jeśli to NIE było zwycięskie cięcie, kontynuuj normalnie.
-    // Logika generowania nowych pni
-    if (gameMode === 'birds') {
-        if (score + tree.length < birdsTarget + 1) {
-            let newBranch = null;
-            const lastSegment = tree[tree.length - 1];
-            const branchChance = 0.35 + (score / 200);
-            if (Math.random() < branchChance) {
-                const potentialSide = Math.random() < 0.5 ? 'left' : 'right';
-                if (lastSegment && lastSegment.branch && lastSegment.branch !== potentialSide) newBranch = null;
-                else newBranch = potentialSide;
-            }
-            tree.push({ branch: newBranch });
-        }
-    } else {
-        // Generowanie dla trybu klasycznego
+    // POPRAWKA 2: Zmieniamy warunek, aby przestać generować drzewo, gdy korona jest już w pamięci.
+    if ((gameMode !== 'birds' || (score + tree.length) <= birdsTarget) && (gameMode !== 'competition' || (score + tree.length) <= competitionTarget)) {
         let newBranch = null;
         const lastSegment = tree[tree.length - 1];
         const branchChance = 0.35 + (score / 200);
@@ -2212,8 +2538,14 @@ function performChop(sideToChop) {
 
     const segmentNextToPlayer = tree[0];
     if (segmentNextToPlayer && segmentNextToPlayer.branch === player.side) {
-        setTimeout(gameOver, 50);
-        return;
+        if (gameMode === 'competition') {
+            playerTimeout = COMPETITION_CONFIG.timeoutDuration;
+            showPlayerTimeoutEffect();
+            return;
+        } else {
+            setTimeout(gameOver, 50);
+            return;
+        }
     }
 
     clearTimeout(animationTimeout1);
@@ -2223,9 +2555,53 @@ function performChop(sideToChop) {
     animationTimeout2 = setTimeout(() => { player.frame = 'idle'; }, 150);
 }
 
+function createChopParticles(choppedSegment, trunkX, choppingSide) {
+    if (!choppedSegment) return;
+
+    // Krok 1: Sprawdzamy, w jakim trybie jest gra (bez zmian)
+    const isFullscreen = !fullscreenModal.classList.contains('hidden');
+    const isCompactMode = !isFullscreen && gameMode === 'competition';
+
+    // Krok 2: Wybieramy siłę odrzutu POZIOMEGO na podstawie trybu (bez zmian)
+    let velocityMultiplier;
+    if (isCompactMode) {
+        velocityMultiplier = Math.random() * 1.5 + 1.5; // Zakres od 1.5 do 3.0
+    } else {
+        velocityMultiplier = Math.random() * 3 + 3;     // Zakres od 3.0 do 6.0
+    }
+
+    // --- NOWY KOD ---
+    // Krok 3: Wybieramy siłę odrzutu PIONOWEGO na podstawie trybu
+    let verticalVelocity;
+    if (isCompactMode) {
+        // Delikatniejszy odrzut w górę w trybie kompaktowym
+        verticalVelocity = -4; 
+    } else {
+        // Normalny, silny odrzut w górę dla pełnego ekranu i innych trybów
+        verticalVelocity = -7;
+    }
+    // --- KONIEC NOWEGO KODU ---
+
+    particles.push({
+        x: trunkX, 
+        y: canvas.height - SEGMENT_HEIGHT, 
+        width: TRUNK_WIDTH, 
+        height: SEGMENT_HEIGHT,
+        branch: choppedSegment.branch, 
+        // Krok 4: Używamy OBU dynamicznych sił do stworzenia cząsteczki
+        velocityX: (choppingSide === 'left' ? 1 : -1) * velocityMultiplier,
+        velocityY: verticalVelocity, // <-- Używamy naszej nowej zmiennej
+        rotation: 0, 
+        rotationSpeed: (choppingSide === 'left' ? 1 : -1) * (Math.random() * 0.05 + 0.05)
+    });
+}
+
 function handleMouseInput(event) { performChopBasedOnInput(event); }
 function handleTouchInput(event) { event.preventDefault(); performChopBasedOnInput(event); }
 function performChopBasedOnInput(event) {
+    const now = Date.now();
+    if (now - lastChopTime < 100) return; // Jeśli od ostatniego cięcia minęło mniej niż 100ms, ignoruj
+    lastChopTime = now; // Zapisz czas obecnego cięcia
     // Zablokuj input podczas odliczania i w innych stanach niż 'playing'
     if (gameState !== 'playing') return;
     const rect = canvas.getBoundingClientRect();
@@ -2995,6 +3371,9 @@ playAgainBtn.addEventListener('click', () => {
     if (gameMode === 'birds' && birdsDifficulty) {
         // W trybie ptaków - ponownie losuj cel z tej samej trudności
         startBirdsSetup(birdsDifficulty);
+    } else if (gameMode === 'competition' && competitionDifficulty) {
+        // W trybie rywalizacji - ponownie losuj cel z tej samej trudności bota
+        startCompetitionSetup(competitionDifficulty);
     } else {
         // W trybie klasycznym - standardowe odliczanie
         gameMode = 'classic';
@@ -3054,6 +3433,41 @@ birdsMediumBtn.addEventListener('click', () => {
 
 birdsHardBtn.addEventListener('click', () => {
     startBirdsSetup('hard');
+});
+
+// Event listenery dla trybu rywalizacji
+competitionModeBtn.addEventListener('click', () => {
+    // Od razu przechodzimy do menu rywalizacji, bez żadnych warunków
+    performTransition(() => {
+        mainMenu.classList.add('hidden');
+        competitionMenu.classList.remove('hidden');
+    });
+});
+
+competitionBotBtn.addEventListener('click', () => {
+    performTransition(() => {
+        competitionMenu.classList.add('hidden');
+        competitionBotMenu.classList.remove('hidden');
+    });
+});
+
+backToCompetitionBtn.addEventListener('click', () => {
+    performTransition(() => {
+        competitionBotMenu.classList.add('hidden');
+        competitionMenu.classList.remove('hidden');
+    });
+});
+
+botEasyBtn.addEventListener('click', () => {
+    startCompetitionSetup('easy');
+});
+
+botMediumBtn.addEventListener('click', () => {
+    startCompetitionSetup('medium');
+});
+
+botHardBtn.addEventListener('click', () => {
+    startCompetitionSetup('hard');
 });
 
 function safeChangeLanguage(lng) {
@@ -3159,9 +3573,27 @@ function showStartScreen() {
     birdsTarget = 0;
     birdsProgress = 0;
     birdsSuccess = false;
-    
-    // Ukryj pasek postępu i usuń klasy sukcesu
+
+    // Reset trybu rywalizacji
+    competitionDifficulty = null;
+    competitionTarget = 0;
+    competitionProgress = 0;
+    botProgress = 0;
+    competitionWinner = null;
+    playerTimeout = 0;
+    botTimeout = 0;
+
+    // --- POCZĄTEK ZMIANY ---
+    // Ukryj UI specyficzne dla trybów i przywróć domyślne
     rescueProgressContainer.classList.add('hidden');
+    botProgressContainer.classList.add('hidden');
+    playerProgressContainer.classList.add('hidden');
+    botScoreElement.classList.add('hidden');
+    playerScoreElement.classList.add('hidden');
+    scoreElement.classList.remove('hidden'); // KLUCZOWA ZMIANA: Pokaż środkowy licznik z powrotem
+    timerBarContainer.classList.remove('hidden'); 
+    // --- KONIEC ZMIANY ---
+
     document.getElementById('game-container').classList.remove('birds-success');
 
     // Pokaż odpowiednie menu i ukryj resztę
@@ -3196,6 +3628,27 @@ function startBirdsSetup(difficulty) {
     showBirdsWarning();
 }
 
+function startCompetitionSetup(difficulty) {
+    // Ustaw parametry trybu rywalizacji
+    gameMode = 'competition';
+    competitionDifficulty = difficulty;
+    competitionTarget = Math.floor(Math.random() * (COMPETITION_CONFIG.targetRange.max - COMPETITION_CONFIG.targetRange.min + 1)) + COMPETITION_CONFIG.targetRange.min;
+    competitionProgress = 0;
+    botProgress = 0;
+    competitionWinner = null;
+    playerTimeout = 0;
+    botTimeout = 0;
+    
+    // Ukryj wszystkie menu (włącznie z game over menu)
+    competitionBotMenu.classList.add('hidden');
+    gameOverMenu.classList.add('hidden');
+    mainMenu.classList.add('hidden');
+    classicMenu.classList.add('hidden');
+    
+    // Pokaż animację ostrzegawczą
+    showCompetitionWarning();
+}
+
 function showBirdsWarning() {
     // Zablokuj input już od razu
     gameState = 'birds-warning';
@@ -3219,6 +3672,29 @@ function showBirdsWarning() {
     }, 2000);
 }
 
+function showCompetitionWarning() {
+    // Zablokuj input już od razu
+    gameState = 'competition-warning';
+    
+    // Ustaw tekst ostrzeżenia
+    const i18n = window.i18next;
+    if (i18n && i18n.t) {
+        competitionWarningText.textContent = i18n.t('competitionMode.preStart', { count: competitionTarget });
+    } else {
+        competitionWarningText.textContent = `Kto pierwszy zetnie ${competitionTarget} pni wygrywa!`;
+    }
+    
+    // Pokaż overlay ostrzegawczy z czarnym tłem
+    messageOverlay.style.display = 'flex';
+    competitionWarningOverlay.classList.remove('hidden');
+    
+    // Po 2 sekundach przejdź do odliczania
+    setTimeout(() => {
+        competitionWarningOverlay.classList.add('hidden');
+        startCountdown(() => initCompetitionMode());
+    }, 2000);
+}
+
 function initBirdsMode() {
     // Wyzeruj score i ustaw początkowy stan
     score = 0;
@@ -3235,6 +3711,63 @@ function initBirdsMode() {
     gameLoopInterval = setInterval(gameLoop, 1000 / 60);
 }
 
+function initCompetitionMode() {
+    recalculateGameConstants();
+    // Wyzeruj score i ustaw początkowy stan
+    score = 0;
+    competitionProgress = 0;
+    botProgress = 0;
+    competitionWinner = null;
+    playerTimeout = 0;
+    botTimeout = 0;
+
+    // Inicjalizuj drzewo bota
+    initBotTree();
+
+    // --- POCZĄTEK ZMIANY ---
+    // Pokaż UI rywalizacji i ukryj domyślny licznik
+    botProgressContainer.classList.remove('hidden');
+    playerProgressContainer.classList.remove('hidden');
+    botScoreElement.classList.remove('hidden');
+    playerScoreElement.classList.remove('hidden');
+    scoreElement.classList.add('hidden'); // KLUCZOWA ZMIANA: Ukryj środkowy licznik
+    timerBarContainer.classList.add('hidden'); 
+    // --- KONIEC ZMIANY ---
+
+    updateCompetitionProgressUI();
+
+    // Uruchom normalną logikę gry
+    gameState = 'playing';
+    if (gameLoopInterval) clearInterval(gameLoopInterval);
+    gameLoopInterval = setInterval(gameLoop, 1000 / 60);
+
+    // Uruchom AI bota
+    startBotAI();
+}
+
+function initBotTree() {
+    // Stwórz początkowe drzewo dla bota (identyczne jak dla gracza)
+    botTree = [];
+    // Użyj tej samej logiki co dla gracza - skopiuj strukturę drzewa gracza
+    for (let i = 0; i < tree.length; i++) {
+        botTree.push({
+            branch: tree[i].branch
+        });
+    }
+}
+
+// Funkcja do synchronizacji drzew - bot i gracz mają mieć identyczne drzewa
+function syncBotTree() {
+    // Bot ma mieć identyczne drzewo jak gracz - ale tylko nowe segmenty
+    // Bot nie usuwa segmentów - tylko dodaje nowe
+    const newSegment = tree[tree.length - 1];
+    if (newSegment) {
+        botTree.push({
+            branch: newSegment.branch
+        });
+    }
+}
+
 function updateRescueProgressUI(current, target) {
     const percentage = Math.min((current / target) * 100, 100);
     rescueProgressBar.style.width = `${percentage}%`;
@@ -3244,6 +3777,145 @@ function updateRescueProgressUI(current, target) {
     if (current >= target) {
         document.getElementById('game-container').classList.add('birds-success');
     }
+}
+
+function updateCompetitionProgressUI() {
+    // Aktualizuj pasek gracza
+    const playerPercentage = Math.min((competitionProgress / competitionTarget) * 100, 100);
+    playerProgressBar.style.width = `${playerPercentage}%`;
+    playerProgressText.textContent = `${competitionProgress} / ${competitionTarget}`;
+    
+    // Aktualizuj pasek bota
+    const botPercentage = Math.min((botProgress / competitionTarget) * 100, 100);
+    botProgressBar.style.width = `${botPercentage}%`;
+    botProgressText.textContent = `${botProgress} / ${competitionTarget}`;
+    
+    // Aktualizuj liczniki punktów
+    playerScoreElement.textContent = competitionProgress;
+    botScoreElement.textContent = botProgress;
+    
+    // Dodaj efekt sukcesu gdy osiągnięto cel
+    if (competitionProgress >= competitionTarget) {
+        document.getElementById('game-container').classList.add('competition-success');
+    }
+}
+
+function showPlayerTimeoutEffect() {
+    // Można dodać efekt wizualny timeoutu gracza
+    console.log('Player timeout for', COMPETITION_CONFIG.timeoutDuration, 'ms');
+}
+
+function startBotAI() {
+    // Uruchom AI bota w trybie rywalizacji
+    if (gameMode === 'competition' && gameState === 'playing') {
+        const botConfig = COMPETITION_CONFIG.botDifficulty[competitionDifficulty];
+        
+        // Bot wykonuje ruch z opóźnieniem i precyzją zależną od trudności
+        setTimeout(() => {
+            botMakeMove(botConfig);
+        }, botConfig.reactionTime);
+    }
+}
+
+function botMakeMove(botConfig) {
+    if (gameMode !== 'competition' || gameState !== 'playing' || botTimeout > 0 || botProgress >= competitionTarget) {
+        return;
+    }
+
+    const currentSegment = botTree[0];
+    const nextSegment = botTree[1]; 
+    let sideToChop;
+    const isBranchOnCurrent_L = currentSegment && currentSegment.branch === 'left';
+    const isBranchOnCurrent_R = currentSegment && currentSegment.branch === 'right';
+    const isBranchOnNext_L = nextSegment && nextSegment.branch === 'left';
+    const isBranchOnNext_R = nextSegment && nextSegment.branch === 'right';
+
+    if (isBranchOnCurrent_L) {
+        sideToChop = 'right'; 
+    } else if (isBranchOnCurrent_R) {
+        sideToChop = 'left'; 
+    } else {
+        if (isBranchOnNext_L && !isBranchOnNext_R) {
+            sideToChop = 'right';
+        } else if (!isBranchOnNext_L && isBranchOnNext_R) {
+            sideToChop = 'left';
+        } else {
+            sideToChop = Math.random() < 0.5 ? 'left' : 'right';
+        }
+    }
+
+    if (Math.random() > botConfig.accuracy) {
+        sideToChop = Math.random() < 0.5 ? 'left' : 'right';
+    }
+
+    if (currentSegment && currentSegment.branch === sideToChop) {
+        botTimeout = COMPETITION_CONFIG.timeoutDuration;
+        botPlayer.side = sideToChop;
+        console.log('Bot hit current branch, timeout for', botTimeout, 'ms');
+        setTimeout(() => {
+            botMakeMove(botConfig); 
+        }, COMPETITION_CONFIG.timeoutDuration + 100);
+        return;
+    }
+
+    botProgress++;
+    botPlayer.side = sideToChop;
+    clearTimeout(botAnimationTimeout1);
+    clearTimeout(botAnimationTimeout2);
+    botPlayer.frame = 'swing';
+    botAnimationTimeout1 = setTimeout(() => { botPlayer.frame = 'chop'; }, 75);
+    botAnimationTimeout2 = setTimeout(() => { botPlayer.frame = 'idle'; }, 150);
+
+    if (gameSounds.chop) {
+        const chopSound = gameSounds.chop.cloneNode();
+        chopSound.volume = 0.5;
+        chopSound.play();
+    }
+    
+    const choppedSegment = botTree.shift();
+    if (choppedSegment) {
+        const BOT_TRUNK_X = canvas.width * 0.25 - TRUNK_WIDTH / 2;
+        createChopParticles(choppedSegment, BOT_TRUNK_X, botPlayer.side);
+    }
+
+    // POPRAWKA 1: Logika generowania nowego pnia PRZED sprawdzeniem kolizji.
+    // POPRAWKA 2: Zmieniony warunek generowania pnia.
+    if ((botProgress + botTree.length) <= competitionTarget) {
+        let newBranch = null;
+        const lastSegment = botTree[botTree.length - 1];
+        const branchChance = 0.35 + (botProgress / 200);
+        if (Math.random() < branchChance) {
+            const potentialSide = Math.random() < 0.5 ? 'left' : 'right';
+            if (!(lastSegment && lastSegment.branch && lastSegment.branch !== potentialSide)) {
+                newBranch = potentialSide;
+            }
+        }
+        botTree.push({ branch: newBranch });
+    }
+    
+    const segmentAfterChop = botTree[0];
+    if (segmentAfterChop && segmentAfterChop.branch === botPlayer.side) {
+        botTimeout = COMPETITION_CONFIG.timeoutDuration;
+        console.log('Bot was hit by a falling branch, timeout for', botTimeout, 'ms');
+        
+        setTimeout(() => {
+            botMakeMove(botConfig);
+        }, COMPETITION_CONFIG.timeoutDuration + 100);
+        return;
+    }
+
+    updateCompetitionProgressUI();
+
+    if (botProgress >= competitionTarget) {
+        competitionWinner = 'bot';
+        setTimeout(gameOver, 1000);
+        botTree.splice(1);
+        return; 
+    }
+
+    setTimeout(() => {
+        botMakeMove(botConfig);
+    }, botConfig.reactionTime + Math.random() * 200);
 }
 
 function birdsRescueComplete() {
@@ -3327,7 +3999,7 @@ function handleResize() {
         canvas.width = containerWidth;
         canvas.height = calculatedCanvasHeight;
         // Ustawiamy wysokość kontenera na podstawie obliczonej wysokości canvas + miejsca na timer
-        gameContainer.style.height = `${calculatedCanvasHeight + TIMER_HEIGHT}px`;
+        gameContainer.style.height = `${calculatedCanvasHeight}px`;
     }
     recalculateGameConstants(); 
     // Na koniec zawsze przerysuj grę z nowymi wymiarami
@@ -3337,21 +4009,37 @@ function handleResize() {
 window.onresize = handleResize;
 
 function recalculateGameConstants() {
-    // --- Szerokości elementów są oparte na STAŁEJ wartości bazowej ---
-    TRUNK_WIDTH = GAME_AREA_WIDTH_BASE * 0.25;
-    PLAYER_WIDTH = TRUNK_WIDTH * 0.6;
-    BRANCH_WIDTH = TRUNK_WIDTH * 1.2;
+    // Sprawdzamy, czy gra jest aktualnie w trybie pełnoekranowym
+    const isFullscreen = !fullscreenModal.classList.contains('hidden');
 
-    // --- Wysokości elementów TEŻ są oparte na STAŁEJ wartości bazowej, aby zachować proporcje ---
-    // Kluczowa zmiana: wysokość segmentu zależy teraz od jego stałej szerokości, a nie od wysokości canvas!
-    SEGMENT_HEIGHT = TRUNK_WIDTH * 0.9;
-    PLAYER_HEIGHT = SEGMENT_HEIGHT * 0.8;
-    BRANCH_HEIGHT = SEGMENT_HEIGHT * 0.4;
+    // Sprawdzamy, czy trzeba dodać lub usunąć klasę do stylów kompaktowych
+    if (!isFullscreen && gameMode === 'competition') {
+        gameContainer.classList.add('compact-mode');
+    } else {
+        gameContainer.classList.remove('compact-mode');
+    }
 
-    // --- Pozycja X jest obliczana tak, by wycentrować grę na DYNAMICZNEJ szerokości płótna ---
+    // Jeśli NIE jesteśmy w trybie pełnoekranowym ORAZ gramy w rywalizację...
+    if (!isFullscreen && gameMode === 'competition') {
+        // ...użyj JESZCZE MNIEJSZYCH, "kompaktowych" wartości
+        TRUNK_WIDTH = GAME_AREA_WIDTH_BASE * 0.15; // Zmniejszyliśmy z 0.18 na 0.15
+        PLAYER_WIDTH = TRUNK_WIDTH * 0.7;
+        BRANCH_WIDTH = TRUNK_WIDTH * 1.3;
+        SEGMENT_HEIGHT = TRUNK_WIDTH * 1.0;
+        PLAYER_HEIGHT = SEGMENT_HEIGHT * 0.9;
+        BRANCH_HEIGHT = SEGMENT_HEIGHT * 0.5;
+    } else {
+        // W każdym innym przypadku (pełny ekran lub inny tryb gry) użyj normalnych, dużych wartości
+        TRUNK_WIDTH = GAME_AREA_WIDTH_BASE * 0.25;
+        PLAYER_WIDTH = TRUNK_WIDTH * 0.6;
+        BRANCH_WIDTH = TRUNK_WIDTH * 1.2;
+        SEGMENT_HEIGHT = TRUNK_WIDTH * 0.9;
+        PLAYER_HEIGHT = SEGMENT_HEIGHT * 0.8;
+        BRANCH_HEIGHT = SEGMENT_HEIGHT * 0.4;
+    }
+
+    // Te wartości pozostają bez zmian
     TRUNK_X = (canvas.width - TRUNK_WIDTH) / 2;
-    
-    // --- Pozostałe stałe ---
     GROUND_HEIGHT = 20;
     PLAYER_OFFSET_X = 15;
     LUNGE_MULTIPLIER = 1.7;
@@ -3720,6 +4408,13 @@ if (desktopMissionsButton) {
     });
 }
 
+backToMainFromCompetitionBtn.addEventListener('click', () => {
+    performTransition(() => {
+        competitionMenu.classList.add('hidden');
+        mainMenu.classList.remove('hidden');
+    });
+})
+
 // Event listenery dla przycisków misji
 document.addEventListener('click', (e) => {
     // Obsługa przełączania zakładek misji
@@ -3756,7 +4451,6 @@ function setGameStateUI(state) {
     const scoreEl = document.getElementById('score');
     const timerContainer = document.getElementById('timer-bar-container');
 
-    // Lista kontenerów, którymi zarządzamy
     const containers = [gameContainer, fullscreenGameWrapper];
 
     if (state === 'menu') {
@@ -3775,7 +4469,16 @@ function setGameStateUI(state) {
                 container.classList.add('game-state');
             }
         });
-        scoreEl.style.display = 'block';
-        timerContainer.style.display = 'flex';
+        
+        // --- POCZĄTEK POPRAWKI ---
+        // Pokaż/ukryj elementy w zależności od trybu gry
+        if (gameMode === 'competition') {
+            scoreEl.style.display = 'none';
+            timerContainer.style.display = 'none';
+        } else {
+            scoreEl.style.display = 'block';
+            timerContainer.style.display = 'flex';
+        }
+        // --- KONIEC POPRAWKI ---
     }
 }

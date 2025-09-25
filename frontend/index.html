@@ -157,7 +157,22 @@
                     <div id="rescue-icon-birds" class="absolute top-1/2 -translate-y-1/2 right-2 text-lg">🪹</div>
                     <div id="rescue-progress-text" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-white text-shadow">0 / 0</div>
                 </div>
+                <!-- Pasek postępu dla bota w trybie rywalizacji -->
+                <div id="bot-progress-container" class="hidden absolute top-20 left-1/4 -translate-x-1/2 h-8 w-2/5 bg-gray-700 border-2 border-gray-600 rounded-md overflow-hidden z-30">
+                    <div id="bot-progress-bar" class="h-full bg-purple-500 transition-width duration-300 ease-out" style="width: 0%"></div>
+                    <div id="bot-icon" class="absolute top-1/2 -translate-y-1/2 left-2 text-lg">🤖</div>
+                    <div id="bot-progress-text" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-white text-shadow">0 / 0</div>
+                </div>
+                <!-- Pasek postępu dla gracza w trybie rywalizacji -->
+                <div id="player-progress-container" class="hidden absolute top-20 left-3/4 -translate-x-1/2 h-8 w-2/5 bg-gray-700 border-2 border-gray-600 rounded-md overflow-hidden z-30">
+                    <div id="player-progress-bar" class="h-full bg-green-500 transition-width duration-300 ease-out" style="width: 0%"></div>
+                    <div id="player-icon" class="absolute top-1/2 -translate-y-1/2 left-2 text-lg">🐱</div>
+                    <div id="player-progress-text" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-white text-shadow">0 / 0</div>
+                </div>
                 <div id="score" class="absolute top-16 left-1/2 -translate-x-1/2 text-5xl font-bold text-shadow z-20">0</div>
+                <!-- Liczniki punktów dla trybu rywalizacji -->
+                <div id="bot-score" class="hidden absolute top-32 left-1/4 -translate-x-1/2 text-4xl font-bold text-shadow z-30 text-purple-400">0</div>
+                <div id="player-score" class="hidden absolute top-32 right-1/4 translate-x-1/2 text-4xl font-bold text-shadow z-30 text-green-400">0</div>
                 <button id="toggle-fullscreen-btn" title="Pełny ekran" class="absolute top-2 right-2 z-30 p-2 bg-gray-900/50 rounded-full hover:bg-gray-900/80 transition-colors">
                     <svg id="expand-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-white">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15m0-6l4.5-4.5m-4.5 0h4.5m0 0v4.5M3.75 15l4.5 4.5" />
@@ -173,7 +188,7 @@
                         
                         <div class="flex flex-col gap-4 w-full max-w-xs">
                             <button id="classic-mode-btn" data-i18n="mainMenu.classic" class="main-menu-button">Gra Zwykła</button>
-                            <button id="competition-mode-btn" data-i18n="mainMenu.competition" class="main-menu-button" disabled>Rywalizacja</button>
+                            <button id="competition-mode-btn" data-i18n="mainMenu.competition" class="main-menu-button">Rywalizacja</button>
                             <button id="birds-mode-btn" data-i18n="mainMenu.birds" class="main-menu-button">Uratuj Ptaki</button>
                             <button id="challenges-mode-btn" data-i18n="mainMenu.challenges" class="main-menu-button" disabled>Wyzwania</button>
                         </div>
@@ -198,6 +213,27 @@
                             <button id="back-to-main-from-birds-btn" data-i18n="classicMenu.back" class="main-menu-button bg-gray-600 hover:bg-gray-700">Powrót</button>
                         </div>
                     </div>
+
+                    <div id="competition-menu" class="hidden flex flex-col items-center justify-center text-center">
+                        <h2 data-i18n="competitionMenu.title" class="text-4xl font-bold mb-8 text-shadow">Rywalizacja</h2>
+                        <p data-i18n="competitionMenu.description" class="text-lg mb-6 text-gray-300">Wybierz z kim chcesz rywalizować!</p>
+                        <div class="flex flex-col gap-4 w-full max-w-xs">
+                            <button id="competition-players-btn" data-i18n="competitionMenu.players" class="main-menu-button bg-blue-600 hover:bg-blue-700" disabled>Rywalizuj z innymi graczami 🔒</button>
+                            <button id="competition-bot-btn" data-i18n="competitionMenu.bot" class="main-menu-button bg-purple-600 hover:bg-purple-700">Rywalizuj z botem</button>
+                            <button id="back-to-main-from-competition-btn" data-i18n="classicMenu.back" class="main-menu-button bg-gray-600 hover:bg-gray-700">Powrót</button>
+                        </div>
+                    </div>
+
+                    <div id="competition-bot-menu" class="hidden flex flex-col items-center justify-center text-center">
+                        <h2 data-i18n="competitionBotMenu.title" class="text-4xl font-bold mb-8 text-shadow">Wybierz trudność bota</h2>
+                        <p data-i18n="competitionBotMenu.description" class="text-lg mb-6 text-gray-300">Kto pierwszy zetnie wymaganą liczbę pni wygrywa!</p>
+                        <div class="flex flex-col gap-4 w-full max-w-xs">
+                            <button id="bot-easy-btn" data-i18n="competitionBotMenu.easy" class="main-menu-button bg-green-600 hover:bg-green-700">Łatwy Bot</button>
+                            <button id="bot-medium-btn" data-i18n="competitionBotMenu.medium" class="main-menu-button bg-yellow-600 hover:bg-yellow-700">Średni Bot</button>
+                            <button id="bot-hard-btn" data-i18n="competitionBotMenu.hard" class="main-menu-button bg-red-600 hover:bg-red-700">Trudny Bot</button>
+                            <button id="back-to-competition-btn" data-i18n="classicMenu.back" class="main-menu-button bg-gray-600 hover:bg-gray-700">Powrót</button>
+                        </div>
+                    </div>
                     
                     <div id="countdown-overlay" class="hidden text-8xl font-bold text-shadow animate-pulse">
                         <span id="countdown-text">3</span>
@@ -208,6 +244,13 @@
                         <h2 data-i18n="birdsMode.warning" class="text-3xl font-bold mb-4 text-shadow text-red-400">Ptaki są w niebezpieczeństwie!</h2>
                         <p id="birds-warning-text" class="text-xl text-gray-300 mb-6">Zetnij 0 pni, aby je ochronić.</p>
                         <div class="text-4xl animate-bounce">🪹🕊️</div>
+                    </div>
+
+                    <div id="competition-warning-overlay" class="hidden flex flex-col items-center justify-center text-center">
+                        <div class="text-6xl mb-4">⚔️</div>
+                        <h2 data-i18n="competitionMode.warning" class="text-3xl font-bold mb-4 text-shadow text-purple-400">Rywalizacja rozpoczęta!</h2>
+                        <p id="competition-warning-text" class="text-xl text-gray-300 mb-6">Kto pierwszy zetnie 0 pni wygrywa!</p>
+                        <div class="text-4xl animate-bounce">👑</div>
                     </div>
 
                     <div id="game-over-menu" class="hidden flex flex-col items-center justify-center text-center">
