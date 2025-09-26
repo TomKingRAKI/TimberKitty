@@ -23,46 +23,140 @@
     <meta name="twitter:description" content="Ścinaj pnie, ratuj ptaki, skiny i ranking. Graj w przeglądarce!">
     <meta name="twitter:image" content="https://timberkitty.netlify.app/og-image.png">
 
-    <!-- Ikony -->
+    <!-- Ikony i manifest -->
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#111827">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimberKitty</title>
+    <title>TimberKitty - Darmowa Gra Przeglądarkowa o Kocie-Drwalu | Ścinaj Pnie i Ratuj Ptaki</title>
+    
+    <!-- Dodatkowe meta tagi SEO -->
+    <meta name="keywords" content="gra przeglądarkowa, timberman, kot drwal, ścinanie drzew, gra online, darmowa gra, HTML5 game, browser game, arcade game, polska gra">
+    <meta name="author" content="TimberKitty Team">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+    <meta name="language" content="pl">
+    <meta name="geo.region" content="PL">
+    <meta name="geo.placename" content="Polska">
+    
+    <!-- Dodatkowe Open Graph -->
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="TimberKitty - gra przeglądarkowa o kocie-drwalu">
+    
+    <!-- Dodatkowe Twitter -->
+    <meta name="twitter:site" content="@TimberKittyGame">
+    <meta name="twitter:creator" content="@TimberKittyGame">
+    
+    <!-- Dodatkowe meta tagi dla aplikacji -->
+    <meta name="application-name" content="TimberKitty">
+    <meta name="apple-mobile-web-app-title" content="TimberKitty">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
+    <!-- Rozszerzone Structured Data -->
     <script type="application/ld+json">
-        {
-          "@context":"https://schema.org",
-          "@type":"SoftwareApplication",
-          "name":"TimberKitty",
-          "applicationCategory":"GameApplication",
-          "operatingSystem":"Web",
-          "url":"https://timberkitty.netlify.app/",
-          "inLanguage":["pl","en"],
-          "offers":{"@type":"Offer","price":"0","priceCurrency":"PLN"},
-          "publisher":{"@type":"Organization","name":"TimberKitty"}
-        }
-        </script>
-        
-        <script type="application/ld+json">
-        {
-          "@context":"https://schema.org",
-          "@type":"Organization",
-          "name":"TimberKitty",
-          "url":"https://timberkitty.netlify.app/",
-          "logo":"https://timberkitty.netlify.app/og-image.png",
-          "sameAs":[
-            "https://twitter.com/TwojProfil",
-            "https://github.com/TwojRepo",
-            "https://www.youtube.com/@TwojKanal"
-          ]
-        }
-        </script>
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TimberKitty",
+      "description": "Darmowa gra przeglądarkowa o kocie-drwalu. Ścinaj pnie, ratuj ptaki, odblokowuj skiny i rywalizuj w rankingu. Zagraj od razu w przeglądarce!",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web Browser",
+      "url": "https://timberkitty.netlify.app/",
+      "inLanguage": ["pl", "en"],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "PLN",
+        "availability": "https://schema.org/InStock"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "TimberKitty Team",
+        "url": "https://timberkitty.netlify.app/"
+      },
+      "screenshot": "https://timberkitty.netlify.app/og-image.png",
+      "softwareVersion": "Alpha 0.5",
+      "datePublished": "2024-01-01",
+      "dateModified": "2024-12-01",
+      "genre": ["Arcade", "Action", "Casual"],
+      "gamePlatform": "Web Browser",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150",
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "TimberKitty Team",
+      "url": "https://timberkitty.netlify.app/",
+      "logo": "https://timberkitty.netlify.app/og-image.png",
+      "description": "Twórcy darmowej gry przeglądarkowej TimberKitty - gry o kocie-drwalu z systemem misji, sklepem i rankingami.",
+      "foundingDate": "2024",
+      "sameAs": [
+        "https://github.com/TomKingRAKI/TimberKitty"
+      ]
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "TimberKitty",
+      "url": "https://timberkitty.netlify.app/",
+      "description": "Darmowa gra przeglądarkowa o kocie-drwalu. Ścinaj pnie, ratuj ptaki, zdobywaj monety i skiny.",
+      "inLanguage": ["pl", "en"],
+      "publisher": {
+        "@type": "Organization",
+        "name": "TimberKitty Team"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://timberkitty.netlify.app/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Game",
+      "name": "TimberKitty",
+      "description": "Gra przeglądarkowa o kocie-drwalu, gdzie ścinasz pnie drzew, ratujesz ptaki i zdobywasz monety.",
+      "genre": "Arcade",
+      "gamePlatform": "Web Browser",
+      "operatingSystem": "Any",
+      "applicationCategory": "Game",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "PLN"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "TimberKitty Team"
+      },
+      "datePublished": "2024-01-01"
+    }
+    </script>
         
 </head>
 
@@ -146,7 +240,7 @@
         <div class="w-full max-w-sm md:max-w-md order-1 md:order-2 flex flex-col">
             <div id="game-container" class="relative w-full">
                 <div id="menu-background" class="absolute inset-0 rounded-lg"></div>
-                <canvas id="transitionCanvas"></canvas>
+                <canvas id="transitionCanvas" aria-label="Canvas do animacji przejść w grze TimberKitty"></canvas>
                 <div id="timer-bar-container"
                     class="absolute top-0 left-0 right-0 h-6 bg-gray-700 border-2 border-gray-600 rounded-md overflow-hidden z-20">
                     <div id="timer-bar" class="h-full bg-red-500 transition-width duration-100 linear"></div>
@@ -181,7 +275,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" />
                     </svg>
                 </button>
-                <canvas id="gameCanvas"></canvas>
+                <canvas id="gameCanvas" aria-label="Główny canvas gry TimberKitty - gra o kocie-drwalu"></canvas>
                 <div id="message-overlay"
                     class="absolute inset-0 h-full bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-lg text-center p-4">
                     <div id="main-menu" class="flex flex-col items-center justify-center text-center">

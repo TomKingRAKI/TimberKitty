@@ -1,0 +1,117 @@
+{
+  "name": "TimberKitty - Gra o Kocie-Drwalu",
+  "short_name": "TimberKitty",
+  "description": "Darmowa gra przeglądarkowa o kocie-drwalu. Ścinaj pnie, ratuj ptaki, odblokowuj skiny i rywalizuj w rankingu.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pl",
+  "dir": "ltr",
+  "categories": ["games", "entertainment", "arcade"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/kitty_idle_right.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/kitty_idle_right.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/kitty_idle_right.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "TimberKitty - Gra o kocie-drwalu"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Rozpocznij grę",
+      "short_name": "Gra",
+      "description": "Rozpocznij nową grę w trybie klasycznym",
+      "url": "/?mode=classic",
+      "icons": [
+        {
+          "src": "/assets/kitty_idle_right.png",
+          "sizes": "64x64"
+        }
+      ]
+    },
+    {
+      "name": "Rywalizacja",
+      "short_name": "PvP",
+      "description": "Rywalizuj z botem lub innymi graczami",
+      "url": "/?mode=competition",
+      "icons": [
+        {
+          "src": "/assets/kitty_idle_right.png",
+          "sizes": "64x64"
+        }
+      ]
+    },
+    {
+      "name": "Uratuj Ptaki",
+      "short_name": "Ptaki",
+      "description": "Uratuj ptaki ścinając określoną liczbę pni",
+      "url": "/?mode=birds",
+      "icons": [
+        {
+          "src": "/assets/kitty_idle_right.png",
+          "sizes": "64x64"
+        }
+      ]
+    },
+    {
+      "name": "Ranking",
+      "short_name": "Top",
+      "description": "Zobacz ranking najlepszych graczy",
+      "url": "/?tab=leaderboard",
+      "icons": [
+        {
+          "src": "/assets/kitty_idle_right.png",
+          "sizes": "64x64"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}

@@ -1,0 +1,8 @@
+<!-- Placeholder dla og-image.png -->
+<!-- Ten plik powinien zostać zastąpiony rzeczywistym obrazem 1200x630px -->
+<!-- Zawierającym logo TimberKitty i screenshot gry -->
+<!-- Format: PNG, rozmiar: 1200x630px -->
+<!-- Kolory: ciemne tło (#111827) z jasnymi elementami -->
+<!-- Tekst: "TimberKitty - Gra o Kocie-Drwalu" -->
+<!-- Elementy: kot-drwal, siekiera, pnie drzew, ptaki -->
+<!-- Styl: pixel art lub stylizowany design -->

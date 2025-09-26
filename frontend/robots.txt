@@ -1,0 +1,65 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://timberkitty.netlify.app/sitemap.xml
+
+# Crawl-delay dla wszystkich botów
+Crawl-delay: 1
+
+# Specjalne instrukcje dla głównych wyszukiwarek
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
+
+# Blokuj agresywne boty
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# Pozwól na indeksowanie wszystkich zasobów gry
+Allow: /assets/
+Allow: /sfx/
+Allow: /locales/
+Allow: /style.css
+Allow: /script.js
+Allow: /index.html
+
+# Pozwól na indeksowanie obrazów
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.gif
+Allow: /*.webp
+Allow: /*.svg
+
+# Pozwól na indeksowanie plików audio
+Allow: /*.mp3
+Allow: /*.wav
+Allow: /*.ogg
+
+# Pozwól na indeksowanie plików CSS i JS
+Allow: /*.css
+Allow: /*.js
+
+# Pozwól na indeksowanie plików JSON (dla tłumaczeń)
+Allow: /*.json
+
+# Pozwól na indeksowanie manifestu i ikon
+Allow: /manifest.json
+Allow: /favicon.ico
+Allow: /apple-touch-icon.png
+Allow: /og-image.png
